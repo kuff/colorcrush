@@ -451,6 +451,7 @@ GameObject:
   - component: {fileID: 889033399}
   - component: {fileID: 889033401}
   - component: {fileID: 889033400}
+  - component: {fileID: 889033402}
   m_Layer: 5
   m_Name: Image
   m_TagString: Untagged
@@ -515,6 +516,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 889033398}
   m_CullTransparentMesh: 1
+--- !u!114 &889033402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 889033398}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 408f2de19c31c0b46bc353d716753bfa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 1e9fbd55d34b8bd48afe7aa3ad13a355, type: 2}
+  colorGroupingData: {fileID: 11400000, guid: f3ecc7e61ae9c1a4295e8bc69c2ca1a0, type: 2}
+  targetSprite: {fileID: 21300000, guid: 5406e0a442551e949a752f48ff102034, type: 3}
 --- !u!1 &1299182421
 GameObject:
   m_ObjectHideFlags: 0
@@ -818,7 +834,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1828100648}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 889033402}
+        m_TargetAssemblyTypeName: Colorcrush.Color.ColorGroupController, Scripts.Colorcrush
+        m_MethodName: ShowNextColorGroup
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1828100648
 MonoBehaviour:
   m_ObjectHideFlags: 0
