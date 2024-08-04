@@ -1390,7 +1390,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1429341258
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6405,6 +6405,7 @@ GameObject:
   - component: {fileID: 1794035850}
   - component: {fileID: 1794035852}
   - component: {fileID: 1794035851}
+  - component: {fileID: 1794035853}
   m_Layer: 5
   m_Name: TargetColorFill
   m_TagString: Untagged
@@ -6451,7 +6452,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 3286163911610860551, guid: 4600d88a717a8bc4a81209f6680b6976, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6469,6 +6470,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1794035849}
   m_CullTransparentMesh: 1
+--- !u!114 &1794035853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1794035849}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d48f24d340d6db24990ec0fc57342ea7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetImage: {fileID: 1794035851}
+  changeInterval: 1
 --- !u!1001 &1964097298
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6681,6 +6696,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1039757013}
     m_Modifications:
+    - target: {fileID: 1704336522505968466, guid: 9f2b9a956dd26084c9fa2f973a0aff89, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1704336522505968466, guid: 9f2b9a956dd26084c9fa2f973a0aff89, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6801997626036133099, guid: 9f2b9a956dd26084c9fa2f973a0aff89, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
