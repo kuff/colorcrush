@@ -260,7 +260,9 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Your vision: 100% complete'
+  m_Text: 'Your vision:
+
+    0% complete'
 --- !u!222 &668640281
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -531,6 +533,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 1e9fbd55d34b8bd48afe7aa3ad13a355, type: 2}
   colorGroupingData: {fileID: 11400000, guid: f3ecc7e61ae9c1a4295e8bc69c2ca1a0, type: 2}
   targetSprite: {fileID: 21300000, guid: 5406e0a442551e949a752f48ff102034, type: 3}
+  progressTextBox: {fileID: 668640280}
 --- !u!1 &1299182421
 GameObject:
   m_ObjectHideFlags: 0
@@ -838,6 +841,18 @@ MonoBehaviour:
       - m_Target: {fileID: 889033402}
         m_TargetAssemblyTypeName: Colorcrush.Color.ColorGroupController, Scripts.Colorcrush
         m_MethodName: ShowNextColorGroup
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 889033402}
+        m_TargetAssemblyTypeName: Colorcrush.Color.ColorGroupController, Scripts.Colorcrush
+        m_MethodName: SetPercentComplete
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

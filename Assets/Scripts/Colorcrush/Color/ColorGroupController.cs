@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Colorcrush.Color
 {
@@ -7,7 +8,8 @@ namespace Colorcrush.Color
         public Material material;
         public ColorGroupingData colorGroupingData;
         public Sprite targetSprite;
-
+        public Text progressTextBox;
+        
         private Texture2D visibilityTexture;
         private int currentGroupCount = 0;
 
@@ -16,6 +18,12 @@ namespace Colorcrush.Color
             // Initialize the visibility texture
             InitializeVisibilityTexture();
             UpdateShaderProperties();
+            
+            // Print the size of each color group
+            foreach (var colorGroup in colorGroupingData.colorGroups)
+            {
+                Debug.Log($"Color: {colorGroup.color}, Pixels: {colorGroup.pixels.Count}");
+            }
         }
 
         public void ShowNextColorGroup()
@@ -28,6 +36,25 @@ namespace Colorcrush.Color
             }
             
             Debug.Log($"Showing {currentGroupCount} color groups");
+        }
+        
+        public int GetPercentComplete()
+        {
+            return Mathf.RoundToInt((float)currentGroupCount / colorGroupingData.colorGroups.Count * 100);
+        }
+        
+        public void SetPercentComplete()
+        {
+            var percent = GetPercentComplete();
+            
+            if (progressTextBox != null)
+            {
+                progressTextBox.text = $"Your vision:\n{percent}% complete";
+            }
+            else
+            {
+                Debug.LogWarning("Progress text box not set");
+            }
         }
 
         void InitializeVisibilityTexture()

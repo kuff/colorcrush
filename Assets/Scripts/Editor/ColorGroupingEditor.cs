@@ -7,7 +7,7 @@ namespace Editor
 {
     public class ColorGroupingEditor : MonoBehaviour
     {
-        [MenuItem("Assets/Create Color Grouping Data", false, 10)]
+        [MenuItem("Assets/Create Color Grouping Data From Sprite", false, 10)]
         private static void CreateColorGroupingData()
         {
             if (Selection.activeObject is Sprite sprite)
@@ -28,7 +28,16 @@ namespace Editor
                 }
 
                 string path = AssetDatabase.GetAssetPath(sprite);
-                string assetPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(path), $"{sprite.name}_ColorGroupingData.asset");
+                string directory = System.IO.Path.GetDirectoryName(path);
+                string assetPath = System.IO.Path.Combine(directory, $"{sprite.name}_ColorGroupingData.asset");
+
+                // Check if the asset already exists and delete it if it does
+                ColorGroupingData existingAsset = AssetDatabase.LoadAssetAtPath<ColorGroupingData>(assetPath);
+                if (existingAsset != null)
+                {
+                    AssetDatabase.DeleteAsset(assetPath);
+                }
+
                 AssetDatabase.CreateAsset(colorGroupingData, assetPath);
                 AssetDatabase.SaveAssets();
 

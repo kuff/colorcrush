@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Colorcrush.Color
@@ -26,7 +27,9 @@ namespace Colorcrush.Color
                     colorGroups[closestColor].Add(new Vector2(x, y));
                 }
             }
-            
+
+            BalanceColorGroups(colorGroups); // Comment this out for more "true" color groups
+
             return colorGroups;
         }
 
@@ -54,6 +57,64 @@ namespace Colorcrush.Color
             float gDiff = a.g - b.g;
             float bDiff = a.b - b.b;
             return Mathf.Sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+        }
+
+        void BalanceColorGroups(Dictionary<UnityEngine.Color, List<Vector2>> colorGroups)
+        {
+            int totalPixels = colorGroups.Values.Sum(group => group.Count);
+            int averageGroupSize = totalPixels / colorGroups.Count;
+
+            List<UnityEngine.Color> targetColors = ColorArray.sRGBTargetColors.ToList();
+
+            foreach (var targetColor in targetColors)
+            {
+                if (colorGroups[targetColor].Count < averageGroupSize)
+                {
+                    int pixelsNeeded = averageGroupSize - colorGroups[targetColor].Count;
+
+                    while (pixelsNeeded > 0)
+                    {
+                        bool foundDonor = FindClosestLargerGroup(colorGroups, targetColor, averageGroupSize, out var donorColor);
+
+                        if (!foundDonor)
+                            break;
+
+                        List<Vector2> donorPixels = colorGroups[donorColor];
+                        int pixelsToMove = Mathf.Min(pixelsNeeded, donorPixels.Count - averageGroupSize);
+
+                        for (int i = 0; i < pixelsToMove; i++)
+                        {
+                            colorGroups[targetColor].Add(donorPixels[0]);
+                            donorPixels.RemoveAt(0);
+                        }
+
+                        pixelsNeeded -= pixelsToMove;
+                    }
+                }
+            }
+        }
+
+        bool FindClosestLargerGroup(Dictionary<UnityEngine.Color, List<Vector2>> colorGroups, UnityEngine.Color targetColor, int averageGroupSize, out UnityEngine.Color closestColor)
+        {
+            closestColor = new UnityEngine.Color();
+            float closestDistance = float.MaxValue;
+            bool found = false;
+
+            foreach (var entry in colorGroups)
+            {
+                if (entry.Value.Count > averageGroupSize)
+                {
+                    float distance = ColorDistance(targetColor, entry.Key);
+                    if (distance < closestDistance)
+                    {
+                        closestColor = entry.Key;
+                        closestDistance = distance;
+                        found = true;
+                    }
+                }
+            }
+
+            return found;
         }
     }
 }
