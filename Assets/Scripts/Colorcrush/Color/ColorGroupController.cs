@@ -49,7 +49,7 @@ namespace Colorcrush.Color
             
             if (progressTextBox != null)
             {
-                progressTextBox.text = $"Your vision:\n{percent}% complete";
+                progressTextBox.text = $"YOUR VISION:\n{percent}% COMPLETE";
             }
             else
             {

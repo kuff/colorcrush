@@ -16,3 +16,4 @@ MonoBehaviour:
   useInitiatingScene: 0
   resourcesPath: Assets/Resources/Colorcrush
   scenesPath: Assets/Scenes
+  doPixelBalancing: 0

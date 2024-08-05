@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Colorcrush.Util;
 using UnityEngine;
 
 namespace Colorcrush.Color
@@ -28,8 +29,12 @@ namespace Colorcrush.Color
                 }
             }
 
-            BalanceColorGroups(colorGroups); // Comment this out for more "true" color groups
-
+            var doPixelBalancing = ProjectConfig.InstanceConfig.doPixelBalancing;
+            if (doPixelBalancing)
+            {
+                BalanceColorGroups(colorGroups); // Comment this out for more "true" color groups
+            }
+            
             return colorGroups;
         }
 

@@ -12,5 +12,7 @@ namespace Colorcrush.Util
         public bool useInitiatingScene = true;
         public string resourcesPath = "Assets/Resources/Colorcrush";
         public string scenesPath = "Assets/Scenes";
+
+        public bool doPixelBalancing = true;
     }
 }
