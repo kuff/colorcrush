@@ -7,6 +7,7 @@ Shader "Custom/ColorTransposeShader"
         _SkinColor ("Skin Color", Color) = (0.97, 0.87, 0.25, 1) // Yellow skin color F8DE40
         _Tolerance ("Tolerance", Range(0, 1)) = 0.1 // Tolerance for color matching
         _WhiteTolerance ("White Tolerance", Range(0, 1)) = 0.1 // Tolerance for detecting white color
+        _Alpha ("Alpha", Range(0, 1)) = 1.0 // Alpha value for the entire image
     }
     SubShader
     {
@@ -39,6 +40,7 @@ Shader "Custom/ColorTransposeShader"
             fixed4 _SkinColor;
             float _Tolerance;
             float _WhiteTolerance;
+            float _Alpha;
 
             v2f vert (appdata_t v)
             {
@@ -62,7 +64,7 @@ Shader "Custom/ColorTransposeShader"
                 float whiteDistance = length(texColor.rgb - float3(1.0, 1.0, 1.0));
                 if (whiteDistance < _WhiteTolerance)
                 {
-                    return texColor; // Return original color if it's white
+                    return fixed4(texColor.rgb, texColor.a * _Alpha); // Return original color if it's white
                 }
 
                 // Calculate the distance between the texture color and the skin color
@@ -71,13 +73,13 @@ Shader "Custom/ColorTransposeShader"
                 if (skinDistance < _Tolerance)
                 {
                     // If the pixel color is close to the skin color, change it to the target color
-                    return fixed4(_TargetColor.rgb, texColor.a);
+                    return fixed4(_TargetColor.rgb, texColor.a * _Alpha);
                 }
                 else
                 {
                     // Otherwise, adjust the color relative to the new skin color
                     float3 colorDiff = texColor.rgb - _SkinColor.rgb;
-                    fixed4 adjustedColor = fixed4(_TargetColor.rgb + colorDiff, texColor.a);
+                    fixed4 adjustedColor = fixed4(_TargetColor.rgb + colorDiff, texColor.a * _Alpha);
                     return adjustedColor;
                 }
             }

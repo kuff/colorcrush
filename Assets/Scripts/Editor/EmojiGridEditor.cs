@@ -30,10 +30,10 @@ namespace Editor
             }
 
             // Create a folder for the materials if it doesn't exist
-            string folderPath = "Assets/GeneratedMaterials";
+            string folderPath = "Assets/Resources/GeneratedMaterials";
             if (!AssetDatabase.IsValidFolder(folderPath))
             {
-                AssetDatabase.CreateFolder("Assets", "GeneratedMaterials");
+                AssetDatabase.CreateFolder("Assets/Resources", "GeneratedMaterials");
             }
 
             // Iterate through each child object

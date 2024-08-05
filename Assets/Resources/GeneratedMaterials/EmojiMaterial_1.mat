@@ -29,9 +29,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Alpha: 1
     - _Tolerance: 0.1
     - _WhiteTolerance: 0.1
     m_Colors:
     - _SkinColor: {r: 0.97, g: 0.87, b: 0.25, a: 1}
-    - _TargetColor: {r: 0.40385187, g: 0.814264, b: 0.82641506, a: 1}
+    - _TargetColor: {r: 0.50656193, g: 0.48577765, b: 0.6872289, a: 1}
   m_BuildTextureStacks: []
