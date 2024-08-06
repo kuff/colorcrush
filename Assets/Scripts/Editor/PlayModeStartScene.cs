@@ -1,7 +1,13 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using static Colorcrush.Util.ProjectConfig;
+
+#endregion
 
 namespace Editor
 {
@@ -18,7 +24,10 @@ namespace Editor
 
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (!InstanceConfig.useInitiatingScene) return;
+            if (!InstanceConfig.useInitiatingScene)
+            {
+                return;
+            }
 
             if (state == PlayModeStateChange.ExitingEditMode)
             {

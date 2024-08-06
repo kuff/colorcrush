@@ -1,5 +1,11 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using UnityEngine;
 using UnityEngine.Serialization;
+
+#endregion
 
 namespace Colorcrush.Util
 {
@@ -14,5 +20,6 @@ namespace Colorcrush.Util
         public string scenesPath = "Assets/Scenes";
 
         public bool doPixelBalancing = true;
+        public int randomSeed = 42;
     }
 }

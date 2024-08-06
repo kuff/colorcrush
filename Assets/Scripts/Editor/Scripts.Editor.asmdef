@@ -1,19 +1,19 @@
 {
-    "name": "Scripts.Editor",
-    "rootNamespace": "",
-    "references": [
-        "GUID:99a32bba3c8024749929b2973cc25b45",
-        "GUID:68550284b645f4b9894995579f34290a"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Scripts.Editor",
+  "rootNamespace": "",
+  "references": [
+    "GUID:99a32bba3c8024749929b2973cc25b45",
+    "GUID:68550284b645f4b9894995579f34290a"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

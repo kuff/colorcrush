@@ -1,5 +1,11 @@
-using Colorcrush.Color;
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
+using Colorcrush.Game;
 using UnityEditor;
+
+#endregion
 
 namespace Editor
 {

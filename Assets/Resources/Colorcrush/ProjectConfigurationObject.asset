@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 908a49a2b3bb6394083118f5252d0f7e, type: 3}
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
-  initiatingScenePath: Assets/Scenes/_InitScene.unity
-  useInitiatingScene: 0
+  initiatingScenePath: Assets/Scenes/LoadingScene.unity
+  useInitiatingScene: 1
   resourcesPath: Assets/Resources/Colorcrush
   scenesPath: Assets/Scenes
   doPixelBalancing: 0
+  randomSeed: 42

@@ -1,4 +1,10 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using UnityEngine;
+
+#endregion
 
 [RequireComponent(typeof(ParticleSystem))]
 public class ParticleBoxOutline : MonoBehaviour
@@ -7,25 +13,25 @@ public class ParticleBoxOutline : MonoBehaviour
     private ParticleSystem particleSystem;
     private ParticleSystem.ShapeModule shapeModule;
 
-    void Start()
+    private void Start()
     {
         particleSystem = GetComponent<ParticleSystem>();
         shapeModule = particleSystem.shape;
         UpdateShape();
     }
 
-    void Update()
+    private void Update()
     {
         UpdateShape();
     }
 
-    void UpdateShape()
+    private void UpdateShape()
     {
         if (targetBox != null)
         {
             // Convert the size of the RectTransform to world units
-            Vector3 worldSize = new Vector3(targetBox.rect.width, targetBox.rect.height, 0);
-            Vector3 scaleFactor = targetBox.lossyScale;
+            var worldSize = new Vector3(targetBox.rect.width, targetBox.rect.height, 0);
+            var scaleFactor = targetBox.lossyScale;
             worldSize = Vector3.Scale(worldSize, scaleFactor);
 
             shapeModule.scale = worldSize;

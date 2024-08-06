@@ -34,5 +34,5 @@ Material:
     - _WhiteTolerance: 0.1
     m_Colors:
     - _SkinColor: {r: 0.97, g: 0.87, b: 0.25, a: 1}
-    - _TargetColor: {r: 0.27569363, g: 0.25305894, b: 0.458028, a: 1}
+    - _TargetColor: {r: 0.07717798, g: 0.17174663, b: 0.54727054, a: 1}
   m_BuildTextureStacks: []

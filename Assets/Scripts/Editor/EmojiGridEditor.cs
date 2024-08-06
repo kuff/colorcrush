@@ -1,18 +1,25 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+
+#endregion
 
 namespace Editor
 {
     public class EmojiGridEditor : UnityEditor.Editor
     {
         [MenuItem("Colorcrush/Generate Emoji Materials", false)]
-        static void GenerateEmojiMaterials()
+        private static void GenerateEmojiMaterials()
         {
             // Get the selected game object
-            GameObject selectedObject = Selection.activeGameObject;
+            var selectedObject = Selection.activeGameObject;
 
             if (selectedObject == null)
             {
@@ -21,7 +28,7 @@ namespace Editor
             }
 
             // Check if the selected object has a GridLayoutGroup component
-            GridLayoutGroup gridLayoutGroup = selectedObject.GetComponent<GridLayoutGroup>();
+            var gridLayoutGroup = selectedObject.GetComponent<GridLayoutGroup>();
 
             if (gridLayoutGroup == null)
             {
@@ -30,19 +37,19 @@ namespace Editor
             }
 
             // Create a folder for the materials if it doesn't exist
-            string folderPath = "Assets/Resources/GeneratedMaterials";
+            var folderPath = "Assets/Resources/GeneratedMaterials";
             if (!AssetDatabase.IsValidFolder(folderPath))
             {
                 AssetDatabase.CreateFolder("Assets/Resources", "GeneratedMaterials");
             }
 
             // Iterate through each child object
-            int childCount = selectedObject.transform.childCount;
+            var childCount = selectedObject.transform.childCount;
 
-            for (int i = 0; i < childCount; i++)
+            for (var i = 0; i < childCount; i++)
             {
-                GameObject child = selectedObject.transform.GetChild(i).gameObject;
-                Image image = child.GetComponent<Image>();
+                var child = selectedObject.transform.GetChild(i).gameObject;
+                var image = child.GetComponent<Image>();
 
                 if (image == null)
                 {
@@ -51,7 +58,7 @@ namespace Editor
                 }
 
                 // Create a new material instance
-                Material material = new Material(Shader.Find("Custom/ColorTransposeShader"));
+                var material = new Material(Shader.Find("Custom/ColorTransposeShader"));
 
                 // Set the initial properties
                 material.SetTexture("_MainTex", image.sprite.texture);
@@ -61,7 +68,7 @@ namespace Editor
                 material.SetFloat("_WhiteTolerance", 0.1f);
 
                 // Save the material as an asset
-                string materialPath = Path.Combine(folderPath, $"EmojiMaterial_{i + 1}.mat");
+                var materialPath = Path.Combine(folderPath, $"EmojiMaterial_{i + 1}.mat");
                 AssetDatabase.CreateAsset(material, materialPath);
                 AssetDatabase.SaveAssets();
 
@@ -73,7 +80,7 @@ namespace Editor
             }
 
             // Save the scene to ensure all changes are persisted
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
 
             Debug.Log("Generated and saved materials for all child objects in the grid.");
         }

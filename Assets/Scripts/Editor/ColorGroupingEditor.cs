@@ -1,7 +1,13 @@
-using System.Collections.Generic;
-using Colorcrush.Color;
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
+using System.IO;
+using Colorcrush.Game;
 using UnityEditor;
 using UnityEngine;
+
+#endregion
 
 namespace Editor
 {
@@ -12,27 +18,27 @@ namespace Editor
         {
             if (Selection.activeObject is Sprite sprite)
             {
-                SpriteColorAnalyzer analyzer = new GameObject().AddComponent<SpriteColorAnalyzer>();
-                Dictionary<Color, List<Vector2>> colorGroups = analyzer.AnalyzeSpriteColors(sprite);
-                Object.DestroyImmediate(analyzer.gameObject);
+                var analyzer = new GameObject().AddComponent<SpriteColorAnalyzer>();
+                var colorGroups = analyzer.AnalyzeSpriteColors(sprite);
+                DestroyImmediate(analyzer.gameObject);
 
-                ColorGroupingData colorGroupingData = ScriptableObject.CreateInstance<ColorGroupingData>();
+                var colorGroupingData = ScriptableObject.CreateInstance<ColorGroupingData>();
                 foreach (var kvp in colorGroups)
                 {
-                    ColorGroupingData.ColorGroup colorGroup = new ColorGroupingData.ColorGroup
+                    var colorGroup = new ColorGroupingData.ColorGroup
                     {
                         color = kvp.Key,
-                        pixels = kvp.Value
+                        pixels = kvp.Value,
                     };
                     colorGroupingData.colorGroups.Add(colorGroup);
                 }
 
-                string path = AssetDatabase.GetAssetPath(sprite);
-                string directory = System.IO.Path.GetDirectoryName(path);
-                string assetPath = System.IO.Path.Combine(directory, $"{sprite.name}_ColorGroupingData.asset");
+                var path = AssetDatabase.GetAssetPath(sprite);
+                var directory = Path.GetDirectoryName(path);
+                var assetPath = Path.Combine(directory, $"{sprite.name}_ColorGroupingData.asset");
 
                 // Check if the asset already exists and delete it if it does
-                ColorGroupingData existingAsset = AssetDatabase.LoadAssetAtPath<ColorGroupingData>(assetPath);
+                var existingAsset = AssetDatabase.LoadAssetAtPath<ColorGroupingData>(assetPath);
                 if (existingAsset != null)
                 {
                     AssetDatabase.DeleteAsset(assetPath);
