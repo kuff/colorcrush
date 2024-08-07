@@ -1,4 +1,10 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using UnityEngine;
+
+#endregion
 
 namespace Colorcrush.Util
 {
@@ -14,7 +20,9 @@ namespace Colorcrush.Util
                 {
                     _instance = Resources.Load<ProjectConfigurationObject>("Colorcrush/ProjectConfigurationObject");
                     if (_instance == null)
+                    {
                         Debug.LogError("ProjectConfigurationObject asset not found in Resources/Colorcrush folder.");
+                    }
                 }
 
                 return _instance;

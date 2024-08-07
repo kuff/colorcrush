@@ -1,7 +1,13 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using Colorcrush.Util;
 using UnityEditor;
 using UnityEngine;
 using static Colorcrush.Util.ProjectConfig;
+
+#endregion
 
 namespace Editor
 {
@@ -9,7 +15,7 @@ namespace Editor
     {
         private const string ConfigPath = "Assets/Resources/Colorcrush/ProjectConfigurationObject.asset";
 
-        [MenuItem("Colorcrush/Edit Configuration", isValidateFunction:false, priority:1)]
+        [MenuItem("Colorcrush/Edit Configuration", false, 1)]
         public static void ShowConfiguration()
         {
             var config = AssetDatabase.LoadAssetAtPath<ProjectConfigurationObject>(ConfigPath);
@@ -23,7 +29,7 @@ namespace Editor
             Selection.activeObject = config;
         }
 
-        [MenuItem("Colorcrush/Create Configuration", isValidateFunction:false, priority:1)]
+        [MenuItem("Colorcrush/Create Configuration", false, 1)]
         public static void CreateConfiguration()
         {
             var config = AssetDatabase.LoadAssetAtPath<ProjectConfigurationObject>(ConfigPath);
@@ -37,10 +43,15 @@ namespace Editor
                 return;
             }
 
-            if (!AssetDatabase.IsValidFolder("Assets/Resources")) AssetDatabase.CreateFolder("Assets", "Resources");
+            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
+            {
+                AssetDatabase.CreateFolder("Assets", "Resources");
+            }
 
             if (!AssetDatabase.IsValidFolder("Assets/Resources/Colorcrush"))
+            {
                 AssetDatabase.CreateFolder("Assets/Resources", "Colorcrush");
+            }
 
             config = ScriptableObject.CreateInstance<ProjectConfigurationObject>();
 

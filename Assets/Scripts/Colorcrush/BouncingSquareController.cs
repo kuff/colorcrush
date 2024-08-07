@@ -1,4 +1,10 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using UnityEngine;
+
+#endregion
 
 namespace Colorcrush
 {
@@ -26,9 +32,13 @@ namespace Colorcrush
         private void Update()
         {
             if (_isDragging)
+            {
                 DragSquare();
+            }
             else
+            {
                 MoveSquare();
+            }
 
             CheckScreenBounds();
         }
@@ -55,7 +65,10 @@ namespace Colorcrush
 
         private void OnMouseUpAsButton()
         {
-            if (Input.mousePresent) EndDrag();
+            if (Input.mousePresent)
+            {
+                EndDrag();
+            }
         }
 
         private void InitializeSquare()
@@ -118,7 +131,10 @@ namespace Colorcrush
         private void ReduceSpeed()
         {
             _currentSpeed *= speedDecayFactor;
-            if (_currentSpeed < initialSpeed) _currentSpeed = initialSpeed;
+            if (_currentSpeed < initialSpeed)
+            {
+                _currentSpeed = initialSpeed;
+            }
         }
 
         private void BeginDrag()
@@ -142,7 +158,10 @@ namespace Colorcrush
             // Set the direction and speed based on the release velocity
             _direction = releaseVelocity.normalized;
             _currentSpeed = releaseVelocity.magnitude;
-            if (_currentSpeed < initialSpeed) _currentSpeed = initialSpeed;
+            if (_currentSpeed < initialSpeed)
+            {
+                _currentSpeed = initialSpeed;
+            }
         }
 
         private void OnTouchDrag()
@@ -157,7 +176,10 @@ namespace Colorcrush
 
         private void OnTouchEnd()
         {
-            if (Input.touchCount > 0) EndDrag();
+            if (Input.touchCount > 0)
+            {
+                EndDrag();
+            }
         }
     }
 }
