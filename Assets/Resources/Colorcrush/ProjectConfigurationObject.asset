@@ -18,3 +18,4 @@ MonoBehaviour:
   scenesPath: Assets/Scenes
   doPixelBalancing: 0
   randomSeed: 42
+  numColorsToFilter: 12

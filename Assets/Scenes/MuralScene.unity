@@ -803,7 +803,7 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: 1e9fbd55d34b8bd48afe7aa3ad13a355, type: 2}
   colorGroupingData: {fileID: 11400000, guid: f3ecc7e61ae9c1a4295e8bc69c2ca1a0, type: 2}
   targetSprite: {fileID: 21300000, guid: 5406e0a442551e949a752f48ff102034, type: 3}
-  progressTextBox: {fileID: 668640280}
+  progressTextBox: {fileID: 289076052}
 --- !u!1 &937185887
 GameObject:
   m_ObjectHideFlags: 0

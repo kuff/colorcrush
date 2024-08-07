@@ -690,6 +690,7 @@ MonoBehaviour:
   submitButtonText: {fileID: 1169758037}
   progressText: {fileID: 1931661348}
   sceneLoader: {fileID: 1625986115}
+  targetColorButtonIndex: -1
 --- !u!114 &478530788
 MonoBehaviour:
   m_ObjectHideFlags: 0

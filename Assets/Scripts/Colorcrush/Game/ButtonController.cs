@@ -20,13 +20,13 @@ namespace Colorcrush.Game
         private const float ShrinkFactor = 0.9f;
         private const float ToggledAlpha = 0.5f;
         private const float DefaultAlpha = 1f;
+        private const int MiddleButtonIndex = 4; // Assuming a 3x3 grid, the middle button is index 4
         [SerializeField] private TextMeshProUGUI submitButtonText;
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private SceneLoader sceneLoader;
         private bool[] _buttonToggledStates;
         private ColorController _colorController;
-        private Queue<Sprite> _emojiQueue;
-
+        private static Queue<Sprite> _emojiQueue;
         private List<Sprite> _emojiSprites;
         private FilteredEmojiTracker _filteredEmojiTracker;
         private Vector3[] _originalButtonScales;
@@ -37,7 +37,10 @@ namespace Colorcrush.Game
         private void Awake()
         {
             LoadAndShuffleEmojis();
-            InitializeEmojiQueue();
+            if (_emojiQueue == null)
+            {
+                InitializeEmojiQueue();
+            }
             InitializeSelectionGridImages();
             InitializeSelectionGridButtons();
             _colorController = FindObjectOfType<ColorController>();
@@ -46,7 +49,7 @@ namespace Colorcrush.Game
                 Debug.LogError("ColorController not found in the scene.");
             }
 
-            _filteredEmojiTracker = new FilteredEmojiTracker(10); // Set target to 10 filtered emojis
+            _filteredEmojiTracker = new FilteredEmojiTracker(ProjectConfig.InstanceConfig.numColorsToFilter);
             if (submitButtonText == null)
             {
                 Debug.LogError("Submit button text not assigned in the inspector.");
@@ -63,6 +66,24 @@ namespace Colorcrush.Game
             }
 
             UpdateProgressText();
+
+            // Unqueue the next 9 emojis and put them on all buttons, including the middle button
+            for (var i = 0; i < 9; i++)
+            {
+                var emoji = GetNextEmoji();
+                _selectionGridImages[i].sprite = emoji;
+                
+                // Update the material color for all buttons
+                if (_colorController != null)
+                {
+                    var newColor = _colorController.GetNextColor();
+                    _selectionGridImages[i].material.SetColor("_TargetColor", newColor);
+                }
+            }
+            
+            // Update the middle button color separately
+            UpdateMiddleButtonColor();
+            OnSubmitButtonClicked();
         }
 
         private void LoadAndShuffleEmojis()
@@ -123,6 +144,10 @@ namespace Colorcrush.Game
                 {
                     _buttonToggledStates[i] = false;
                     _originalButtonScales[i] = _selectionGridButtons[i].transform.localScale;
+                    if (i == MiddleButtonIndex)
+                    {
+                        _selectionGridButtons[i].interactable = false;
+                    }
                 }
 
                 Debug.Log($"ButtonController: Selection grid buttons initialized. Count: {_selectionGridButtons.Length}");
@@ -136,7 +161,7 @@ namespace Colorcrush.Game
         public void OnButtonClicked(int index)
         {
             Debug.Log($"ButtonController: Button clicked. Index: {index}");
-            if (index >= 0 && index < _selectionGridButtons.Length)
+            if (index >= 0 && index < _selectionGridButtons.Length && index != MiddleButtonIndex)
             {
                 _buttonToggledStates[index] = !_buttonToggledStates[index];
 
@@ -154,7 +179,7 @@ namespace Colorcrush.Game
             }
             else
             {
-                Debug.LogWarning("Invalid button index.");
+                Debug.LogWarning("Invalid button index or middle button clicked.");
             }
         }
 
@@ -163,6 +188,7 @@ namespace Colorcrush.Game
             Debug.Log("ButtonController: Submit button clicked");
             if (_filteredEmojiTracker.TargetReached)
             {
+                _colorController.AdvanceToNextTargetColor();
                 submitButtonText.text = "LOADING...";
                 sceneLoader.LoadScene("MuralScene");
                 return;
@@ -173,6 +199,12 @@ namespace Colorcrush.Game
             string firstUpdatedObjectName = null;
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
+                if (i == MiddleButtonIndex)
+                {
+                    UpdateMiddleButtonColor();
+                    continue;
+                }
+
                 if (_buttonToggledStates[i])
                 {
                     _buttonToggledStates[i] = false;
@@ -200,8 +232,7 @@ namespace Colorcrush.Game
             }
 
             _filteredEmojiTracker.TrackFilteredEmojis(filteredEmojis);
-            Debug.Log($"ButtonController: Updated {updatedButtonsCount} button(s)" +
-                      (updatedButtonsCount > 0 ? $", including {firstUpdatedObjectName}" : ""));
+            Debug.Log($"ButtonController: Updated {updatedButtonsCount} button(s)" + (updatedButtonsCount > 0 ? $", including {firstUpdatedObjectName}" : ""));
 
             UpdateProgressText();
 
@@ -215,8 +246,7 @@ namespace Colorcrush.Game
 
         private void UpdateProgressText()
         {
-            var progress = (float)_filteredEmojiTracker.FilteredEmojiCount / _filteredEmojiTracker.TargetFilteredCount *
-                           100f;
+            var progress = Mathf.Min((float)_filteredEmojiTracker.FilteredEmojiCount / _filteredEmojiTracker.TargetFilteredCount * 100f, 100f);
             progressText.text = $"{progress:F0}%";
         }
 
@@ -232,6 +262,15 @@ namespace Colorcrush.Game
             _emojiQueue.Enqueue(nextEmoji); // Add back to the end for wrapping
             Debug.Log($"ButtonController: Next emoji retrieved. Remaining in queue: {_emojiQueue.Count}");
             return nextEmoji;
+        }
+
+        private void UpdateMiddleButtonColor()
+        {
+            if (_colorController != null)
+            {
+                Color targetColor = ColorController.GetCurrentTargetColor();
+                _selectionGridImages[MiddleButtonIndex].material.SetColor("_TargetColor", targetColor);
+            }
         }
     }
 }

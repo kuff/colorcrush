@@ -3,7 +3,7 @@
 #region
 
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 #endregion
 
@@ -14,9 +14,8 @@ namespace Colorcrush.Game
         public Material material;
         public ColorGroupingData colorGroupingData;
         public Sprite targetSprite;
-        public Text progressTextBox;
+        public TextMeshProUGUI progressTextBox;
         private int _currentGroupCount;
-
         private Texture2D _visibilityTexture;
 
         private void Start()
@@ -30,23 +29,26 @@ namespace Colorcrush.Game
             {
                 Debug.Log($"Color: {colorGroup.color}, Pixels: {colorGroup.pixels.Count}");
             }
+
+            // Set initial visibility based on current target color index
+            UpdateVisibilityBasedOnTargetColor();
+            SetPercentComplete(); // Update percent complete on start
         }
 
         public void ShowNextColorGroup()
         {
-            if (_currentGroupCount < colorGroupingData.colorGroups.Count)
-            {
-                _currentGroupCount++;
-                UpdateVisibilityTexture();
-                UpdateShaderProperties();
-            }
+            UpdateVisibilityBasedOnTargetColor();
+            UpdateShaderProperties();
+            SetPercentComplete(); // Update percent complete after showing next color group
 
             Debug.Log($"Showing {_currentGroupCount} color groups");
         }
 
         public int GetPercentComplete()
         {
-            return Mathf.RoundToInt((float)_currentGroupCount / colorGroupingData.colorGroups.Count * 100);
+            int totalColors = ColorArray.SRGBTargetColors.Length;
+            int currentColorIndex = ColorController.GetCurrentTargetColorIndex();
+            return Mathf.RoundToInt((float)currentColorIndex / totalColors * 100);
         }
 
         public void SetPercentComplete()
@@ -80,12 +82,27 @@ namespace Colorcrush.Game
             material.SetTexture("_VisiblePixels", _visibilityTexture);
         }
 
-        private void UpdateVisibilityTexture()
+        private void UpdateVisibilityBasedOnTargetColor()
         {
-            foreach (var colorGroup in colorGroupingData.colorGroups.GetRange(0, _currentGroupCount))
-            foreach (var pixel in colorGroup.pixels)
+            int targetColorIndex = ColorController.GetCurrentTargetColorIndex();
+            _currentGroupCount = targetColorIndex;
+
+            // Reset visibility texture
+            var pixels = new Color[_visibilityTexture.width * _visibilityTexture.height];
+            for (var i = 0; i < pixels.Length; i++)
             {
-                _visibilityTexture.SetPixel((int)pixel.x, (int)pixel.y, Color.white); // Mark as visible
+                pixels[i] = Color.black;
+            }
+            _visibilityTexture.SetPixels(pixels);
+
+            // Update visibility for all groups up to but not including the current target color
+            for (int i = 0; i < _currentGroupCount; i++)
+            {
+                var colorGroup = colorGroupingData.colorGroups[i];
+                foreach (var pixel in colorGroup.pixels)
+                {
+                    _visibilityTexture.SetPixel((int)pixel.x, (int)pixel.y, Color.white);
+                }
             }
 
             _visibilityTexture.Apply();
@@ -93,7 +110,7 @@ namespace Colorcrush.Game
 
         private void UpdateShaderProperties()
         {
-            material.SetInt("_NumAllowedColors", _currentGroupCount); // Optional, if needed for some logic in shader
+            material.SetInt("_NumAllowedColors", _currentGroupCount);
         }
     }
 }

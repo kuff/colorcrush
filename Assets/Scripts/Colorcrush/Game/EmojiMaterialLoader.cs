@@ -32,7 +32,6 @@ namespace Colorcrush.Game
                 .OrderBy(material => material.name)
                 .ToList();
 
-            // Optional: Print the names of loaded materials to the console
             foreach (var material in _emojiMaterialsList)
             {
                 Debug.Log("Loaded emoji material: " + material.name);
