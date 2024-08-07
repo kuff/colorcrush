@@ -29,7 +29,7 @@ namespace Editor
                     colorGroupingData.colorGroups.Add(new ColorGroupingData.ColorGroup
                     {
                         color = kvp.Key,
-                        pixels = kvp.Value
+                        pixels = kvp.Value,
                     });
                 }
 

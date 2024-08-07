@@ -14,8 +14,8 @@ namespace Colorcrush.Game
     public class SpriteColorAnalyzer : MonoBehaviour
     {
         public Sprite sprite;
-        private Color[] _targetColors;
         private Dictionary<Color, int> _colorIndexMap;
+        private Color[] _targetColors;
 
         private void Awake()
         {
@@ -26,7 +26,7 @@ namespace Colorcrush.Game
         {
             _targetColors = ColorArray.SRGBTargetColors;
             _colorIndexMap = new Dictionary<Color, int>();
-            for (int i = 0; i < _targetColors.Length; i++)
+            for (var i = 0; i < _targetColors.Length; i++)
             {
                 _colorIndexMap[_targetColors[i]] = i;
             }
@@ -52,12 +52,12 @@ namespace Colorcrush.Game
 
             var groupCounts = new int[_targetColors.Length];
 
-            for (int i = 0; i < pixels.Length; i++)
+            for (var i = 0; i < pixels.Length; i++)
             {
                 var pixelColor = pixels[i];
                 if (ShouldConsiderPixel(pixelColor))
                 {
-                    int closestColorIndex = FindClosestColorIndex(pixelColor);
+                    var closestColorIndex = FindClosestColorIndex(pixelColor);
                     colorGroups[_targetColors[closestColorIndex]].Add(new Vector2(i % width, i / width));
                     groupCounts[closestColorIndex]++;
                 }
@@ -73,7 +73,11 @@ namespace Colorcrush.Game
 
         private bool ShouldConsiderPixel(Color32 color)
         {
-            if (color.a < 3) return false;
+            if (color.a < 3)
+            {
+                return false;
+            }
+
             const byte threshold = 13;
             return !(color.r <= threshold && color.g <= threshold && color.b <= threshold) &&
                    !(color.r >= 255 - threshold && color.g >= 255 - threshold && color.b >= 255 - threshold);
@@ -81,12 +85,12 @@ namespace Colorcrush.Game
 
         private int FindClosestColorIndex(Color32 color)
         {
-            int closestIndex = 0;
-            float closestDistance = float.MaxValue;
+            var closestIndex = 0;
+            var closestDistance = float.MaxValue;
 
-            for (int i = 0; i < _targetColors.Length; i++)
+            for (var i = 0; i < _targetColors.Length; i++)
             {
-                float distance = ColorDistance(color, _targetColors[i]);
+                var distance = ColorDistance(color, _targetColors[i]);
                 if (distance < closestDistance)
                 {
                     closestDistance = distance;
@@ -99,31 +103,34 @@ namespace Colorcrush.Game
 
         private float ColorDistance(Color32 a, Color b)
         {
-            float rDiff = a.r / 255f - b.r;
-            float gDiff = a.g / 255f - b.g;
-            float bDiff = a.b / 255f - b.b;
+            var rDiff = a.r / 255f - b.r;
+            var gDiff = a.g / 255f - b.g;
+            var bDiff = a.b / 255f - b.b;
             return rDiff * rDiff + gDiff * gDiff + bDiff * bDiff;
         }
 
         private void BalanceColorGroups(Dictionary<Color, List<Vector2>> colorGroups, int[] groupCounts)
         {
-            int totalPixels = groupCounts.Sum();
-            int averageGroupSize = totalPixels / _targetColors.Length;
+            var totalPixels = groupCounts.Sum();
+            var averageGroupSize = totalPixels / _targetColors.Length;
 
-            for (int i = 0; i < _targetColors.Length; i++)
+            for (var i = 0; i < _targetColors.Length; i++)
             {
                 if (groupCounts[i] < averageGroupSize)
                 {
-                    int pixelsNeeded = averageGroupSize - groupCounts[i];
+                    var pixelsNeeded = averageGroupSize - groupCounts[i];
                     while (pixelsNeeded > 0)
                     {
-                        int donorIndex = FindLargestGroup(groupCounts, averageGroupSize);
-                        if (donorIndex == -1) break;
+                        var donorIndex = FindLargestGroup(groupCounts, averageGroupSize);
+                        if (donorIndex == -1)
+                        {
+                            break;
+                        }
 
                         var donorColor = _targetColors[donorIndex];
                         var targetColor = _targetColors[i];
                         var donorPixels = colorGroups[donorColor];
-                        int pixelsToMove = Mathf.Min(pixelsNeeded, groupCounts[donorIndex] - averageGroupSize);
+                        var pixelsToMove = Mathf.Min(pixelsNeeded, groupCounts[donorIndex] - averageGroupSize);
 
                         colorGroups[targetColor].AddRange(donorPixels.GetRange(0, pixelsToMove));
                         donorPixels.RemoveRange(0, pixelsToMove);
@@ -138,10 +145,10 @@ namespace Colorcrush.Game
 
         private int FindLargestGroup(int[] groupCounts, int averageGroupSize)
         {
-            int largestIndex = -1;
-            int largestCount = averageGroupSize;
+            var largestIndex = -1;
+            var largestCount = averageGroupSize;
 
-            for (int i = 0; i < groupCounts.Length; i++)
+            for (var i = 0; i < groupCounts.Length; i++)
             {
                 if (groupCounts[i] > largestCount)
                 {
