@@ -12,8 +12,7 @@ namespace Colorcrush.Util
     [CreateAssetMenu(fileName = "ProjectConfigurationObject", menuName = "Colorcrush/Project Configuration")]
     public class ProjectConfigurationObject : ScriptableObject
     {
-        [FormerlySerializedAs("startScenePath")]
-        [Tooltip("The path to the initiating scene. This is used when 'Use Initiating Scene' is enabled.")]
+        [FormerlySerializedAs("startScenePath")] [Tooltip("The path to the initiating scene. This is used when 'Use Initiating Scene' is enabled.")]
         public string initiatingScenePath;
 
         [Tooltip("If true, the game will start from the initiating scene specified above. If false, it will use the default Unity scene loading behavior.")]

@@ -3,9 +3,9 @@
 #region
 
 using System.Collections.Generic;
+using Colorcrush.Util;
 using UnityEngine;
 using Random = System.Random;
-using Colorcrush.Util;
 
 #endregion
 
@@ -15,10 +15,10 @@ namespace Colorcrush.Game
     {
         private const int VariationsPerColor = 30;
         private const float VariationRange = 0.05f;
-        private int _randomSeed;
-        private static int _currentTargetColorIndex = 0;
-        private readonly Queue<Color> _currentColorVariations = new();
+        private static int _currentTargetColorIndex;
         private static Color _currentTargetColor;
+        private readonly Queue<Color> _currentColorVariations = new();
+        private int _randomSeed;
 
         private void Start()
         {
@@ -58,11 +58,9 @@ namespace Colorcrush.Game
                 _currentColorVariations.Enqueue(nextColor);
                 return nextColor;
             }
-            else
-            {
-                Debug.LogError("Failed to get next color. Returning default color.");
-                return Color.white;
-            }
+
+            Debug.LogError("Failed to get next color. Returning default color.");
+            return Color.white;
         }
 
         public void AdvanceToNextTargetColor()
@@ -72,6 +70,7 @@ namespace Colorcrush.Game
             {
                 _currentTargetColorIndex = 0;
             }
+
             GenerateColorVariations();
         }
 

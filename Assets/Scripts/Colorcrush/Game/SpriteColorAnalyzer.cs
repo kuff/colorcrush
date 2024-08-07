@@ -14,120 +14,143 @@ namespace Colorcrush.Game
     public class SpriteColorAnalyzer : MonoBehaviour
     {
         public Sprite sprite;
+        private Color[] _targetColors;
+        private Dictionary<Color, int> _colorIndexMap;
+
+        private void Awake()
+        {
+            InitializeColorData();
+        }
+
+        private void InitializeColorData()
+        {
+            _targetColors = ColorArray.SRGBTargetColors;
+            _colorIndexMap = new Dictionary<Color, int>();
+            for (int i = 0; i < _targetColors.Length; i++)
+            {
+                _colorIndexMap[_targetColors[i]] = i;
+            }
+        }
 
         public Dictionary<Color, List<Vector2>> AnalyzeSpriteColors(Sprite s)
         {
+            if (_targetColors == null || _colorIndexMap == null)
+            {
+                InitializeColorData();
+            }
+
             var texture = s.texture;
+            var pixels = texture.GetPixels32();
+            var width = texture.width;
+            var height = texture.height;
 
             var colorGroups = new Dictionary<Color, List<Vector2>>();
-            foreach (var targetColor in ColorArray.SRGBTargetColors)
+            foreach (var color in _targetColors)
             {
-                colorGroups[targetColor] = new List<Vector2>();
+                colorGroups[color] = new List<Vector2>();
             }
 
-            for (var x = 0; x < texture.width; x++)
-            for (var y = 0; y < texture.height; y++)
+            var groupCounts = new int[_targetColors.Length];
+
+            for (int i = 0; i < pixels.Length; i++)
             {
-                var pixelColor = texture.GetPixel(x, y);
-                var closestColor = FindClosestColor(pixelColor);
-                colorGroups[closestColor].Add(new Vector2(x, y));
+                var pixelColor = pixels[i];
+                if (ShouldConsiderPixel(pixelColor))
+                {
+                    int closestColorIndex = FindClosestColorIndex(pixelColor);
+                    colorGroups[_targetColors[closestColorIndex]].Add(new Vector2(i % width, i / width));
+                    groupCounts[closestColorIndex]++;
+                }
             }
 
-            var doPixelBalancing = ProjectConfig.InstanceConfig.doPixelBalancing;
-            if (doPixelBalancing)
+            if (ProjectConfig.InstanceConfig.doPixelBalancing)
             {
-                BalanceColorGroups(colorGroups); // Comment this out for more "true" color groups
+                BalanceColorGroups(colorGroups, groupCounts);
             }
 
             return colorGroups;
         }
 
-        private Color FindClosestColor(Color color)
+        private bool ShouldConsiderPixel(Color32 color)
         {
-            var closestColor = ColorArray.SRGBTargetColors[0];
-            var closestDistance = ColorDistance(color, closestColor);
+            if (color.a < 3) return false;
+            const byte threshold = 13;
+            return !(color.r <= threshold && color.g <= threshold && color.b <= threshold) &&
+                   !(color.r >= 255 - threshold && color.g >= 255 - threshold && color.b >= 255 - threshold);
+        }
 
-            foreach (var targetColor in ColorArray.SRGBTargetColors)
+        private int FindClosestColorIndex(Color32 color)
+        {
+            int closestIndex = 0;
+            float closestDistance = float.MaxValue;
+
+            for (int i = 0; i < _targetColors.Length; i++)
             {
-                var distance = ColorDistance(color, targetColor);
+                float distance = ColorDistance(color, _targetColors[i]);
                 if (distance < closestDistance)
                 {
-                    closestColor = targetColor;
                     closestDistance = distance;
+                    closestIndex = i;
                 }
             }
 
-            return closestColor;
+            return closestIndex;
         }
 
-        private float ColorDistance(Color a, Color b)
+        private float ColorDistance(Color32 a, Color b)
         {
-            var rDiff = a.r - b.r;
-            var gDiff = a.g - b.g;
-            var bDiff = a.b - b.b;
-            return Mathf.Sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+            float rDiff = a.r / 255f - b.r;
+            float gDiff = a.g / 255f - b.g;
+            float bDiff = a.b / 255f - b.b;
+            return rDiff * rDiff + gDiff * gDiff + bDiff * bDiff;
         }
 
-        private void BalanceColorGroups(Dictionary<Color, List<Vector2>> colorGroups)
+        private void BalanceColorGroups(Dictionary<Color, List<Vector2>> colorGroups, int[] groupCounts)
         {
-            var totalPixels = colorGroups.Values.Sum(group => group.Count);
-            var averageGroupSize = totalPixels / colorGroups.Count;
+            int totalPixels = groupCounts.Sum();
+            int averageGroupSize = totalPixels / _targetColors.Length;
 
-            var targetColors = ColorArray.SRGBTargetColors.ToList();
-
-            foreach (var targetColor in targetColors)
+            for (int i = 0; i < _targetColors.Length; i++)
             {
-                if (colorGroups[targetColor].Count < averageGroupSize)
+                if (groupCounts[i] < averageGroupSize)
                 {
-                    var pixelsNeeded = averageGroupSize - colorGroups[targetColor].Count;
-
+                    int pixelsNeeded = averageGroupSize - groupCounts[i];
                     while (pixelsNeeded > 0)
                     {
-                        var foundDonor = FindClosestLargerGroup(colorGroups, targetColor, averageGroupSize,
-                            out var donorColor);
+                        int donorIndex = FindLargestGroup(groupCounts, averageGroupSize);
+                        if (donorIndex == -1) break;
 
-                        if (!foundDonor)
-                        {
-                            break;
-                        }
-
+                        var donorColor = _targetColors[donorIndex];
+                        var targetColor = _targetColors[i];
                         var donorPixels = colorGroups[donorColor];
-                        var pixelsToMove = Mathf.Min(pixelsNeeded, donorPixels.Count - averageGroupSize);
+                        int pixelsToMove = Mathf.Min(pixelsNeeded, groupCounts[donorIndex] - averageGroupSize);
 
-                        for (var i = 0; i < pixelsToMove; i++)
-                        {
-                            colorGroups[targetColor].Add(donorPixels[0]);
-                            donorPixels.RemoveAt(0);
-                        }
+                        colorGroups[targetColor].AddRange(donorPixels.GetRange(0, pixelsToMove));
+                        donorPixels.RemoveRange(0, pixelsToMove);
 
+                        groupCounts[i] += pixelsToMove;
+                        groupCounts[donorIndex] -= pixelsToMove;
                         pixelsNeeded -= pixelsToMove;
                     }
                 }
             }
         }
 
-        private bool FindClosestLargerGroup(Dictionary<Color, List<Vector2>> colorGroups,
-            Color targetColor, int averageGroupSize, out Color closestColor)
+        private int FindLargestGroup(int[] groupCounts, int averageGroupSize)
         {
-            closestColor = new Color();
-            var closestDistance = float.MaxValue;
-            var found = false;
+            int largestIndex = -1;
+            int largestCount = averageGroupSize;
 
-            foreach (var entry in colorGroups)
+            for (int i = 0; i < groupCounts.Length; i++)
             {
-                if (entry.Value.Count > averageGroupSize)
+                if (groupCounts[i] > largestCount)
                 {
-                    var distance = ColorDistance(targetColor, entry.Key);
-                    if (distance < closestDistance)
-                    {
-                        closestColor = entry.Key;
-                        closestDistance = distance;
-                        found = true;
-                    }
+                    largestCount = groupCounts[i];
+                    largestIndex = i;
                 }
             }
 
-            return found;
+            return largestIndex;
         }
     }
 }

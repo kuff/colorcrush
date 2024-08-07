@@ -18,37 +18,31 @@ namespace Editor
         {
             if (Selection.activeObject is Sprite sprite)
             {
-                var analyzer = new GameObject().AddComponent<SpriteColorAnalyzer>();
+                // Create SpriteColorAnalyzer instance without instantiating a GameObject
+                var analyzer = new SpriteColorAnalyzer();
                 var colorGroups = analyzer.AnalyzeSpriteColors(sprite);
-                DestroyImmediate(analyzer.gameObject);
 
                 var colorGroupingData = ScriptableObject.CreateInstance<ColorGroupingData>();
+                colorGroupingData.colorGroups.Capacity = colorGroups.Count; // Pre-allocate capacity
                 foreach (var kvp in colorGroups)
                 {
-                    var colorGroup = new ColorGroupingData.ColorGroup
+                    colorGroupingData.colorGroups.Add(new ColorGroupingData.ColorGroup
                     {
                         color = kvp.Key,
-                        pixels = kvp.Value,
-                    };
-                    colorGroupingData.colorGroups.Add(colorGroup);
+                        pixels = kvp.Value
+                    });
                 }
 
                 var path = AssetDatabase.GetAssetPath(sprite);
                 var directory = Path.GetDirectoryName(path);
                 var assetPath = Path.Combine(directory, $"{sprite.name}_ColorGroupingData.asset");
 
-                // Check if the asset already exists and delete it if it does
-                var existingAsset = AssetDatabase.LoadAssetAtPath<ColorGroupingData>(assetPath);
-                if (existingAsset != null)
-                {
-                    AssetDatabase.DeleteAsset(assetPath);
-                }
-
+                // Use AssetDatabase.CreateAsset directly, which will overwrite if the asset exists
                 AssetDatabase.CreateAsset(colorGroupingData, assetPath);
                 AssetDatabase.SaveAssets();
 
-                EditorUtility.FocusProjectWindow();
                 Selection.activeObject = colorGroupingData;
+                EditorUtility.FocusProjectWindow();
             }
             else
             {

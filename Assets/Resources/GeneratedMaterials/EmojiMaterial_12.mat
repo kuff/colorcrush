@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: EmojiMaterial_7
+  m_Name: EmojiMaterial_12
   m_Shader: {fileID: 4800000, guid: 9233119e661d229458b712c132f1504a, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -24,7 +24,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 8c3dbaab90802ca40a3bd07e76a94da0, type: 3}
+        m_Texture: {fileID: 2800000, guid: d074a00e623471e41801ddeb58a0f2eb, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -34,5 +34,5 @@ Material:
     - _WhiteTolerance: 0.1
     m_Colors:
     - _SkinColor: {r: 0.97, g: 0.87, b: 0.25, a: 1}
-    - _TargetColor: {r: 0.27654165, g: 0.5971455, b: 0.7336516, a: 1}
+    - _TargetColor: {r: 0.30767792, g: 0.62995607, b: 0.7282572, a: 1}
   m_BuildTextureStacks: []

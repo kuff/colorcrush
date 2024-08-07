@@ -2,8 +2,8 @@
 
 #region
 
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 #endregion
 
@@ -46,8 +46,8 @@ namespace Colorcrush.Game
 
         public int GetPercentComplete()
         {
-            int totalColors = ColorArray.SRGBTargetColors.Length;
-            int currentColorIndex = ColorController.GetCurrentTargetColorIndex();
+            var totalColors = ColorArray.SRGBTargetColors.Length;
+            var currentColorIndex = ColorController.GetCurrentTargetColorIndex();
             return Mathf.RoundToInt((float)currentColorIndex / totalColors * 100);
         }
 
@@ -84,7 +84,7 @@ namespace Colorcrush.Game
 
         private void UpdateVisibilityBasedOnTargetColor()
         {
-            int targetColorIndex = ColorController.GetCurrentTargetColorIndex();
+            var targetColorIndex = ColorController.GetCurrentTargetColorIndex();
             _currentGroupCount = targetColorIndex;
 
             // Reset visibility texture
@@ -93,10 +93,11 @@ namespace Colorcrush.Game
             {
                 pixels[i] = Color.black;
             }
+
             _visibilityTexture.SetPixels(pixels);
 
             // Update visibility for all groups up to but not including the current target color
-            for (int i = 0; i < _currentGroupCount; i++)
+            for (var i = 0; i < _currentGroupCount; i++)
             {
                 var colorGroup = colorGroupingData.colorGroups[i];
                 foreach (var pixel in colorGroup.pixels)
