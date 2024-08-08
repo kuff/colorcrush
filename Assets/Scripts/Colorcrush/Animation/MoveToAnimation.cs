@@ -8,11 +8,11 @@ using UnityEngine;
 
 namespace Colorcrush.Animation
 {
-    public class MoveToAnimationObject : AnimationManager.Animation
+    public class MoveToAnimation : AnimationManager.Animation
     {
         private readonly Vector3 _targetPosition;
 
-        public MoveToAnimationObject(Vector3 targetPosition, float duration)
+        public MoveToAnimation(Vector3 targetPosition, float duration)
         {
             _targetPosition = targetPosition;
             Duration = duration;

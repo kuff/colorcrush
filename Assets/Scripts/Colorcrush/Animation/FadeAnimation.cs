@@ -8,19 +8,19 @@ using UnityEngine;
 
 namespace Colorcrush.Animation
 {
-    public class FadeAnimationObject : AnimationManager.Animation
+    public class FadeAnimation : AnimationManager.Animation
     {
         private readonly float _endOpacity;
         private readonly float _startOpacity;
 
-        public FadeAnimationObject(float endOpacity, float duration)
+        public FadeAnimation(float endOpacity, float duration)
         {
             _startOpacity = 1f; // Assume starting from fully opaque
             _endOpacity = endOpacity;
             Duration = duration;
         }
 
-        public FadeAnimationObject(float startOpacity, float endOpacity, float duration)
+        public FadeAnimation(float startOpacity, float endOpacity, float duration)
         {
             _startOpacity = startOpacity;
             _endOpacity = endOpacity;

@@ -28,6 +28,7 @@ namespace Colorcrush.Game
         [SerializeField] private string nextSceneName = "MuralScene";
         [SerializeField] private Button submitButton;
         [SerializeField] private Canvas uiCanvas;
+        private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
 
         private ColorController _colorController;
@@ -81,7 +82,7 @@ namespace Colorcrush.Game
             else
             {
                 var buttonAnimator = submitButton.gameObject.GetComponent<ButtonAnimator>();
-                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new TapAnimationObject(0.1f, 0.9f)));
+                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new TapAnimation(0.1f, 0.9f)));
             }
 
             if (uiCanvas == null)
@@ -137,12 +138,16 @@ namespace Colorcrush.Game
             UpdateProgressText();
         }
 
-        private void UpdateButton(int index)
+        private void UpdateButton(int index, bool ignoreAlpha = false)
         {
             _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
             var nextColor = _colorController.GetNextColor();
             _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
-            _selectionGridImages[index].material.SetFloat("_Alpha", DefaultAlpha);
+            if (!ignoreAlpha)
+            {
+                _selectionGridImages[index].material.SetFloat("_Alpha", DefaultAlpha);
+            }
+
             LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
         }
 
@@ -161,16 +166,14 @@ namespace Colorcrush.Game
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
 
-            // Update emoji sprite based on toggle state
+            // We no longer update the emoji sprite here
+
             if (_buttonToggledStates[index])
             {
-                var sadEmoji = _emojiController.GetNextSadEmoji();
-                _selectionGridImages[index].sprite = sadEmoji;
-                LoggingManager.LogEvent(new ColorSelectedEvent(index, sadEmoji.name));
+                LoggingManager.LogEvent(new ColorSelectedEvent(index, _selectionGridImages[index].sprite.name));
             }
             else
             {
-                _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
                 LoggingManager.LogEvent(new ColorDeselectedEvent(index));
             }
 
@@ -179,9 +182,9 @@ namespace Colorcrush.Game
 
         public void OnSubmitButtonClicked()
         {
-            if (SceneManager.IsLoading)
+            if (SceneManager.IsLoading || !_buttonsInteractable)
             {
-                return; // Prevent button spamming
+                return; // Prevent button spamming or clicking before buttons are ready
             }
 
             if (_targetReached)
@@ -215,6 +218,7 @@ namespace Colorcrush.Game
 
         private IEnumerator AnimateEmojisAndResetButtons()
         {
+            _buttonsInteractable = false;
             var instantiatedObjects = new List<GameObject>();
             var emojiAnimators = new List<EmojiAnimator>();
 
@@ -241,9 +245,14 @@ namespace Colorcrush.Game
 
                 var emojiAnimator = instance.AddComponent<EmojiAnimator>();
                 emojiAnimators.Add(emojiAnimator);
+            }
 
-                // Hide the original button
-                button.SetActive(false);
+            // Set original buttons to 0 opacity and make them uninteractable
+            foreach (var button in _selectionGridButtons)
+            {
+                var image = button.GetComponent<Image>();
+                image.material.SetFloat("_Alpha", 0.0f);
+                button.interactable = false;
             }
 
             // Animate selected emojis immediately and without delay
@@ -251,8 +260,15 @@ namespace Colorcrush.Game
             {
                 if (_buttonToggledStates[i])
                 {
+                    // Change to sad emoji for selected emojis
+                    var instanceImage = emojiAnimators[i].GetComponent<Image>();
+                    if (instanceImage != null)
+                    {
+                        instanceImage.sprite = _emojiController.GetNextSadEmoji();
+                    }
+
                     // Fade out selected emojis
-                    AnimationManager.PlayAnimation(emojiAnimators[i], new FadeAnimationObject(ToggledAlpha, 0f, 0.5f));
+                    AnimationManager.PlayAnimation(emojiAnimators[i], new FadeAnimation(ToggledAlpha, 0f, 0.5f));
                 }
             }
 
@@ -271,10 +287,10 @@ namespace Colorcrush.Game
                     var targetPosition = progressText.transform.position;
 
                     // Combine MoveToAnimation with ScaleAnimation
-                    AnimationManager.PlayAnimation(emojiAnimators[i], new MoveToAnimationObject(targetPosition, 1f));
-                    AnimationManager.PlayAnimation(emojiAnimators[i], new ScaleAnimationObject(Vector3.zero, 1f));
+                    AnimationManager.PlayAnimation(emojiAnimators[i], new MoveToAnimation(targetPosition, 1f));
+                    AnimationManager.PlayAnimation(emojiAnimators[i], new ScaleAnimation(Vector3.zero, 1f));
 
-                    yield return new WaitForSeconds(0.1f);
+                    yield return new WaitForSeconds(0.05f);
                 }
             }
 
@@ -287,17 +303,50 @@ namespace Colorcrush.Game
                 Destroy(obj);
             }
 
-            // Show the original buttons again and reset them
+            // Reset buttons without showing them yet
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
-                _selectionButtons[i].SetActive(true);
-                UpdateButton(i);
+                UpdateButton(i, true);
                 if (_buttonToggledStates[i])
                 {
                     _buttonToggledStates[i] = false;
                     _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
                 }
             }
+
+            // Fade in buttons at the start of the next cycle
+            yield return StartCoroutine(FadeInButtons());
+        }
+
+        private IEnumerator FadeInButtons()
+        {
+            // Ensure all buttons are not interactable before starting the fade-in
+            foreach (var button in _selectionGridButtons)
+            {
+                button.interactable = false;
+            }
+
+            // Show the buttons and fade them in
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
+                var fadeAnimation = new FadeAnimation(0f, DefaultAlpha, 0.5f);
+                AnimationManager.PlayAnimation(buttonAnimator, fadeAnimation);
+
+                // Add a small delay between each button's fade-in
+                yield return new WaitForSeconds(0.025f);
+            }
+
+            // Wait for the fade-in animation to complete
+            yield return new WaitForSeconds(0.5f);
+
+            // Make all buttons interactable after the fade-in is complete
+            foreach (var button in _selectionGridButtons)
+            {
+                button.interactable = true;
+            }
+
+            _buttonsInteractable = true;
         }
 
         private IEnumerator ShowHappyEmojiCoroutine()

@@ -8,11 +8,11 @@ using UnityEngine;
 
 namespace Colorcrush.Animation
 {
-    public class ScaleAnimationObject : AnimationManager.Animation
+    public class ScaleAnimation : AnimationManager.Animation
     {
         private readonly Vector3 _targetScale;
 
-        public ScaleAnimationObject(Vector3 targetScale, float duration)
+        public ScaleAnimation(Vector3 targetScale, float duration)
         {
             _targetScale = targetScale;
             Duration = duration;
