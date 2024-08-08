@@ -95,9 +95,8 @@ namespace Colorcrush.Util
             {
                 Debug.LogWarning("Scene " + sceneName + " is already loaded.");
                 onSceneReady?.Invoke();
+                IsLoading = false;
             }
-
-            IsLoading = false;
         }
 
         // This function should be called to fully load the scene after the callback
@@ -112,12 +111,21 @@ namespace Colorcrush.Util
             if (_asyncOperation is { isDone: false, })
             {
                 _asyncOperation.allowSceneActivation = true;
+                StartCoroutine(WaitForSceneActivation());
             }
             else
             {
                 Debug.LogWarning("No scene is currently being loaded or the scene has already been activated.");
+                IsLoading = false;
             }
+        }
 
+        private IEnumerator WaitForSceneActivation()
+        {
+            while (!_asyncOperation.isDone)
+            {
+                yield return null;
+            }
             IsLoading = false;
         }
     }

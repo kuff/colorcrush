@@ -181,7 +181,7 @@ namespace Colorcrush.Game
             {
                 _colorController.AdvanceToNextTargetColor();
                 submitButtonText.text = "LOADING...";
-                SceneManager.LoadSceneAsync(nextSceneName, OnSceneReady);
+                SceneManager.LoadSceneAsync(nextSceneName);
                 return;
             }
 
@@ -212,11 +212,6 @@ namespace Colorcrush.Game
 
                 submitButtonText.text = "CONTINUE";
             }
-        }
-
-        private void OnSceneReady()
-        {
-            SceneManager.ActivateLoadedScene();
         }
 
         private IEnumerator ShowHappyEmojiCoroutine()
