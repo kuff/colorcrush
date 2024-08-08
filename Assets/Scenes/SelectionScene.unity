@@ -576,7 +576,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec5348337cc1fdf4994698353ad9d783, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  materialsFolder: GeneratedMaterials
 --- !u!4 &478530786
 Transform:
   m_ObjectHideFlags: 0
@@ -607,6 +606,7 @@ MonoBehaviour:
   submitButtonText: {fileID: 1169758037}
   progressText: {fileID: 1931661348}
   nextSceneName: MuralScene
+  submitButton: {fileID: 1510623099}
 --- !u!114 &478530788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -631,7 +631,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1478386a1cd136c47840216987baa374, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
 --- !u!1 &481976435
 GameObject:
   m_ObjectHideFlags: 0
@@ -2644,6 +2643,7 @@ GameObject:
   - component: {fileID: 1510623101}
   - component: {fileID: 1510623100}
   - component: {fileID: 1510623099}
+  - component: {fileID: 1510623102}
   m_Layer: 5
   m_Name: SubmitButton (TMP)
   m_TagString: Untagged
@@ -2765,6 +2765,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1510623097}
   m_CullTransparentMesh: 1
+--- !u!114 &1510623102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1510623097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1c5b4457a0d401c8ca10e265216411a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rectTransform: {fileID: 1510623098}
+  image: {fileID: 1510623100}
 --- !u!224 &1526542142
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3881,6 +3895,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1816373712}
   m_CullTransparentMesh: 1
+--- !u!1 &1865052640
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1865052642}
+  - component: {fileID: 1865052641}
+  m_Layer: 0
+  m_Name: AnimationManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1865052641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865052640}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae00da870164494cbfd6b6fdc4f3270b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1865052642
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865052640}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 642, y: 1389, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &1867860747
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4858,3 +4916,4 @@ SceneRoots:
   - {fileID: 478530786}
   - {fileID: 1625986116}
   - {fileID: 1578038648}
+  - {fileID: 1865052642}

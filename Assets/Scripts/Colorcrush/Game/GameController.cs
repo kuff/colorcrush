@@ -4,6 +4,7 @@
 
 using System.Collections;
 using System.Linq;
+using Colorcrush.Animation;
 using Colorcrush.Files;
 using TMPro;
 using UnityEngine;
@@ -24,6 +25,7 @@ namespace Colorcrush.Game
         [SerializeField] private TextMeshProUGUI submitButtonText;
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private string nextSceneName = "MuralScene";
+        [SerializeField] private Button submitButton;
         private bool[] _buttonToggledStates;
 
         private ColorController _colorController;
@@ -68,6 +70,16 @@ namespace Colorcrush.Game
             if (progressText == null)
             {
                 Debug.LogError("Progress text not assigned in the inspector.");
+            }
+
+            if (submitButton == null)
+            {
+                Debug.LogError("Submit button not assigned in the inspector.");
+            }
+            else
+            {
+                var buttonAnimator = submitButton.gameObject.GetComponent<ButtonAnimator>();
+                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new TapAnimation(0.1f, 0.9f)));
             }
         }
 
