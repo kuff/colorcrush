@@ -8,12 +8,12 @@ using UnityEngine;
 
 namespace Colorcrush.Animation
 {
-    public class TapAnimation : AnimationManager.Animation
+    public class TapAnimationObject : AnimationManager.Animation
     {
         private const float LerpDuration = 0.1f; // Very short lerp duration
         private readonly float _shrinkScale;
 
-        public TapAnimation(float duration, float shrinkScale)
+        public TapAnimationObject(float duration, float shrinkScale)
         {
             Duration = duration;
             IsTemporary = true;

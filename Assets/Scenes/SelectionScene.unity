@@ -213,6 +213,7 @@ GameObject:
   - component: {fileID: 1549927710}
   - component: {fileID: 1549927709}
   - component: {fileID: 1549927708}
+  - component: {fileID: 1549927711}
   m_Layer: 5
   m_Name: ColorPickButton8
   m_TagString: SelectionButton
@@ -232,6 +233,7 @@ GameObject:
   - component: {fileID: 1964097302}
   - component: {fileID: 1964097301}
   - component: {fileID: 1964097300}
+  - component: {fileID: 1964097303}
   m_Layer: 5
   m_Name: ColorPickButton7
   m_TagString: SelectionButton
@@ -607,6 +609,7 @@ MonoBehaviour:
   progressText: {fileID: 1931661348}
   nextSceneName: MuralScene
   submitButton: {fileID: 1510623099}
+  uiCanvas: {fileID: 1299182424}
 --- !u!114 &478530788
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -801,6 +804,7 @@ GameObject:
   - component: {fileID: 1035027245}
   - component: {fileID: 1035027244}
   - component: {fileID: 1035027243}
+  - component: {fileID: 1035027246}
   m_Layer: 5
   m_Name: ColorPickButton11
   m_TagString: SelectionButton
@@ -820,6 +824,7 @@ GameObject:
   - component: {fileID: 2070675891}
   - component: {fileID: 2070675890}
   - component: {fileID: 2070675889}
+  - component: {fileID: 2070675892}
   m_Layer: 5
   m_Name: ColorPickButton1
   m_TagString: SelectionButton
@@ -839,6 +844,7 @@ GameObject:
   - component: {fileID: 904373048}
   - component: {fileID: 904373047}
   - component: {fileID: 904373046}
+  - component: {fileID: 904373049}
   m_Layer: 5
   m_Name: ColorPickButton4
   m_TagString: SelectionButton
@@ -858,6 +864,7 @@ GameObject:
   - component: {fileID: 1964671746}
   - component: {fileID: 1964671745}
   - component: {fileID: 1964671744}
+  - component: {fileID: 1964671747}
   m_Layer: 5
   m_Name: ColorPickButton10
   m_TagString: SelectionButton
@@ -1150,6 +1157,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 625096617}
   m_CullTransparentMesh: 1
+--- !u!114 &904373049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 625096617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 904373047}
+  material: {fileID: 2100000, guid: 42d5c995b15ea3a42b3cc613b1357d1f, type: 2}
 --- !u!1 &953820687
 GameObject:
   m_ObjectHideFlags: 0
@@ -1162,6 +1183,7 @@ GameObject:
   - component: {fileID: 953820690}
   - component: {fileID: 953820689}
   - component: {fileID: 953820688}
+  - component: {fileID: 953820691}
   m_Layer: 5
   m_Name: ColorPickButton6
   m_TagString: SelectionButton
@@ -1263,6 +1285,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 953820687}
   m_CullTransparentMesh: 1
+--- !u!114 &953820691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 953820687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 953820689}
+  material: {fileID: 2100000, guid: c7f5504554f6a1748b0a435648238c74, type: 2}
 --- !u!224 &997868513
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1397,6 +1433,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 550596234}
   m_CullTransparentMesh: 1
+--- !u!114 &1035027246
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 550596234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1035027244}
+  material: {fileID: 2100000, guid: 657e0a5260034e3419bbde42b8c8f967, type: 2}
 --- !u!1 &1039757012
 GameObject:
   m_ObjectHideFlags: 0
@@ -2131,6 +2181,7 @@ GameObject:
   - component: {fileID: 1526542145}
   - component: {fileID: 1526542144}
   - component: {fileID: 1526542143}
+  - component: {fileID: 1526542146}
   m_Layer: 5
   m_Name: ColorPickButton12
   m_TagString: SelectionButton
@@ -2260,7 +2311,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2376,6 +2427,7 @@ GameObject:
   - component: {fileID: 1368958706}
   - component: {fileID: 1368958705}
   - component: {fileID: 1368958704}
+  - component: {fileID: 1368958707}
   m_Layer: 5
   m_Name: ColorPickButton5
   m_TagString: SelectionButton
@@ -2477,6 +2529,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1368958703}
   m_CullTransparentMesh: 1
+--- !u!114 &1368958707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1368958703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1368958705}
+  material: {fileID: 2100000, guid: afc9d15be157fb04c9a7a2065cac1655, type: 2}
 --- !u!1 &1403780951
 GameObject:
   m_ObjectHideFlags: 0
@@ -2488,6 +2554,7 @@ GameObject:
   - component: {fileID: 1403780952}
   - component: {fileID: 1403780954}
   - component: {fileID: 1403780953}
+  - component: {fileID: 1403780955}
   m_Layer: 5
   m_Name: TargetImage
   m_TagString: SelectionTarget
@@ -2552,6 +2619,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1403780951}
   m_CullTransparentMesh: 1
+--- !u!114 &1403780955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1403780951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1403780953}
+  material: {fileID: 2100000, guid: eb657866f6454f348ad6480e0eb877e8, type: 2}
 --- !u!1 &1485316631
 GameObject:
   m_ObjectHideFlags: 0
@@ -2894,6 +2975,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1297864874}
   m_CullTransparentMesh: 1
+--- !u!114 &1526542146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297864874}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1526542144}
+  material: {fileID: 2100000, guid: 857483036ff561540aab2a0850cd8618, type: 2}
 --- !u!1 &1548944415
 GameObject:
   m_ObjectHideFlags: 0
@@ -2906,6 +3001,7 @@ GameObject:
   - component: {fileID: 1548944418}
   - component: {fileID: 1548944417}
   - component: {fileID: 1548944416}
+  - component: {fileID: 1548944419}
   m_Layer: 5
   m_Name: ColorPickButton3
   m_TagString: SelectionButton
@@ -3007,6 +3103,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1548944415}
   m_CullTransparentMesh: 1
+--- !u!114 &1548944419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1548944415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1548944417}
+  material: {fileID: 2100000, guid: 4ea8b99846867774b8b68c87d0a31b2d, type: 2}
 --- !u!224 &1549927707
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3121,6 +3231,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 31850709}
   m_CullTransparentMesh: 1
+--- !u!114 &1549927711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 31850709}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1549927709}
+  material: {fileID: 2100000, guid: 743e05c4a6bf795449cee3eb6a3bb440, type: 2}
 --- !u!1 &1578038645
 GameObject:
   m_ObjectHideFlags: 0
@@ -3748,6 +3872,7 @@ GameObject:
   - component: {fileID: 1816373715}
   - component: {fileID: 1816373714}
   - component: {fileID: 1816373713}
+  - component: {fileID: 1816373716}
   m_Layer: 5
   m_Name: ColorPickButton2
   m_TagString: SelectionButton
@@ -3849,6 +3974,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1816373712}
   m_CullTransparentMesh: 1
+--- !u!114 &1816373716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1816373712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1816373714}
+  material: {fileID: 2100000, guid: 04372c4e34ed31b45922de77e82433da, type: 2}
 --- !u!1 &1865052640
 GameObject:
   m_ObjectHideFlags: 0
@@ -4240,6 +4379,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 64214911}
   m_CullTransparentMesh: 1
+--- !u!114 &1964097303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 64214911}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1964097301}
+  material: {fileID: 2100000, guid: 2cb8b7d80100a1e439f9fcdaf14a68cb, type: 2}
 --- !u!224 &1964671743
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4354,6 +4507,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 660217686}
   m_CullTransparentMesh: 1
+--- !u!114 &1964671747
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 660217686}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 1964671745}
+  material: {fileID: 2100000, guid: 876994319cce7114bbe1c099195e72f0, type: 2}
 --- !u!1 &1991311866
 GameObject:
   m_ObjectHideFlags: 0
@@ -4509,6 +4676,7 @@ GameObject:
   - component: {fileID: 2056636732}
   - component: {fileID: 2056636731}
   - component: {fileID: 2056636730}
+  - component: {fileID: 2056636733}
   m_Layer: 5
   m_Name: ColorPickButton9
   m_TagString: SelectionButton
@@ -4610,6 +4778,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2056636729}
   m_CullTransparentMesh: 1
+--- !u!114 &2056636733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2056636729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 2056636731}
+  material: {fileID: 2100000, guid: c26e5fbc36a5e3f4189469b07fb98880, type: 2}
 --- !u!224 &2070675888
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4724,6 +4906,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 603376132}
   m_CullTransparentMesh: 1
+--- !u!114 &2070675892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 603376132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7becedc3319ab524780e25da48d78e58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  image: {fileID: 2070675890}
+  material: {fileID: 2100000, guid: b51a1b3e56bec70408d617eba3c116d3, type: 2}
 --- !u!1 &2099375582
 GameObject:
   m_ObjectHideFlags: 0

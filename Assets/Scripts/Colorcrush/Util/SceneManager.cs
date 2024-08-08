@@ -126,6 +126,7 @@ namespace Colorcrush.Util
             {
                 yield return null;
             }
+
             IsLoading = false;
         }
     }

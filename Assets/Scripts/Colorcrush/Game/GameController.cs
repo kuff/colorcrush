@@ -3,6 +3,7 @@
 #region
 
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Colorcrush.Animation;
 using Colorcrush.Logging;
@@ -26,6 +27,7 @@ namespace Colorcrush.Game
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private string nextSceneName = "MuralScene";
         [SerializeField] private Button submitButton;
+        [SerializeField] private Canvas uiCanvas;
         private bool[] _buttonToggledStates;
 
         private ColorController _colorController;
@@ -79,7 +81,12 @@ namespace Colorcrush.Game
             else
             {
                 var buttonAnimator = submitButton.gameObject.GetComponent<ButtonAnimator>();
-                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new TapAnimation(0.1f, 0.9f)));
+                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new TapAnimationObject(0.1f, 0.9f)));
+            }
+
+            if (uiCanvas == null)
+            {
+                Debug.LogError("UI Canvas not assigned in the inspector.");
             }
         }
 
@@ -188,15 +195,7 @@ namespace Colorcrush.Game
             _submitCount++;
             LoggingManager.LogEvent(new ColorsSubmittedEvent());
 
-            for (var i = 0; i < _selectionGridButtons.Length; i++)
-            {
-                UpdateButton(i);
-                if (_buttonToggledStates[i])
-                {
-                    _buttonToggledStates[i] = false;
-                    _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
-                }
-            }
+            StartCoroutine(AnimateEmojisAndResetButtons());
 
             UpdateProgressText();
             UpdateTargetButtonColor();
@@ -211,6 +210,93 @@ namespace Colorcrush.Game
                 }
 
                 submitButtonText.text = "CONTINUE";
+            }
+        }
+
+        private IEnumerator AnimateEmojisAndResetButtons()
+        {
+            var instantiatedObjects = new List<GameObject>();
+            var emojiAnimators = new List<EmojiAnimator>();
+
+            // Instantiate all emojis at once
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                var button = _selectionGridButtons[i].gameObject;
+                var prefab = Resources.Load<GameObject>("Colorcrush/Misc/ColorPickButton");
+                var instance = Instantiate(prefab, button.transform.position, button.transform.rotation, uiCanvas.transform);
+                instance.transform.SetAsLastSibling(); // Ensure the instance is rendered on top
+                instantiatedObjects.Add(instance);
+
+                // Copy the original sprite, material, scale, and opacity
+                var buttonImage = button.GetComponent<Image>();
+                var instanceImage = instance.GetComponent<Image>();
+                if (buttonImage != null && instanceImage != null)
+                {
+                    instanceImage.sprite = buttonImage.sprite;
+                    instanceImage.material = new Material(buttonImage.material);
+                    instance.transform.localScale = button.transform.localScale;
+                    var color = buttonImage.color;
+                    instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[i] ? ToggledAlpha : DefaultAlpha);
+                }
+
+                var emojiAnimator = instance.AddComponent<EmojiAnimator>();
+                emojiAnimators.Add(emojiAnimator);
+
+                // Hide the original button
+                button.SetActive(false);
+            }
+
+            // Animate selected emojis immediately and without delay
+            for (var i = 0; i < emojiAnimators.Count; i++)
+            {
+                if (_buttonToggledStates[i])
+                {
+                    // Fade out selected emojis
+                    AnimationManager.PlayAnimation(emojiAnimators[i], new FadeAnimationObject(ToggledAlpha, 0f, 0.5f));
+                }
+            }
+
+            // Animate non-selected emojis with delay
+            for (var i = 0; i < emojiAnimators.Count; i++)
+            {
+                if (!_buttonToggledStates[i])
+                {
+                    // Change to happy emoji and move for non-selected emojis
+                    var instanceImage = emojiAnimators[i].GetComponent<Image>();
+                    if (instanceImage != null)
+                    {
+                        instanceImage.sprite = _emojiController.GetNextHappyEmoji();
+                    }
+
+                    var targetPosition = progressText.transform.position;
+
+                    // Combine MoveToAnimation with ScaleAnimation
+                    AnimationManager.PlayAnimation(emojiAnimators[i], new MoveToAnimationObject(targetPosition, 1f));
+                    AnimationManager.PlayAnimation(emojiAnimators[i], new ScaleAnimationObject(Vector3.zero, 1f));
+
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+
+            // Wait for all animations to complete
+            yield return new WaitForSeconds(1f);
+
+            // Clean up instantiated objects
+            foreach (var obj in instantiatedObjects)
+            {
+                Destroy(obj);
+            }
+
+            // Show the original buttons again and reset them
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                _selectionButtons[i].SetActive(true);
+                UpdateButton(i);
+                if (_buttonToggledStates[i])
+                {
+                    _buttonToggledStates[i] = false;
+                    _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
+                }
             }
         }
 
