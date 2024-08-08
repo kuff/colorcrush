@@ -12,6 +12,7 @@ namespace Colorcrush.Util
     [CreateAssetMenu(fileName = "ProjectConfigurationObject", menuName = "Colorcrush/Project Configuration")]
     public class ProjectConfigurationObject : ScriptableObject
     {
+        [Header("Editor Configuration")]
         [FormerlySerializedAs("startScenePath")] [Tooltip("The path to the initiating scene. This is used when 'Use Initiating Scene' is enabled.")]
         public string initiatingScenePath;
 
@@ -27,10 +28,43 @@ namespace Colorcrush.Util
         [Tooltip("If true, the game will attempt to balance pixel colors in the final image. This may affect performance.")]
         public bool doPixelBalancing = true;
 
+        [Header("Game Configuration")]
         [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;
 
         [Tooltip("The number of colors that need to be filtered before the game progresses to the next stage.")]
         public int numColorsToFilter = 12;
+
+        [Header("Emoji Configuration")]
+        [Tooltip("The name of the default emoji sprite (without the file extension).")]
+        public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
+
+        [Tooltip("The path to the folder containing happy emoji sprites.")]
+        public string happyEmojiFolder = "Colorcrush/Emoji/Happy";
+
+        [Tooltip("The path to the folder containing sad emoji sprites.")]
+        public string sadEmojiFolder = "Colorcrush/Emoji/Sad";
+
+        [Tooltip("The folder name within Resources where emoji materials are stored.")]
+        public string emojiMaterialsFolder = "GeneratedMaterials";
+
+        [Tooltip("The prefix used for emoji material names.")]
+        public string emojiMaterialPrefix = "EmojiMaterial_";
+
+        [Header("Logging Configuration")]
+        [Tooltip("The prefix used for log file names.")]
+        public string logFilePrefix = "game_log_";
+
+        [Tooltip("The file extension for log files.")]
+        public string logFileExtension = ".txt";
+
+        [Tooltip("The symbol used to mark the end of a log file. Make sure this symbol cannot be mistaken for logging data, as file lines are periodically deleted using it.")]
+        public string endOfFileSymbol = "EOF";
+
+        [Tooltip("The interval (in seconds) between automatic log saves.")]
+        public float logSaveInterval = 5f;
+
+        [Tooltip("The minimum severity level for logs to be recorded. The severity scale is: Log (0), Warning (1), Assert (2), Error (3), Exception (4). Only logs with this severity or higher will be recorded.")]
+        public LogType minimumLogSeverity = LogType.Log;
     }
 }

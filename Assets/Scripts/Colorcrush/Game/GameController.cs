@@ -4,6 +4,7 @@
 
 using System.Collections;
 using System.Linq;
+using Colorcrush.Files;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -120,8 +121,10 @@ namespace Colorcrush.Game
         private void UpdateButton(int index)
         {
             _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
-            _selectionGridImages[index].material.SetColor("_TargetColor", _colorController.GetNextColor());
+            var nextColor = _colorController.GetNextColor();
+            _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
             _selectionGridImages[index].material.SetFloat("_Alpha", DefaultAlpha);
+            LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
         }
 
         public void OnButtonClicked(int index)
@@ -140,9 +143,17 @@ namespace Colorcrush.Game
             _selectionGridButtons[index].transform.localScale = targetScale;
 
             // Update emoji sprite based on toggle state
-            _selectionGridImages[index].sprite = _buttonToggledStates[index]
-                ? _emojiController.GetNextSadEmoji()
-                : _emojiController.GetDefaultEmoji();
+            if (_buttonToggledStates[index])
+            {
+                var sadEmoji = _emojiController.GetNextSadEmoji();
+                _selectionGridImages[index].sprite = sadEmoji;
+                LoggingManager.LogEvent(new ColorSelectedEvent(index, sadEmoji.name));
+            }
+            else
+            {
+                _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
+                LoggingManager.LogEvent(new ColorDeselectedEvent(index));
+            }
 
             Debug.Log($"GameController: Button {index} toggled. New state: {_buttonToggledStates[index]}");
         }
@@ -158,12 +169,13 @@ namespace Colorcrush.Game
             }
 
             _submitCount++;
+            LoggingManager.LogEvent(new ColorsSubmittedEvent());
 
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
+                UpdateButton(i);
                 if (_buttonToggledStates[i])
                 {
-                    UpdateButton(i);
                     _buttonToggledStates[i] = false;
                     _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
                 }
@@ -202,7 +214,9 @@ namespace Colorcrush.Game
         {
             if (_colorController != null && _targetEmojiImage != null && _targetMaterial != null)
             {
-                _targetMaterial.SetColor("_TargetColor", ColorController.GetCurrentTargetColor());
+                var targetColor = ColorController.GetCurrentTargetColor();
+                _targetMaterial.SetColor("_TargetColor", targetColor);
+                LoggingManager.LogEvent(new NewTargetColorEvent(targetColor));
             }
         }
     }

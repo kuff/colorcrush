@@ -13,9 +13,19 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/LoadingScene.unity
-  useInitiatingScene: 0
+  useInitiatingScene: 1
   resourcesPath: Assets/Resources/Colorcrush
   scenesPath: Assets/Scenes
   doPixelBalancing: 0
   randomSeed: 42
   numColorsToFilter: 12
+  defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
+  happyEmojiFolder: Colorcrush/Emoji/Happy
+  sadEmojiFolder: Colorcrush/Emoji/Sad
+  emojiMaterialsFolder: GeneratedMaterials
+  emojiMaterialPrefix: EmojiMaterial_
+  logFilePrefix: game_log_
+  logFileExtension: .txt
+  endOfFileSymbol: EOF
+  logSaveInterval: 5
+  minimumLogSeverity: 2

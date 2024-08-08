@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using Colorcrush.Util;
 using UnityEngine;
 
 #endregion
@@ -12,8 +13,6 @@ namespace Colorcrush.Game
 {
     public class EmojiMaterialLoader : MonoBehaviour
     {
-        [SerializeField] private string materialsFolder = "GeneratedMaterials"; // Folder name within Resources
-
         private List<Material> _emojiMaterialsList;
 
         private void Start()
@@ -24,7 +23,7 @@ namespace Colorcrush.Game
         private void LoadEmojiMaterials()
         {
             // Load all materials from the specified folder
-            var allMaterials = Resources.LoadAll<Material>(materialsFolder);
+            var allMaterials = Resources.LoadAll<Material>(ProjectConfig.InstanceConfig.emojiMaterialsFolder);
 
             // Filter and sort materials with names starting with "EmojiMaterial_"
             _emojiMaterialsList = allMaterials

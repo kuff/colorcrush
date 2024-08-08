@@ -14,12 +14,6 @@ namespace Colorcrush.Game
 {
     public class EmojiController : MonoBehaviour
     {
-        private const string EmojiPath = "Colorcrush/Emoji";
-        private const string HappyFolder = "Happy";
-        private const string SadFolder = "Sad";
-
-        [SerializeField] private string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
-
         private Sprite _defaultEmojiSprite;
 
         private Queue<Sprite> _happyEmojiQueue;
@@ -32,17 +26,17 @@ namespace Colorcrush.Game
 
         public void InitializeEmojiQueues()
         {
-            _happyEmojiQueue = CreateEmojiQueue(HappyFolder);
-            _sadEmojiQueue = CreateEmojiQueue(SadFolder);
+            _happyEmojiQueue = CreateEmojiQueue(ProjectConfig.InstanceConfig.happyEmojiFolder);
+            _sadEmojiQueue = CreateEmojiQueue(ProjectConfig.InstanceConfig.sadEmojiFolder);
         }
 
-        private Queue<Sprite> CreateEmojiQueue(string folderName)
+        private Queue<Sprite> CreateEmojiQueue(string folderPath)
         {
-            var emojis = Resources.LoadAll<Sprite>($"{EmojiPath}/{folderName}");
+            var emojis = Resources.LoadAll<Sprite>(folderPath);
             var emojiList = new List<Sprite>(emojis);
 
             // Remove the default emoji from the list if it's in this folder
-            emojiList.RemoveAll(emoji => emoji.name == defaultEmojiName);
+            emojiList.RemoveAll(emoji => emoji.name == ProjectConfig.InstanceConfig.defaultEmojiName);
 
             // Shuffle the list using the random seed from ProjectConfig
             var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
@@ -69,15 +63,15 @@ namespace Colorcrush.Game
             }
 
             // Try to load the default emoji from both folders
-            _defaultEmojiSprite = Resources.Load<Sprite>($"{EmojiPath}/{HappyFolder}/{defaultEmojiName}");
+            _defaultEmojiSprite = Resources.Load<Sprite>($"{ProjectConfig.InstanceConfig.happyEmojiFolder}/{ProjectConfig.InstanceConfig.defaultEmojiName}");
             if (_defaultEmojiSprite == null)
             {
-                _defaultEmojiSprite = Resources.Load<Sprite>($"{EmojiPath}/{SadFolder}/{defaultEmojiName}");
+                _defaultEmojiSprite = Resources.Load<Sprite>($"{ProjectConfig.InstanceConfig.sadEmojiFolder}/{ProjectConfig.InstanceConfig.defaultEmojiName}");
             }
 
             if (_defaultEmojiSprite == null)
             {
-                Debug.LogError($"Default emoji '{defaultEmojiName}' not found in either Happy or Sad folder.");
+                Debug.LogError($"Default emoji '{ProjectConfig.InstanceConfig.defaultEmojiName}' not found in either Happy or Sad folder.");
             }
 
             return _defaultEmojiSprite;
