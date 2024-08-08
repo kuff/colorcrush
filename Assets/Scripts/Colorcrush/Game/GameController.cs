@@ -5,10 +5,10 @@
 using System.Collections;
 using System.Linq;
 using Colorcrush.Animation;
-using Colorcrush.Files;
+using Colorcrush.Logging;
+using Colorcrush.Util;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 #endregion
@@ -172,11 +172,16 @@ namespace Colorcrush.Game
 
         public void OnSubmitButtonClicked()
         {
+            if (SceneManager.IsLoading)
+            {
+                return; // Prevent button spamming
+            }
+
             if (_targetReached)
             {
                 _colorController.AdvanceToNextTargetColor();
                 submitButtonText.text = "LOADING...";
-                SceneManager.LoadScene(nextSceneName);
+                SceneManager.LoadSceneAsync(nextSceneName, OnSceneReady);
                 return;
             }
 
@@ -207,6 +212,11 @@ namespace Colorcrush.Game
 
                 submitButtonText.text = "CONTINUE";
             }
+        }
+
+        private void OnSceneReady()
+        {
+            SceneManager.ActivateLoadedScene();
         }
 
         private IEnumerator ShowHappyEmojiCoroutine()

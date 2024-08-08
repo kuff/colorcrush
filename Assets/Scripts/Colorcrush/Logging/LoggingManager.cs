@@ -11,7 +11,7 @@ using UnityEngine;
 
 #endregion
 
-namespace Colorcrush.Files
+namespace Colorcrush.Logging
 {
     public class LoggingManager : MonoBehaviour
     {

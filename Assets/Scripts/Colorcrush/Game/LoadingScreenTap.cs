@@ -5,9 +5,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using Colorcrush.Animation;
+using Colorcrush.Util;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Animator = Colorcrush.Animation.Animator;
 
 #endregion
@@ -19,6 +19,7 @@ namespace Colorcrush.Game
         [SerializeField] private TextMeshProUGUI tapText;
         [SerializeField] private string nextSceneName = "MuralScene";
         private Animator[] _animators;
+        private bool _isLoading;
 
         private void Awake()
         {
@@ -33,6 +34,12 @@ namespace Colorcrush.Game
 
         public void OnTapTextClicked()
         {
+            if (_isLoading)
+            {
+                return; // Prevent multiple clicks
+            }
+
+            _isLoading = true;
             tapText.text = "LOADING...";
             AnimationManager.PlayAnimation(new List<Animator>(_animators), new TapAllAnimation(new List<Animator>(_animators)));
             StartCoroutine(LoadNextSceneAfterAnimation());
@@ -41,7 +48,12 @@ namespace Colorcrush.Game
         private IEnumerator LoadNextSceneAfterAnimation()
         {
             yield return new WaitForSeconds(0.1f); // Wait for the animation duration
-            SceneManager.LoadScene(nextSceneName);
+            SceneManager.LoadSceneAsync(nextSceneName, OnSceneReady);
+        }
+
+        private void OnSceneReady()
+        {
+            SceneManager.ActivateLoadedScene();
         }
     }
 }
