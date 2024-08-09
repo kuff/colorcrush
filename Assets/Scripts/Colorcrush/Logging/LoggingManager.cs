@@ -91,7 +91,8 @@ namespace Colorcrush.Logging
         {
             if (LogSeverity[type] >= LogSeverity[ProjectConfig.InstanceConfig.minimumLogSeverity])
             {
-                LogEvent(new ConsoleOutputEvent(type, logString));
+                var sanitizedStackTrace = stackTrace?.Replace("\n", " ").Replace("\r", "");
+                LogEvent(new ConsoleOutputEvent(type, $"{logString} | StackTrace: {sanitizedStackTrace}"));
             }
         }
 

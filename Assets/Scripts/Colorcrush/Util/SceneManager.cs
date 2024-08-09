@@ -14,6 +14,7 @@ namespace Colorcrush.Util
     {
         private static SceneManager _instance;
         private AsyncOperation _asyncOperation;
+        private string _previousSceneName;
 
         public static SceneManager Instance
         {
@@ -58,6 +59,7 @@ namespace Colorcrush.Util
         public static void LoadSceneAsync(string sceneName, Action onSceneReady)
         {
             Debug.Log($"Starting to load scene: {sceneName} asynchronously.");
+            Instance._previousSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             IsLoading = true;
             Instance.StartCoroutine(Instance.LoadSceneAsyncCoroutine(sceneName, onSceneReady));
         }
@@ -68,7 +70,14 @@ namespace Colorcrush.Util
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != sceneName)
             {
                 _asyncOperation = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync(sceneName);
-                _asyncOperation!.allowSceneActivation = false;
+                if (_asyncOperation == null)
+                {
+                    Debug.LogError("Failed to load scene " + sceneName + ". Aborting.");
+                    IsLoading = false;
+                    yield break;
+                }
+
+                _asyncOperation.allowSceneActivation = false;
 
                 while (!_asyncOperation.isDone)
                 {
@@ -128,6 +137,12 @@ namespace Colorcrush.Util
             }
 
             IsLoading = false;
+        }
+
+        // This function can be called to retrieve the name of the previous scene
+        public static string GetPreviousSceneName()
+        {
+            return Instance._previousSceneName;
         }
     }
 }

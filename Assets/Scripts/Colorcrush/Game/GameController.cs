@@ -24,7 +24,7 @@ namespace Colorcrush.Game
         private const int TargetSubmitCount = 5;
 
         [SerializeField] private TextMeshProUGUI submitButtonText;
-        [SerializeField] private TextMeshProUGUI progressText;
+        [SerializeField] private Image progressBar;
         [SerializeField] private string nextSceneName = "MuralScene";
         [SerializeField] private Button submitButton;
         [SerializeField] private Canvas uiCanvas;
@@ -33,61 +33,32 @@ namespace Colorcrush.Game
 
         private ColorController _colorController;
         private EmojiController _emojiController;
+        private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
-
         private GameObject[] _selectionButtons;
         private Button[] _selectionGridButtons;
         private Image[] _selectionGridImages;
         private int _submitCount;
-
         private Image _targetEmojiImage;
-        private Material _targetMaterial;
         private bool _targetReached;
 
         private void Awake()
         {
             InitializeComponents();
             InitializeButtons();
+            InitializeProgressBar();
             UpdateUI();
         }
 
         private void InitializeComponents()
         {
             _colorController = FindObjectOfType<ColorController>();
-            if (_colorController == null)
-            {
-                Debug.LogError("ColorController not found in the scene.");
-            }
-
             _emojiController = FindObjectOfType<EmojiController>();
-            if (_emojiController == null)
-            {
-                Debug.LogError("EmojiController not found in the scene.");
-            }
 
-            if (submitButtonText == null)
-            {
-                Debug.LogError("Submit button text not assigned in the inspector.");
-            }
-
-            if (progressText == null)
-            {
-                Debug.LogError("Progress text not assigned in the inspector.");
-            }
-
-            if (submitButton == null)
-            {
-                Debug.LogError("Submit button not assigned in the inspector.");
-            }
-            else
+            if (submitButton != null)
             {
                 var buttonAnimator = submitButton.gameObject.GetComponent<ButtonAnimator>();
-                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new TapAnimation(0.1f, 0.9f)));
-            }
-
-            if (uiCanvas == null)
-            {
-                Debug.LogError("UI Canvas not assigned in the inspector.");
+                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new BumpAnimation(0.1f, 0.9f)));
             }
         }
 
@@ -96,7 +67,6 @@ namespace Colorcrush.Game
             _selectionButtons = GameObject.FindGameObjectsWithTag("SelectionButton");
             if (_selectionButtons.Length == 0)
             {
-                Debug.LogWarning("No GameObjects with tag 'SelectionButton' found.");
                 return;
             }
 
@@ -106,16 +76,23 @@ namespace Colorcrush.Game
             _originalButtonScales = _selectionGridButtons.Select(b => b.transform.localScale).ToArray();
 
             _targetEmojiImage = GameObject.FindGameObjectWithTag("SelectionTarget")?.GetComponent<Image>();
-            if (_targetEmojiImage == null)
-            {
-                Debug.LogError("Target emoji object not found or missing Image component.");
-            }
-            else
+            if (_targetEmojiImage != null)
             {
                 _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
             }
+        }
 
-            _targetMaterial = _targetEmojiImage?.material;
+        private void InitializeProgressBar()
+        {
+            if (progressBar != null)
+            {
+                _initialProgressBarWidth = progressBar.rectTransform.rect.width;
+                progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0);
+            }
+            else
+            {
+                Debug.LogError("Progress bar image not assigned in the inspector.");
+            }
         }
 
         private T[] GetSortedComponentsFromButtons<T>(GameObject[] buttons) where T : Component
@@ -135,7 +112,7 @@ namespace Colorcrush.Game
             }
 
             UpdateTargetButtonColor();
-            UpdateProgressText();
+            UpdateProgressBar();
         }
 
         private void UpdateButton(int index, bool ignoreAlpha = false)
@@ -155,7 +132,6 @@ namespace Colorcrush.Game
         {
             if (index < 0 || index >= _selectionGridButtons.Length)
             {
-                Debug.LogWarning("Invalid button index clicked.");
                 return;
             }
 
@@ -166,31 +142,22 @@ namespace Colorcrush.Game
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
 
-            // We no longer update the emoji sprite here
-
-            if (_buttonToggledStates[index])
-            {
-                LoggingManager.LogEvent(new ColorSelectedEvent(index, _selectionGridImages[index].sprite.name));
-            }
-            else
-            {
-                LoggingManager.LogEvent(new ColorDeselectedEvent(index));
-            }
-
-            Debug.Log($"GameController: Button {index} toggled. New state: {_buttonToggledStates[index]}");
+            LoggingManager.LogEvent(_buttonToggledStates[index]
+                ? new ColorSelectedEvent(index, _selectionGridImages[index].sprite.name)
+                : new ColorDeselectedEvent(index));
         }
 
         public void OnSubmitButtonClicked()
         {
             if (SceneManager.IsLoading || !_buttonsInteractable)
             {
-                return; // Prevent button spamming or clicking before buttons are ready
+                return;
             }
 
             if (_targetReached)
             {
                 _colorController.AdvanceToNextTargetColor();
-                submitButtonText.text = "LOADING...";
+                submitButtonText.text = "...";
                 SceneManager.LoadSceneAsync(nextSceneName);
                 return;
             }
@@ -199,8 +166,7 @@ namespace Colorcrush.Game
             LoggingManager.LogEvent(new ColorsSubmittedEvent());
 
             StartCoroutine(AnimateEmojisAndResetButtons());
-
-            UpdateProgressText();
+            UpdateProgressBar();
             UpdateTargetButtonColor();
             StartCoroutine(ShowHappyEmojiCoroutine());
 
@@ -222,88 +188,100 @@ namespace Colorcrush.Game
             var instantiatedObjects = new List<GameObject>();
             var emojiAnimators = new List<EmojiAnimator>();
 
-            // Instantiate all emojis at once
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
-                var button = _selectionGridButtons[i].gameObject;
-                var prefab = Resources.Load<GameObject>("Colorcrush/Misc/ColorPickButton");
-                var instance = Instantiate(prefab, button.transform.position, button.transform.rotation, uiCanvas.transform);
-                instance.transform.SetAsLastSibling(); // Ensure the instance is rendered on top
+                var instance = CreateEmojiInstance(i);
                 instantiatedObjects.Add(instance);
-
-                // Copy the original sprite, material, scale, and opacity
-                var buttonImage = button.GetComponent<Image>();
-                var instanceImage = instance.GetComponent<Image>();
-                if (buttonImage != null && instanceImage != null)
-                {
-                    instanceImage.sprite = buttonImage.sprite;
-                    instanceImage.material = new Material(buttonImage.material);
-                    instance.transform.localScale = button.transform.localScale;
-                    var color = buttonImage.color;
-                    instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[i] ? ToggledAlpha : DefaultAlpha);
-                }
-
-                var emojiAnimator = instance.AddComponent<EmojiAnimator>();
-                emojiAnimators.Add(emojiAnimator);
+                emojiAnimators.Add(instance.AddComponent<EmojiAnimator>());
             }
 
-            // Set original buttons to 0 opacity and make them uninteractable
+            SetOriginalButtonsInactive();
+            yield return AnimateEmojis(emojiAnimators);
+
+            foreach (var obj in instantiatedObjects)
+            {
+                Destroy(obj);
+            }
+
+            ResetButtons();
+            yield return StartCoroutine(FadeInButtons());
+        }
+
+        private GameObject CreateEmojiInstance(int index)
+        {
+            var button = _selectionGridButtons[index].gameObject;
+            var prefab = Resources.Load<GameObject>("Colorcrush/Misc/ColorPickButton");
+            var instance = Instantiate(prefab, button.transform.position, button.transform.rotation, uiCanvas.transform);
+            instance.transform.SetAsLastSibling();
+
+            var buttonImage = button.GetComponent<Image>();
+            var instanceImage = instance.GetComponent<Image>();
+            if (buttonImage != null && instanceImage != null)
+            {
+                instanceImage.sprite = buttonImage.sprite;
+                instanceImage.material = new Material(buttonImage.material);
+                instance.transform.localScale = button.transform.localScale;
+                var color = buttonImage.color;
+                instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[index] ? ToggledAlpha : DefaultAlpha);
+            }
+
+            return instance;
+        }
+
+        private void SetOriginalButtonsInactive()
+        {
             foreach (var button in _selectionGridButtons)
             {
                 var image = button.GetComponent<Image>();
                 image.material.SetFloat("_Alpha", 0.0f);
                 button.interactable = false;
             }
+        }
 
-            // Animate selected emojis immediately and without delay
+        private IEnumerator AnimateEmojis(List<EmojiAnimator> emojiAnimators)
+        {
             for (var i = 0; i < emojiAnimators.Count; i++)
             {
                 if (_buttonToggledStates[i])
                 {
-                    // Change to sad emoji for selected emojis
-                    var instanceImage = emojiAnimators[i].GetComponent<Image>();
-                    if (instanceImage != null)
-                    {
-                        instanceImage.sprite = _emojiController.GetNextSadEmoji();
-                    }
-
-                    // Fade out selected emojis
-                    AnimationManager.PlayAnimation(emojiAnimators[i], new FadeAnimation(ToggledAlpha, 0f, 0.5f));
+                    AnimateSelectedEmoji(emojiAnimators[i]);
                 }
-            }
-
-            // Animate non-selected emojis with delay
-            for (var i = 0; i < emojiAnimators.Count; i++)
-            {
-                if (!_buttonToggledStates[i])
+                else
                 {
-                    // Change to happy emoji and move for non-selected emojis
-                    var instanceImage = emojiAnimators[i].GetComponent<Image>();
-                    if (instanceImage != null)
-                    {
-                        instanceImage.sprite = _emojiController.GetNextHappyEmoji();
-                    }
-
-                    var targetPosition = progressText.transform.position;
-
-                    // Combine MoveToAnimation with ScaleAnimation
-                    AnimationManager.PlayAnimation(emojiAnimators[i], new MoveToAnimation(targetPosition, 1f));
-                    AnimationManager.PlayAnimation(emojiAnimators[i], new ScaleAnimation(Vector3.zero, 1f));
-
-                    yield return new WaitForSeconds(0.05f);
+                    yield return AnimateNonSelectedEmoji(emojiAnimators[i]);
                 }
             }
 
-            // Wait for all animations to complete
             yield return new WaitForSeconds(1f);
+        }
 
-            // Clean up instantiated objects
-            foreach (var obj in instantiatedObjects)
+        private void AnimateSelectedEmoji(EmojiAnimator animator)
+        {
+            var image = animator.GetComponent<Image>();
+            if (image != null)
             {
-                Destroy(obj);
+                image.sprite = _emojiController.GetNextSadEmoji();
             }
 
-            // Reset buttons without showing them yet
+            AnimationManager.PlayAnimation(animator, new FadeAnimation(ToggledAlpha, 0f, 0.5f));
+        }
+
+        private IEnumerator AnimateNonSelectedEmoji(EmojiAnimator animator)
+        {
+            var image = animator.GetComponent<Image>();
+            if (image != null)
+            {
+                image.sprite = _emojiController.GetNextHappyEmoji();
+            }
+
+            var targetPosition = progressBar.transform.position;
+            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 1f));
+            AnimationManager.PlayAnimation(animator, new ScaleAnimation(Vector3.zero, 1f));
+            yield return new WaitForSeconds(0.05f);
+        }
+
+        private void ResetButtons()
+        {
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 UpdateButton(i, true);
@@ -313,34 +291,24 @@ namespace Colorcrush.Game
                     _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
                 }
             }
-
-            // Fade in buttons at the start of the next cycle
-            yield return StartCoroutine(FadeInButtons());
         }
 
         private IEnumerator FadeInButtons()
         {
-            // Ensure all buttons are not interactable before starting the fade-in
             foreach (var button in _selectionGridButtons)
             {
                 button.interactable = false;
             }
 
-            // Show the buttons and fade them in
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
-                var fadeAnimation = new FadeAnimation(0f, DefaultAlpha, 0.5f);
-                AnimationManager.PlayAnimation(buttonAnimator, fadeAnimation);
-
-                // Add a small delay between each button's fade-in
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, DefaultAlpha, 0.5f));
                 yield return new WaitForSeconds(0.025f);
             }
 
-            // Wait for the fade-in animation to complete
             yield return new WaitForSeconds(0.5f);
 
-            // Make all buttons interactable after the fade-in is complete
             foreach (var button in _selectionGridButtons)
             {
                 button.interactable = true;
@@ -356,18 +324,22 @@ namespace Colorcrush.Game
             _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
         }
 
-        private void UpdateProgressText()
+        private void UpdateProgressBar()
         {
-            var progress = Mathf.Min((float)_submitCount / TargetSubmitCount * 100f, 100f);
-            progressText.text = $"{progress:F0}%";
+            if (progressBar != null)
+            {
+                var progress = Mathf.Min((float)_submitCount / TargetSubmitCount, 1f);
+                var newWidth = _initialProgressBarWidth * progress;
+                progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, newWidth);
+            }
         }
 
         private void UpdateTargetButtonColor()
         {
-            if (_colorController != null && _targetEmojiImage != null && _targetMaterial != null)
+            if (_colorController != null && _targetEmojiImage != null && _targetEmojiImage.material != null)
             {
                 var targetColor = ColorController.GetCurrentTargetColor();
-                _targetMaterial.SetColor("_TargetColor", targetColor);
+                _targetEmojiImage.material.SetColor("_TargetColor", targetColor);
                 LoggingManager.LogEvent(new NewTargetColorEvent(targetColor));
             }
         }

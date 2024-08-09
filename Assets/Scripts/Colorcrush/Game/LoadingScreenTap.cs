@@ -17,7 +17,7 @@ namespace Colorcrush.Game
     public class LoadingScreenTap : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI tapText;
-        [SerializeField] private string nextSceneName = "MuralScene";
+        [SerializeField] private string nextSceneName = "GameScene";
         private Animator[] _animators;
         private bool _isLoading;
 
@@ -41,7 +41,8 @@ namespace Colorcrush.Game
 
             _isLoading = true;
             tapText.text = "LOADING...";
-            AnimationManager.PlayAnimation(new List<Animator>(_animators), new TapAllAnimation(new List<Animator>(_animators)));
+            var animatorsList = new List<Animator>(_animators);
+            AnimationManager.PlayAnimation(animatorsList, new BumpAllAnimation(0.25f, 0.9f, animatorsList));
             StartCoroutine(LoadNextSceneAfterAnimation());
         }
 
