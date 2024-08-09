@@ -24,8 +24,8 @@ namespace Colorcrush.Colorspace
 
         private void UpdateColorspaceInfo()
         {
-            var info = $"Color Space: {QualitySettings.activeColorSpace}\n";
-            info += $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
+            var info = $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
+            info += $"Actual Color Space: {QualitySettings.activeColorSpace}\n";
             info += $"Quality Level: {QualitySettings.GetQualityLevel()}\n";
             info += $"HDR Enabled: {QualitySettings.vSyncCount > 0}\n";
             
