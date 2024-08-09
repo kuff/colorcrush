@@ -28,19 +28,19 @@ namespace Colorcrush.Colorspace
             info += $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
             info += $"Quality Level: {QualitySettings.GetQualityLevel()}\n";
             info += $"HDR Enabled: {QualitySettings.vSyncCount > 0}\n";
-            info += $"Render Pipeline: {GetRenderPipelineInfo()}\n";
-
-            infoText.text = info;
-        }
-
-        private string GetRenderPipelineInfo()
-        {
+            
             if (GraphicsSettings.renderPipelineAsset == null)
             {
-                return "Built-in Render Pipeline";
+                info += "Render Pipeline Type: Built-in Render Pipeline";
+            }
+            else
+            {
+                var renderPipelineAsset = GraphicsSettings.renderPipelineAsset;
+                info += $"Render Pipeline Name: {renderPipelineAsset.name}";
             }
 
-            return GraphicsSettings.renderPipelineAsset.GetType().Name;
+
+            infoText.text = info;
         }
     }
 }
