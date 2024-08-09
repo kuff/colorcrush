@@ -133,13 +133,14 @@ GameObject:
   - component: {fileID: 34146520}
   - component: {fileID: 34146522}
   - component: {fileID: 34146521}
+  - component: {fileID: 34146523}
   m_Layer: 5
   m_Name: TapText (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &34146520
 RectTransform:
   m_ObjectHideFlags: 0
@@ -256,6 +257,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 34146519}
   m_CullTransparentMesh: 1
+--- !u!114 &34146523
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 34146519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0120a45d0769054fa0ef8b903b2254c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textComponent: {fileID: 34146521}
 --- !u!1 &74247027
 GameObject:
   m_ObjectHideFlags: 0
@@ -456,6 +470,52 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &440928362
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 440928364}
+  - component: {fileID: 440928363}
+  m_Layer: 0
+  m_Name: LogicObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &440928363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440928362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f67330287796e74ab05c6daa779b70e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tapText: {fileID: 34146521}
+  nextSceneName: GameScene
+--- !u!4 &440928364
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 440928362}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 642, y: 1389, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &724237947
 GameObject:
   m_ObjectHideFlags: 0
@@ -467,6 +527,7 @@ GameObject:
   - component: {fileID: 724237948}
   - component: {fileID: 724237950}
   - component: {fileID: 724237949}
+  - component: {fileID: 724237951}
   m_Layer: 5
   m_Name: ColorcrushText (TMP)
   m_TagString: Untagged
@@ -490,7 +551,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 100}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &724237949
@@ -513,10 +574,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Colorcrush!
+  m_text: Colorcrush :)
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 29e5a3dcfdbfa2c488a0b2a11a83ba7c, type: 2}
-  m_sharedMaterial: {fileID: 2475853618545036364, guid: 29e5a3dcfdbfa2c488a0b2a11a83ba7c, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8c6c7232715e43340a72e130517e0a09, type: 2}
+  m_sharedMaterial: {fileID: 3236816787023020114, guid: 8c6c7232715e43340a72e130517e0a09, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -540,13 +601,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 122
-  m_fontSizeBase: 122
+  m_fontSize: 111
+  m_fontSizeBase: 111
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 16
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -590,6 +651,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 724237947}
   m_CullTransparentMesh: 1
+--- !u!114 &724237951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724237947}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0120a45d0769054fa0ef8b903b2254c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textComponent: {fileID: 724237949}
 --- !u!1 &766903112
 GameObject:
   m_ObjectHideFlags: 0
@@ -665,6 +739,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 766903112}
   m_CullTransparentMesh: 1
+--- !u!1 &1103717564
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1103717566}
+  - component: {fileID: 1103717565}
+  m_Layer: 0
+  m_Name: AnimationManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1103717565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1103717564}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae00da870164494cbfd6b6fdc4f3270b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1103717566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1103717564}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 642, y: 1389, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1139498305
 GameObject:
   m_ObjectHideFlags: 0
@@ -913,7 +1031,7 @@ GameObject:
   - component: {fileID: 1417825056}
   - component: {fileID: 1417825055}
   m_Layer: 0
-  m_Name: SceneLoader
+  m_Name: SceneManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -931,9 +1049,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b732d416928d13c458d02da1ef58e288, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadButton: {fileID: 0}
-  buttonText: {fileID: 0}
-  buttonTextTMP: {fileID: 34146521}
 --- !u!4 &1417825056
 Transform:
   m_ObjectHideFlags: 0
@@ -1032,10 +1147,10 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1417825055}
-        m_TargetAssemblyTypeName: Colorcrush.Loading.SceneLoader, Scripts.Colorcrush
-        m_MethodName: LoadScene
-        m_Mode: 5
+      - m_Target: {fileID: 440928363}
+        m_TargetAssemblyTypeName: LoadingScreenTap, Scripts.Colorcrush
+        m_MethodName: OnTapTextClicked
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -1219,6 +1334,7 @@ GameObject:
   - component: {fileID: 1979448837}
   - component: {fileID: 1979448836}
   - component: {fileID: 1979448838}
+  - component: {fileID: 1979448839}
   m_Layer: 5
   m_Name: VersionText (TMP)
   m_TagString: Untagged
@@ -1357,6 +1473,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   versionText: {fileID: 1979448836}
+--- !u!114 &1979448839
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1979448834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0120a45d0769054fa0ef8b903b2254c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  textComponent: {fileID: 1979448836}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1366,3 +1495,5 @@ SceneRoots:
   - {fileID: 1789198091}
   - {fileID: 1417825056}
   - {fileID: 1569686144}
+  - {fileID: 1103717566}
+  - {fileID: 440928364}

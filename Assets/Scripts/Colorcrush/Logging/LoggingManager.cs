@@ -11,7 +11,7 @@ using UnityEngine;
 
 #endregion
 
-namespace Colorcrush.Files
+namespace Colorcrush.Logging
 {
     public class LoggingManager : MonoBehaviour
     {
@@ -91,7 +91,8 @@ namespace Colorcrush.Files
         {
             if (LogSeverity[type] >= LogSeverity[ProjectConfig.InstanceConfig.minimumLogSeverity])
             {
-                LogEvent(new ConsoleOutputEvent(type, logString));
+                var sanitizedStackTrace = stackTrace?.Replace("\n", " ").Replace("\r", "");
+                LogEvent(new ConsoleOutputEvent(type, $"{logString} | StackTrace: {sanitizedStackTrace}"));
             }
         }
 

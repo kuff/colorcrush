@@ -8,7 +8,7 @@ using UnityEngine;
 
 // ReSharper disable StringLiteralTypo
 
-namespace Colorcrush.Files
+namespace Colorcrush.Logging
 {
     public interface ILogEvent
     {

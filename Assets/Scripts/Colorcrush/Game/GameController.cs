@@ -3,11 +3,13 @@
 #region
 
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
-using Colorcrush.Files;
+using Colorcrush.Animation;
+using Colorcrush.Logging;
+using Colorcrush.Util;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 #endregion
@@ -22,52 +24,41 @@ namespace Colorcrush.Game
         private const int TargetSubmitCount = 5;
 
         [SerializeField] private TextMeshProUGUI submitButtonText;
-        [SerializeField] private TextMeshProUGUI progressText;
+        [SerializeField] private Image progressBar;
         [SerializeField] private string nextSceneName = "MuralScene";
+        [SerializeField] private Button submitButton;
+        [SerializeField] private Canvas uiCanvas;
+        private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
 
         private ColorController _colorController;
         private EmojiController _emojiController;
+        private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
-
         private GameObject[] _selectionButtons;
         private Button[] _selectionGridButtons;
         private Image[] _selectionGridImages;
         private int _submitCount;
-
         private Image _targetEmojiImage;
-        private Material _targetMaterial;
         private bool _targetReached;
 
         private void Awake()
         {
             InitializeComponents();
             InitializeButtons();
+            InitializeProgressBar();
             UpdateUI();
         }
 
         private void InitializeComponents()
         {
             _colorController = FindObjectOfType<ColorController>();
-            if (_colorController == null)
-            {
-                Debug.LogError("ColorController not found in the scene.");
-            }
-
             _emojiController = FindObjectOfType<EmojiController>();
-            if (_emojiController == null)
-            {
-                Debug.LogError("EmojiController not found in the scene.");
-            }
 
-            if (submitButtonText == null)
+            if (submitButton != null)
             {
-                Debug.LogError("Submit button text not assigned in the inspector.");
-            }
-
-            if (progressText == null)
-            {
-                Debug.LogError("Progress text not assigned in the inspector.");
+                var buttonAnimator = submitButton.gameObject.GetComponent<ButtonAnimator>();
+                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new BumpAnimation(0.1f, 0.9f)));
             }
         }
 
@@ -76,7 +67,6 @@ namespace Colorcrush.Game
             _selectionButtons = GameObject.FindGameObjectsWithTag("SelectionButton");
             if (_selectionButtons.Length == 0)
             {
-                Debug.LogWarning("No GameObjects with tag 'SelectionButton' found.");
                 return;
             }
 
@@ -86,16 +76,23 @@ namespace Colorcrush.Game
             _originalButtonScales = _selectionGridButtons.Select(b => b.transform.localScale).ToArray();
 
             _targetEmojiImage = GameObject.FindGameObjectWithTag("SelectionTarget")?.GetComponent<Image>();
-            if (_targetEmojiImage == null)
-            {
-                Debug.LogError("Target emoji object not found or missing Image component.");
-            }
-            else
+            if (_targetEmojiImage != null)
             {
                 _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
             }
+        }
 
-            _targetMaterial = _targetEmojiImage?.material;
+        private void InitializeProgressBar()
+        {
+            if (progressBar != null)
+            {
+                _initialProgressBarWidth = progressBar.rectTransform.rect.width;
+                progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 0);
+            }
+            else
+            {
+                Debug.LogError("Progress bar image not assigned in the inspector.");
+            }
         }
 
         private T[] GetSortedComponentsFromButtons<T>(GameObject[] buttons) where T : Component
@@ -115,15 +112,19 @@ namespace Colorcrush.Game
             }
 
             UpdateTargetButtonColor();
-            UpdateProgressText();
+            UpdateProgressBar();
         }
 
-        private void UpdateButton(int index)
+        private void UpdateButton(int index, bool ignoreAlpha = false)
         {
             _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
             var nextColor = _colorController.GetNextColor();
             _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
-            _selectionGridImages[index].material.SetFloat("_Alpha", DefaultAlpha);
+            if (!ignoreAlpha)
+            {
+                _selectionGridImages[index].material.SetFloat("_Alpha", DefaultAlpha);
+            }
+
             LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
         }
 
@@ -131,7 +132,6 @@ namespace Colorcrush.Game
         {
             if (index < 0 || index >= _selectionGridButtons.Length)
             {
-                Debug.LogWarning("Invalid button index clicked.");
                 return;
             }
 
@@ -142,46 +142,31 @@ namespace Colorcrush.Game
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
 
-            // Update emoji sprite based on toggle state
-            if (_buttonToggledStates[index])
-            {
-                var sadEmoji = _emojiController.GetNextSadEmoji();
-                _selectionGridImages[index].sprite = sadEmoji;
-                LoggingManager.LogEvent(new ColorSelectedEvent(index, sadEmoji.name));
-            }
-            else
-            {
-                _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
-                LoggingManager.LogEvent(new ColorDeselectedEvent(index));
-            }
-
-            Debug.Log($"GameController: Button {index} toggled. New state: {_buttonToggledStates[index]}");
+            LoggingManager.LogEvent(_buttonToggledStates[index]
+                ? new ColorSelectedEvent(index, _selectionGridImages[index].sprite.name)
+                : new ColorDeselectedEvent(index));
         }
 
         public void OnSubmitButtonClicked()
         {
+            if (SceneManager.IsLoading || !_buttonsInteractable)
+            {
+                return;
+            }
+
             if (_targetReached)
             {
                 _colorController.AdvanceToNextTargetColor();
-                submitButtonText.text = "LOADING...";
-                SceneManager.LoadScene(nextSceneName);
+                submitButtonText.text = "...";
+                SceneManager.LoadSceneAsync(nextSceneName);
                 return;
             }
 
             _submitCount++;
             LoggingManager.LogEvent(new ColorsSubmittedEvent());
 
-            for (var i = 0; i < _selectionGridButtons.Length; i++)
-            {
-                UpdateButton(i);
-                if (_buttonToggledStates[i])
-                {
-                    _buttonToggledStates[i] = false;
-                    _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
-                }
-            }
-
-            UpdateProgressText();
+            StartCoroutine(AnimateEmojisAndResetButtons());
+            UpdateProgressBar();
             UpdateTargetButtonColor();
             StartCoroutine(ShowHappyEmojiCoroutine());
 
@@ -197,6 +182,141 @@ namespace Colorcrush.Game
             }
         }
 
+        private IEnumerator AnimateEmojisAndResetButtons()
+        {
+            _buttonsInteractable = false;
+            var instantiatedObjects = new List<GameObject>();
+            var emojiAnimators = new List<EmojiAnimator>();
+
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                var instance = CreateEmojiInstance(i);
+                instantiatedObjects.Add(instance);
+                emojiAnimators.Add(instance.AddComponent<EmojiAnimator>());
+            }
+
+            SetOriginalButtonsInactive();
+            yield return AnimateEmojis(emojiAnimators);
+
+            foreach (var obj in instantiatedObjects)
+            {
+                Destroy(obj);
+            }
+
+            ResetButtons();
+            yield return StartCoroutine(FadeInButtons());
+        }
+
+        private GameObject CreateEmojiInstance(int index)
+        {
+            var button = _selectionGridButtons[index].gameObject;
+            var prefab = Resources.Load<GameObject>("Colorcrush/Misc/ColorPickButton");
+            var instance = Instantiate(prefab, button.transform.position, button.transform.rotation, uiCanvas.transform);
+            instance.transform.SetAsLastSibling();
+
+            var buttonImage = button.GetComponent<Image>();
+            var instanceImage = instance.GetComponent<Image>();
+            if (buttonImage != null && instanceImage != null)
+            {
+                instanceImage.sprite = buttonImage.sprite;
+                instanceImage.material = new Material(buttonImage.material);
+                instance.transform.localScale = button.transform.localScale;
+                var color = buttonImage.color;
+                instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[index] ? ToggledAlpha : DefaultAlpha);
+            }
+
+            return instance;
+        }
+
+        private void SetOriginalButtonsInactive()
+        {
+            foreach (var button in _selectionGridButtons)
+            {
+                var image = button.GetComponent<Image>();
+                image.material.SetFloat("_Alpha", 0.0f);
+                button.interactable = false;
+            }
+        }
+
+        private IEnumerator AnimateEmojis(List<EmojiAnimator> emojiAnimators)
+        {
+            for (var i = 0; i < emojiAnimators.Count; i++)
+            {
+                if (_buttonToggledStates[i])
+                {
+                    AnimateSelectedEmoji(emojiAnimators[i]);
+                }
+                else
+                {
+                    yield return AnimateNonSelectedEmoji(emojiAnimators[i]);
+                }
+            }
+
+            yield return new WaitForSeconds(1f);
+        }
+
+        private void AnimateSelectedEmoji(EmojiAnimator animator)
+        {
+            var image = animator.GetComponent<Image>();
+            if (image != null)
+            {
+                image.sprite = _emojiController.GetNextSadEmoji();
+            }
+
+            AnimationManager.PlayAnimation(animator, new FadeAnimation(ToggledAlpha, 0f, 0.5f));
+        }
+
+        private IEnumerator AnimateNonSelectedEmoji(EmojiAnimator animator)
+        {
+            var image = animator.GetComponent<Image>();
+            if (image != null)
+            {
+                image.sprite = _emojiController.GetNextHappyEmoji();
+            }
+
+            var targetPosition = progressBar.transform.position;
+            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 1f));
+            AnimationManager.PlayAnimation(animator, new ScaleAnimation(Vector3.zero, 1f));
+            yield return new WaitForSeconds(0.05f);
+        }
+
+        private void ResetButtons()
+        {
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                UpdateButton(i, true);
+                if (_buttonToggledStates[i])
+                {
+                    _buttonToggledStates[i] = false;
+                    _selectionGridButtons[i].transform.localScale = _originalButtonScales[i];
+                }
+            }
+        }
+
+        private IEnumerator FadeInButtons()
+        {
+            foreach (var button in _selectionGridButtons)
+            {
+                button.interactable = false;
+            }
+
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, DefaultAlpha, 0.5f));
+                yield return new WaitForSeconds(0.025f);
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+            foreach (var button in _selectionGridButtons)
+            {
+                button.interactable = true;
+            }
+
+            _buttonsInteractable = true;
+        }
+
         private IEnumerator ShowHappyEmojiCoroutine()
         {
             _targetEmojiImage.sprite = _emojiController.GetNextHappyEmoji();
@@ -204,18 +324,22 @@ namespace Colorcrush.Game
             _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
         }
 
-        private void UpdateProgressText()
+        private void UpdateProgressBar()
         {
-            var progress = Mathf.Min((float)_submitCount / TargetSubmitCount * 100f, 100f);
-            progressText.text = $"{progress:F0}%";
+            if (progressBar != null)
+            {
+                var progress = Mathf.Min((float)_submitCount / TargetSubmitCount, 1f);
+                var newWidth = _initialProgressBarWidth * progress;
+                progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, newWidth);
+            }
         }
 
         private void UpdateTargetButtonColor()
         {
-            if (_colorController != null && _targetEmojiImage != null && _targetMaterial != null)
+            if (_colorController != null && _targetEmojiImage != null && _targetEmojiImage.material != null)
             {
                 var targetColor = ColorController.GetCurrentTargetColor();
-                _targetMaterial.SetColor("_TargetColor", targetColor);
+                _targetEmojiImage.material.SetColor("_TargetColor", targetColor);
                 LoggingManager.LogEvent(new NewTargetColorEvent(targetColor));
             }
         }
