@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
-  useInitiatingScene: 1
+  useInitiatingScene: 0
   resourcesPath: Assets/Resources/Colorcrush
   scenesPath: Assets/Scenes
   doPixelBalancing: 0
