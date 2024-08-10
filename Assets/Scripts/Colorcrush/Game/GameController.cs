@@ -39,7 +39,7 @@ namespace Colorcrush.Game
         private ColorController _colorController;
 
         private GameState _currentState = GameState.Setup;
-        private EmojiController _emojiController;
+        private EmojiManager _emojiManager;
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
         private Vector3 _originalSubmitButtonPosition;
@@ -168,7 +168,7 @@ namespace Colorcrush.Game
         private void InitializeComponents()
         {
             _colorController = FindObjectOfType<ColorController>();
-            _emojiController = FindObjectOfType<EmojiController>();
+            _emojiManager = FindObjectOfType<EmojiManager>();
         }
 
         private void InitializeButtons()
@@ -191,7 +191,7 @@ namespace Colorcrush.Game
                 _targetEmojiAnimator = targetEmojiObject.GetComponent<Animator>();
                 if (_targetEmojiImage != null)
                 {
-                    _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
+                    _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
                 }
 
                 var targetButton = targetEmojiObject.GetComponent<Button>();
@@ -247,7 +247,7 @@ namespace Colorcrush.Game
 
         private void UpdateButton(int index, bool ignoreAlpha = false)
         {
-            _selectionGridImages[index].sprite = _emojiController.GetDefaultEmoji();
+            _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
             var nextColor = _colorController.GetNextColor();
             _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
             if (!ignoreAlpha)
@@ -317,7 +317,7 @@ namespace Colorcrush.Game
                 }
 
                 // Set the target emoji to the default happy emoji
-                _targetEmojiImage.sprite = _emojiController.GetDefaultHappyEmoji();
+                _targetEmojiImage.sprite = EmojiManager.GetDefaultHappyEmoji();
             }
         }
 
@@ -399,7 +399,7 @@ namespace Colorcrush.Game
             var image = animator.GetComponent<Image>();
             if (image != null)
             {
-                image.sprite = _emojiController.GetNextSadEmoji();
+                image.sprite = EmojiManager.GetNextSadEmoji();
             }
 
             AnimationManager.PlayAnimation(animator, new FadeAnimation(ToggledAlpha, 0f, 0.5f));
@@ -410,7 +410,7 @@ namespace Colorcrush.Game
             var image = animator.GetComponent<Image>();
             if (image != null)
             {
-                image.sprite = _emojiController.GetNextHappyEmoji();
+                image.sprite = EmojiManager.GetNextHappyEmoji();
             }
 
             var targetPosition = progressBar.transform.position;
@@ -457,11 +457,11 @@ namespace Colorcrush.Game
 
         private IEnumerator ShowHappyEmojiCoroutine()
         {
-            _targetEmojiImage.sprite = _emojiController.GetNextHappyEmoji();
+            _targetEmojiImage.sprite = EmojiManager.GetNextHappyEmoji();
             yield return new WaitForSeconds(1f);
             if (!_targetReached)
             {
-                _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
+                _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
             }
         }
 
