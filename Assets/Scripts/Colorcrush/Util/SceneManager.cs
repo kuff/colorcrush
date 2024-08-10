@@ -1,12 +1,6 @@
-// Copyright (C) 2024 Peter Guld Leth
-
-#region
-
 using System;
 using System.Collections;
 using UnityEngine;
-
-#endregion
 
 namespace Colorcrush.Util
 {
@@ -15,6 +9,7 @@ namespace Colorcrush.Util
         private static SceneManager _instance;
         private AsyncOperation _asyncOperation;
         private string _previousSceneName;
+        private Coroutine _activationWarningCoroutine;
 
         public static SceneManager Instance
         {
@@ -49,15 +44,19 @@ namespace Colorcrush.Util
             }
         }
 
-        // This function can be called to load a scene in the background without a callback
         public static void LoadSceneAsync(string sceneName)
         {
             LoadSceneAsync(sceneName, null);
         }
 
-        // This function can be called to load a scene in the background with a callback
         public static void LoadSceneAsync(string sceneName, Action onSceneReady)
         {
+            if (IsLoading)
+            {
+                Debug.LogWarning("A scene is already loading. Cannot load another scene until the current one is done.");
+                return;
+            }
+
             Debug.Log($"Starting to load scene: {sceneName} asynchronously.");
             Instance._previousSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
             IsLoading = true;
@@ -79,26 +78,28 @@ namespace Colorcrush.Util
 
                 _asyncOperation.allowSceneActivation = false;
 
-                while (!_asyncOperation.isDone)
+                while (_asyncOperation.progress < 0.9f)
                 {
-                    if (_asyncOperation.progress >= 0.9f)
-                    {
-                        if (onSceneReady != null)
-                        {
-                            Debug.Log("Scene loaded. Invoking onSceneReady callback.");
-                            onSceneReady.Invoke();
-                        }
-                        else
-                        {
-                            Debug.Log("Scene loaded. Activating loaded scene.");
-                            ActivateLoadedScene();
-                        }
-
-                        yield break;
-                    }
-
                     yield return null;
                 }
+
+                Debug.Log("Scene loaded to 90%. Ready for activation.");
+                onSceneReady?.Invoke();
+
+                if (onSceneReady == null)
+                {
+                    Debug.Log("No callback provided. Automatically activating the scene.");
+                    ActivateLoadedScene();
+                }
+
+                // Wait here until the scene is activated by the caller.
+                while (!_asyncOperation.allowSceneActivation)
+                {
+                    yield return null;
+                }
+
+                // Wait for the scene to finish loading
+                yield return WaitForSceneActivation();
             }
             else
             {
@@ -108,19 +109,23 @@ namespace Colorcrush.Util
             }
         }
 
-        // This function should be called to fully load the scene after the callback
         public static void ActivateLoadedScene()
         {
+            if (Instance._activationWarningCoroutine != null)
+            {
+                Instance.StopCoroutine(Instance._activationWarningCoroutine);
+                Instance._activationWarningCoroutine = null;
+            }
+
             Debug.Log("Activating loaded scene.");
             Instance.ActivateLoadedSceneInternal();
         }
 
         private void ActivateLoadedSceneInternal()
         {
-            if (_asyncOperation is { isDone: false, })
+            if (_asyncOperation != null && !_asyncOperation.isDone)
             {
                 _asyncOperation.allowSceneActivation = true;
-                StartCoroutine(WaitForSceneActivation());
             }
             else
             {
@@ -139,7 +144,6 @@ namespace Colorcrush.Util
             IsLoading = false;
         }
 
-        // This function can be called to retrieve the name of the previous scene
         public static string GetPreviousSceneName()
         {
             return Instance._previousSceneName;
