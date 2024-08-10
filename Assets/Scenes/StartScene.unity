@@ -503,7 +503,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tapText: {fileID: 34146521}
-  nextSceneName: 
+  nextSceneName: GameScene
 --- !u!4 &440928364
 Transform:
   m_ObjectHideFlags: 0

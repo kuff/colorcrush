@@ -10,20 +10,31 @@ namespace Colorcrush.Animation
 {
     public class MoveToAnimation : AnimationManager.Animation
     {
+        private readonly Vector3? _endScale;
         private readonly Vector3 _targetPosition;
 
-        public MoveToAnimation(Vector3 targetPosition, float duration)
+        public MoveToAnimation(Vector3 targetPosition, float duration, Vector3? endScale = null)
         {
             _targetPosition = targetPosition;
+            _endScale = endScale;
             Duration = duration;
             IsTemporary = false;
         }
 
         public override void Play(Animator animator, float progress)
         {
-            var startPosition = animator.transform.position;
             var easedProgress = EaseInOutQuad(progress);
-            animator.transform.position = Vector3.Lerp(startPosition, _targetPosition, easedProgress);
+
+            // Handle position animation
+            var startPosition = animator.GetOriginalPosition();
+            animator.SetPosition(Vector3.Lerp(startPosition, _targetPosition, easedProgress));
+
+            // Handle scale animation if endScale is provided
+            if (_endScale.HasValue)
+            {
+                var startScale = animator.GetOriginalScale();
+                animator.SetScale(Vector3.Lerp(startScale, _endScale.Value, easedProgress));
+            }
         }
 
         private float EaseInOutQuad(float t)

@@ -11,6 +11,7 @@ using Colorcrush.Util;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Animator = Colorcrush.Animation.Animator;
 
 #endregion
 
@@ -39,6 +40,7 @@ namespace Colorcrush.Game
         private Button[] _selectionGridButtons;
         private Image[] _selectionGridImages;
         private int _submitCount;
+        private Animator _targetEmojiAnimator;
         private Image _targetEmojiImage;
         private bool _targetReached;
 
@@ -54,12 +56,6 @@ namespace Colorcrush.Game
         {
             _colorController = FindObjectOfType<ColorController>();
             _emojiController = FindObjectOfType<EmojiController>();
-
-            if (submitButton != null)
-            {
-                var buttonAnimator = submitButton.gameObject.GetComponent<ButtonAnimator>();
-                submitButton.onClick.AddListener(() => AnimationManager.PlayAnimation(buttonAnimator, new BumpAnimation(0.1f, 0.9f)));
-            }
         }
 
         private void InitializeButtons()
@@ -75,10 +71,29 @@ namespace Colorcrush.Game
             _buttonToggledStates = new bool[_selectionGridButtons.Length];
             _originalButtonScales = _selectionGridButtons.Select(b => b.transform.localScale).ToArray();
 
-            _targetEmojiImage = GameObject.FindGameObjectWithTag("SelectionTarget")?.GetComponent<Image>();
-            if (_targetEmojiImage != null)
+            var targetEmojiObject = GameObject.FindGameObjectWithTag("SelectionTarget");
+            if (targetEmojiObject != null)
             {
-                _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
+                _targetEmojiImage = targetEmojiObject.GetComponent<Image>();
+                _targetEmojiAnimator = targetEmojiObject.GetComponent<Animator>();
+                if (_targetEmojiImage != null)
+                {
+                    _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
+                }
+
+                var targetButton = targetEmojiObject.GetComponent<Button>();
+                if (targetButton != null)
+                {
+                    targetButton.onClick.AddListener(OnTargetEmojiClicked);
+                }
+            }
+        }
+
+        private void OnTargetEmojiClicked()
+        {
+            if (_targetEmojiAnimator != null)
+            {
+                AnimationManager.PlayAnimation(_targetEmojiAnimator, new ShakeAnimation(0.5f, 5f, 15f));
             }
         }
 
@@ -142,6 +157,9 @@ namespace Colorcrush.Game
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
 
+            // Add debug info
+            Debug.Log($"Button {index} {(_buttonToggledStates[index] ? "selected" : "deselected")}. New alpha: {alpha}, New scale: {targetScale}");
+
             LoggingManager.LogEvent(_buttonToggledStates[index]
                 ? new ColorSelectedEvent(index, _selectionGridImages[index].sprite.name)
                 : new ColorDeselectedEvent(index));
@@ -149,10 +167,15 @@ namespace Colorcrush.Game
 
         public void OnSubmitButtonClicked()
         {
+            Debug.Log("Submit button clicked");
+
             if (SceneManager.IsLoading || !_buttonsInteractable)
             {
+                AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new ShakeAnimation(0.1f, 9f));
                 return;
             }
+
+            AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
 
             if (_targetReached)
             {
@@ -275,8 +298,7 @@ namespace Colorcrush.Game
             }
 
             var targetPosition = progressBar.transform.position;
-            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 1f));
-            AnimationManager.PlayAnimation(animator, new ScaleAnimation(Vector3.zero, 1f));
+            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 0.5f, Vector3.zero));
             yield return new WaitForSeconds(0.05f);
         }
 

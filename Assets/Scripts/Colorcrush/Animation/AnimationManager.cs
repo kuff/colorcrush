@@ -14,6 +14,7 @@ namespace Colorcrush.Animation
         private static AnimationManager _instance;
 
         private readonly Dictionary<Animation, List<AnimationState>> _activeAnimations = new();
+        private readonly Dictionary<Animator, List<Animation>> _animatorAnimations = new();
 
         public static AnimationManager Instance
         {
@@ -73,6 +74,7 @@ namespace Colorcrush.Animation
                 foreach (var state in completedStates)
                 {
                     states.Remove(state);
+                    RemoveAnimatorAnimation(state.Animator, animation);
                 }
 
                 if (states.Count == 0)
@@ -98,11 +100,77 @@ namespace Colorcrush.Animation
             {
                 states = new List<AnimationState>();
                 Instance._activeAnimations[animation] = states;
+                Debug.Log($"Created new animation state for {animation.GetType().Name}");
+            }
+            else
+            {
+                Debug.Log($"Using existing animation state for {animation.GetType().Name}");
             }
 
+            var count = 0;
             foreach (var animator in animators)
             {
-                states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
+                if (animator != null)
+                {
+                    // Remove any existing animations for this animator
+                    Instance.RemoveExistingAnimations(animator);
+                    // Add a new state for this animator
+                    states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
+                    Instance.AddAnimatorAnimation(animator, animation);
+                    count++;
+                }
+                else
+                {
+                    Debug.LogWarning("Attempted to add a null animator to the animation state");
+                }
+            }
+
+            if (count > 0)
+            {
+                Debug.Log($"Added {count} animator(s) to {animation.GetType().Name}");
+            }
+            else
+            {
+                Debug.LogWarning($"No valid animators were added to {animation.GetType().Name}");
+            }
+        }
+
+        private void RemoveExistingAnimations(Animator animator)
+        {
+            if (_animatorAnimations.TryGetValue(animator, out var animations))
+            {
+                foreach (var anim in animations)
+                {
+                    if (_activeAnimations.TryGetValue(anim, out var states))
+                    {
+                        states.RemoveAll(s => s.Animator == animator);
+                    }
+                }
+
+                _animatorAnimations.Remove(animator);
+            }
+        }
+
+        private void AddAnimatorAnimation(Animator animator, Animation animation)
+        {
+            if (!_animatorAnimations.TryGetValue(animator, out var animations))
+            {
+                animations = new List<Animation>();
+                _animatorAnimations[animator] = animations;
+            }
+
+            animations.Add(animation);
+        }
+
+        private void RemoveAnimatorAnimation(Animator animator, Animation animation)
+        {
+            if (_animatorAnimations.TryGetValue(animator, out var animations))
+            {
+                animations.Remove(animation);
+                if (animations.Count == 0)
+                {
+                    _animatorAnimations.Remove(animator);
+                }
             }
         }
 

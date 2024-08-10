@@ -9,6 +9,8 @@ using System.IO;
 using Colorcrush.Util;
 using UnityEngine;
 
+// ReSharper disable StringLiteralTypo
+
 #endregion
 
 namespace Colorcrush.Logging
@@ -212,7 +214,7 @@ namespace Colorcrush.Logging
                     File.Delete(file);
                 }
 
-                Debug.Log($"Deleted {logFiles.Length} log files.");
+                Debug.Log($"Deleted {logFiles.Length} log file(s).");
             }
             catch (Exception e)
             {

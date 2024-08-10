@@ -17,7 +17,7 @@ namespace Colorcrush.Animation
         public ShakeAnimation(float duration, float maxRotation = 2f, float frequency = 10f)
         {
             Duration = duration;
-            IsTemporary = true;
+            IsTemporary = false;
             _duration = duration;
             _maxRotation = maxRotation;
             _frequency = frequency;
