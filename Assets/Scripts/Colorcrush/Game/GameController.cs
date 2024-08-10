@@ -23,6 +23,10 @@ namespace Colorcrush.Game
         private const float ToggledAlpha = 0.5f;
         private const float DefaultAlpha = 1f;
         private const int TargetSubmitCount = 5;
+        private const float SetupScaleFactor = 1.2f;
+        private const float SetupAnimationDuration = 0.5f;
+        private const float SubmitButtonMoveDistance = 50f; // Distance to move the submit button
+        private const float ButtonFadeInDelay = 0.025f; // Delay between each button fading in
 
         [SerializeField] private TextMeshProUGUI submitButtonText;
         [SerializeField] private Image progressBar;
@@ -33,9 +37,13 @@ namespace Colorcrush.Game
         private bool[] _buttonToggledStates;
 
         private ColorController _colorController;
+
+        private GameState _currentState = GameState.Setup;
         private EmojiController _emojiController;
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
+        private Vector3 _originalSubmitButtonPosition;
+        private Vector3 _originalTargetScale;
         private GameObject[] _selectionButtons;
         private Button[] _selectionGridButtons;
         private Image[] _selectionGridImages;
@@ -50,6 +58,111 @@ namespace Colorcrush.Game
             InitializeButtons();
             InitializeProgressBar();
             UpdateUI();
+            StartCoroutine(GameLoop());
+        }
+
+        private IEnumerator GameLoop()
+        {
+            yield return StartCoroutine(SetupState());
+            yield return StartCoroutine(MainState());
+            yield return StartCoroutine(TeardownState());
+        }
+
+        private IEnumerator SetupState()
+        {
+            _currentState = GameState.Setup;
+            _targetEmojiImage.transform.localScale = _originalTargetScale * SetupScaleFactor;
+
+            // Set grid buttons' opacity to 0 and activate them
+            foreach (var button in _selectionGridButtons)
+            {
+                var image = button.GetComponent<Image>();
+                if (image != null && image.material != null)
+                {
+                    image.material.SetFloat("_Alpha", 0f);
+                }
+
+                button.gameObject.SetActive(true);
+            }
+
+            // Hide submit button
+            var submitButtonAnimator = submitButton.GetComponent<Animator>();
+            submitButtonAnimator.SetOpacity(0f);
+            submitButton.interactable = false;
+
+            // Scale down target
+            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale, SetupAnimationDuration));
+
+            yield return new WaitForSeconds(SetupAnimationDuration / 2); // Start fading in buttons halfway through target scaling
+
+            // Fade in grid buttons with staggered delay
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, DefaultAlpha, 0.5f));
+                yield return new WaitForSeconds(ButtonFadeInDelay);
+            }
+
+            // Wait for all grid buttons to finish fading in
+            yield return new WaitForSeconds(0.25f);
+
+            // Fade in submit button
+            submitButton.gameObject.SetActive(true);
+            _originalSubmitButtonPosition = submitButton.transform.position;
+            AnimationManager.PlayAnimation(submitButtonAnimator, new FadeAnimation(0f, DefaultAlpha, SetupAnimationDuration / 2));
+
+            yield return new WaitForSeconds(SetupAnimationDuration / 2);
+
+            // Make submit button interactable after it's fully revealed
+            submitButton.interactable = true;
+        }
+
+        private IEnumerator MainState()
+        {
+            _currentState = GameState.Main;
+            _buttonsInteractable = true;
+
+            while (!_targetReached)
+            {
+                yield return null; // Wait for player interactions
+            }
+        }
+
+        private IEnumerator TeardownState()
+        {
+            _currentState = GameState.Teardown;
+            _buttonsInteractable = false;
+
+            // Fade out grid and submit button
+            foreach (var button in _selectionGridButtons)
+            {
+                var buttonAnimator = button.GetComponent<Animator>();
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(DefaultAlpha, 0f, SetupAnimationDuration / 2));
+            }
+
+            yield return new WaitForSeconds(1f);
+
+            var sceneIsLoaded = false;
+            SceneManager.LoadSceneAsync(nextSceneName, () => sceneIsLoaded = true);
+
+            var submitAnimator = submitButton.GetComponent<Animator>();
+            AnimationManager.PlayAnimation(submitAnimator, new FadeAnimation(DefaultAlpha, 0f, SetupAnimationDuration / 2));
+
+            // Wait for an additional second before scaling up the target
+            yield return new WaitForSeconds(SetupAnimationDuration / 2);
+
+            // Scale up target
+            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale * SetupScaleFactor, SetupAnimationDuration));
+
+            yield return new WaitForSeconds(SetupAnimationDuration);
+
+            // Allow scene to load
+            while (!sceneIsLoaded)
+            {
+                yield return null;
+            }
+
+            SceneManager.ActivateLoadedScene();
         }
 
         private void InitializeComponents()
@@ -86,6 +199,8 @@ namespace Colorcrush.Game
                 {
                     targetButton.onClick.AddListener(OnTargetEmojiClicked);
                 }
+
+                _originalTargetScale = targetEmojiObject.transform.localScale;
             }
         }
 
@@ -145,7 +260,7 @@ namespace Colorcrush.Game
 
         public void OnButtonClicked(int index)
         {
-            if (index < 0 || index >= _selectionGridButtons.Length)
+            if (_currentState != GameState.Main || !_buttonsInteractable || index < 0 || index >= _selectionGridButtons.Length)
             {
                 return;
             }
@@ -167,13 +282,13 @@ namespace Colorcrush.Game
 
         public void OnSubmitButtonClicked()
         {
-            Debug.Log("Submit button clicked");
-
-            if (SceneManager.IsLoading || !_buttonsInteractable)
+            if (_currentState != GameState.Main || SceneManager.IsLoading || !_buttonsInteractable)
             {
                 AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new ShakeAnimation(0.1f, 9f));
                 return;
             }
+
+            Debug.Log("Submit button clicked");
 
             AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
 
@@ -181,7 +296,7 @@ namespace Colorcrush.Game
             {
                 _colorController.AdvanceToNextTargetColor();
                 submitButtonText.text = "...";
-                SceneManager.LoadSceneAsync(nextSceneName);
+                StartCoroutine(TeardownState());
                 return;
             }
 
@@ -201,7 +316,8 @@ namespace Colorcrush.Game
                     button.SetActive(false);
                 }
 
-                submitButtonText.text = "CONTINUE";
+                // Set the target emoji to the default happy emoji
+                _targetEmojiImage.sprite = _emojiController.GetDefaultHappyEmoji();
             }
         }
 
@@ -343,7 +459,10 @@ namespace Colorcrush.Game
         {
             _targetEmojiImage.sprite = _emojiController.GetNextHappyEmoji();
             yield return new WaitForSeconds(1f);
-            _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
+            if (!_targetReached)
+            {
+                _targetEmojiImage.sprite = _emojiController.GetDefaultEmoji();
+            }
         }
 
         private void UpdateProgressBar()
@@ -364,6 +483,13 @@ namespace Colorcrush.Game
                 _targetEmojiImage.material.SetColor("_TargetColor", targetColor);
                 LoggingManager.LogEvent(new NewTargetColorEvent(targetColor));
             }
+        }
+
+        private enum GameState
+        {
+            Setup,
+            Main,
+            Teardown,
         }
     }
 }

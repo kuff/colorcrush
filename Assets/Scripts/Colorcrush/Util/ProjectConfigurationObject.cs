@@ -39,6 +39,9 @@ namespace Colorcrush.Util
         [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
 
+        [Tooltip("The name of the default happy emoji sprite (without the file extension).")]
+        public string defaultHappyEmojiName = "reshot-icon-ok-QBCJ4DSA8U";
+
         [Tooltip("The path to the folder containing happy emoji sprites.")]
         public string happyEmojiFolder = "Colorcrush/Emoji/Happy";
 

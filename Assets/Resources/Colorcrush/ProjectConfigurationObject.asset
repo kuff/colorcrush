@@ -20,6 +20,7 @@ MonoBehaviour:
   randomSeed: 42
   numColorsToFilter: 12
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
+  defaultHappyEmojiName: reshot-icon-ok-QBCJ4DSA8U
   happyEmojiFolder: Colorcrush/Emoji/Happy
   sadEmojiFolder: Colorcrush/Emoji/Sad
   emojiMaterialsFolder: GeneratedMaterials

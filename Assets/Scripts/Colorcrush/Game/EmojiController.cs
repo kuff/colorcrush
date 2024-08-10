@@ -15,6 +15,7 @@ namespace Colorcrush.Game
     public class EmojiController : MonoBehaviour
     {
         private Sprite _defaultEmojiSprite;
+        private Sprite _defaultHappyEmojiSprite;
 
         private Queue<Sprite> _happyEmojiQueue;
         private Queue<Sprite> _sadEmojiQueue;
@@ -75,6 +76,23 @@ namespace Colorcrush.Game
             }
 
             return _defaultEmojiSprite;
+        }
+
+        public Sprite GetDefaultHappyEmoji()
+        {
+            if (_defaultHappyEmojiSprite != null)
+            {
+                return _defaultHappyEmojiSprite;
+            }
+
+            _defaultHappyEmojiSprite = Resources.Load<Sprite>($"{ProjectConfig.InstanceConfig.happyEmojiFolder}/{ProjectConfig.InstanceConfig.defaultHappyEmojiName}");
+
+            if (_defaultHappyEmojiSprite == null)
+            {
+                Debug.LogError($"Default happy emoji '{ProjectConfig.InstanceConfig.defaultHappyEmojiName}' not found in Happy folder.");
+            }
+
+            return _defaultHappyEmojiSprite;
         }
 
         private Sprite GetNextEmoji(Queue<Sprite> queue)

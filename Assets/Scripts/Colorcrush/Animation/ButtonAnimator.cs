@@ -2,6 +2,7 @@
 
 #region
 
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -97,9 +98,39 @@ namespace Colorcrush.Animation
 
         public override void SetOpacity(float opacity)
         {
-            var color = image.color;
-            color.a = opacity;
-            image.color = color;
+            if (image != null)
+            {
+                var color = image.color;
+                color.a = opacity;
+                image.color = color;
+            }
+
+            // Set opacity for all nested Image components
+            foreach (var nestedImage in GetComponentsInChildren<Image>())
+            {
+                if (nestedImage != image)
+                {
+                    var nestedColor = nestedImage.color;
+                    nestedColor.a = opacity;
+                    nestedImage.color = nestedColor;
+                }
+            }
+
+            // Set opacity for all nested Text components
+            foreach (var text in GetComponentsInChildren<Text>())
+            {
+                var textColor = text.color;
+                textColor.a = opacity;
+                text.color = textColor;
+            }
+
+            // Set opacity for all nested TextMeshProUGUI components
+            foreach (var tmpText in GetComponentsInChildren<TextMeshProUGUI>())
+            {
+                var tmpTextColor = tmpText.color;
+                tmpTextColor.a = opacity;
+                tmpText.color = tmpTextColor;
+            }
         }
 
         public string GetButtonText()
