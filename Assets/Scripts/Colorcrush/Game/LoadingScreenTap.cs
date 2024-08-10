@@ -30,6 +30,17 @@ namespace Colorcrush.Game
             }
 
             _animators = FindObjectsOfType<Animator>();
+            StartCoroutine(PlayTwitchAnimationPeriodically());
+        }
+
+        private IEnumerator PlayTwitchAnimationPeriodically()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(8f);
+                var animatorsList = new List<Animator>(_animators);
+                AnimationManager.PlayAnimation(animatorsList, new ShakeAnimation(0.75f));
+            }
         }
 
         public void OnTapTextClicked()
@@ -41,14 +52,6 @@ namespace Colorcrush.Game
 
             _isLoading = true;
             tapText.text = "LOADING...";
-            var animatorsList = new List<Animator>(_animators);
-            AnimationManager.PlayAnimation(animatorsList, new BumpAllAnimation(0.25f, 0.9f, animatorsList));
-            StartCoroutine(LoadNextSceneAfterAnimation());
-        }
-
-        private IEnumerator LoadNextSceneAfterAnimation()
-        {
-            yield return new WaitForSeconds(0.1f); // Wait for the animation duration
             SceneManager.LoadSceneAsync(nextSceneName, OnSceneReady);
         }
 

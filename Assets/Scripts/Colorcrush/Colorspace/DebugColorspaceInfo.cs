@@ -28,17 +28,16 @@ namespace Colorcrush.Colorspace
             info += $"Actual Color Space: {QualitySettings.activeColorSpace}\n";
             info += $"Quality Level: {QualitySettings.GetQualityLevel()}\n";
             info += $"HDR Enabled: {QualitySettings.vSyncCount > 0}\n";
-            
+
             if (GraphicsSettings.renderPipelineAsset == null)
             {
-                info += "Render Pipeline Type: Built-in Render Pipeline";
+                info += "Render Pipeline: Built-in Render Pipeline";
             }
             else
             {
                 var renderPipelineAsset = GraphicsSettings.renderPipelineAsset;
-                info += $"Render Pipeline Name: {renderPipelineAsset.name}";
+                info += $"Render Pipeline: {renderPipelineAsset.name}";
             }
-
 
             infoText.text = info;
         }
