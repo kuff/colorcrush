@@ -291,8 +291,6 @@ namespace Colorcrush.Game
             AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
 
             _submitCount++;
-            LoggingManager.LogEvent(new ColorsSubmittedEvent());
-
             StartCoroutine(AnimateEmojisAndResetButtons());
             UpdateProgressBar();
             UpdateTargetButtonColor();
@@ -448,6 +446,7 @@ namespace Colorcrush.Game
         private IEnumerator ShowHappyEmojiCoroutine()
         {
             _targetEmojiImage.sprite = EmojiManager.GetNextHappyEmoji();
+            LoggingManager.LogEvent(new ColorsSubmittedEvent(_targetEmojiImage.sprite.name));
             yield return new WaitForSeconds(1f);
             if (!_targetReached)
             {

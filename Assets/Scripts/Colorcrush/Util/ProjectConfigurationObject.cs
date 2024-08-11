@@ -28,6 +28,9 @@ namespace Colorcrush.Util
         [Tooltip("If true, the game will attempt to balance pixel colors in the final image. This may affect performance.")]
         public bool doPixelBalancing = true;
 
+        [Tooltip("If true, all log files will be deleted on startup when running in the Unity Editor.")]
+        public bool deleteAllLogFilesOnEditorStartup = true;
+
         [Header("Game Configuration")]
         [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;
@@ -69,6 +72,9 @@ namespace Colorcrush.Util
 
         [Tooltip("The minimum severity level for logs to be recorded. The severity scale is: Log (0), Warning (1), Assert (2), Error (3), Exception (4). Only logs with this severity or higher will be recorded.")]
         public LogType minimumLogSeverity = LogType.Log;
+
+        [Tooltip("If true, a new log file will always be created on startup, regardless of existing log files.")]
+        public bool alwaysCreateNewLogFileOnStartup = false;
 
         [Header("Audio Configuration")]
         [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]

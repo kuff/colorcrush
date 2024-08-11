@@ -2,6 +2,7 @@
 
 #region
 
+using System;
 using UnityEngine;
 
 #endregion
@@ -126,11 +127,17 @@ namespace Colorcrush.Logging
 
     public class ColorsSubmittedEvent : ILogEvent
     {
+        public ColorsSubmittedEvent(string targetColorHappySpriteName)
+        {
+            TargetColorHappySpriteName = targetColorHappySpriteName;
+        }
+
+        public string TargetColorHappySpriteName { get; }
         public string EventName => "colorssubmitted";
 
         public string GetStringifiedData()
         {
-            return "";
+            return TargetColorHappySpriteName;
         }
     }
 
@@ -149,6 +156,38 @@ namespace Colorcrush.Logging
         public string GetStringifiedData()
         {
             return $"{Type} {Message}";
+        }
+    }
+
+    public class RewardEmojiEvent : ILogEvent
+    {
+        public RewardEmojiEvent(string emojiName)
+        {
+            EmojiName = emojiName;
+        }
+
+        public string EmojiName { get; }
+        public string EventName => "rewardemoji";
+
+        public string GetStringifiedData()
+        {
+            return EmojiName;
+        }
+    }
+
+    public class StartTimeEvent : ILogEvent
+    {
+        public StartTimeEvent(DateTime startTime)
+        {
+            StartTime = startTime;
+        }
+
+        public DateTime StartTime { get; }
+        public string EventName => "starttime";
+
+        public string GetStringifiedData()
+        {
+            return StartTime.ToString("o"); // ISO 8601 format
         }
     }
 }

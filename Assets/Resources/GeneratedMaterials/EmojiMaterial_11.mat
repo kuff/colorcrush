@@ -29,7 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 1
+    - _Alpha: 0.045968648
     - _Tolerance: 0.1
     - _WhiteTolerance: 0.1
     m_Colors:

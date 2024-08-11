@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Colorcrush.Util;
 using UnityEngine;
 
@@ -31,8 +32,10 @@ namespace Colorcrush.Logging
 
         private readonly Queue<(long timestamp, ILogEvent logEvent)> _eventQueue = new();
         private string _currentLogFilePath;
-        private bool _isFirstLog = true;
         private DateTime _startTime;
+
+        public delegate void LogEventQueuedHandler(ILogEvent logEvent);
+        public static event LogEventQueuedHandler OnLogEventQueued;
 
         public static LoggingManager Instance
         {
@@ -60,7 +63,21 @@ namespace Colorcrush.Logging
             _instance = this;
             DontDestroyOnLoad(gameObject);
 
-            InitializeNewLogFile();
+#if DEBUG
+            if (ProjectConfig.InstanceConfig.deleteAllLogFilesOnEditorStartup)
+            {
+                DeleteAllLogFiles();
+            }
+#endif
+
+            if (ProjectConfig.InstanceConfig.alwaysCreateNewLogFileOnStartup)
+            {
+                InitializeNewLogFile();
+            }
+            else
+            {
+                InitializeMostRecentLogFile();
+            }
             StartCoroutine(SaveLogRoutine());
 
             Application.logMessageReceived += HandleLog;
@@ -98,12 +115,29 @@ namespace Colorcrush.Logging
             }
         }
 
+        private void InitializeMostRecentLogFile()
+        {
+            var logFiles = Directory.GetFiles(Application.persistentDataPath, $"{ProjectConfig.InstanceConfig.logFilePrefix}*{ProjectConfig.InstanceConfig.logFileExtension}");
+            if (logFiles.Length > 0)
+            {
+                _currentLogFilePath = logFiles.OrderByDescending(f => new FileInfo(f).CreationTime).First();
+                _startTime = DateTime.Now;
+                LogEvent(new StartTimeEvent(_startTime));
+                Debug.Log($"Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
+            }
+            else
+            {
+                InitializeNewLogFile();
+                Debug.LogWarning($"No existing log files found. Initialized new log file: {_currentLogFilePath}");
+            }
+        }
+
         private void InitializeNewLogFile()
         {
             _startTime = DateTime.Now;
             var timestamp = _startTime.ToString("yyyyMMdd_HHmmss");
             _currentLogFilePath = Path.Combine(Application.persistentDataPath, $"{ProjectConfig.InstanceConfig.logFilePrefix}{timestamp}{ProjectConfig.InstanceConfig.logFileExtension}");
-            _isFirstLog = true;
+            LogEvent(new StartTimeEvent(_startTime));
         }
 
         public static void LogEvent(ILogEvent logEvent)
@@ -115,6 +149,7 @@ namespace Colorcrush.Logging
         {
             var timestamp = (long)(DateTime.Now - _startTime).TotalMilliseconds;
             _eventQueue.Enqueue((timestamp, logEvent));
+            OnLogEventQueued?.Invoke(logEvent);
         }
 
         private IEnumerator SaveLogRoutine()
@@ -166,12 +201,6 @@ namespace Colorcrush.Logging
                         ? $"{timestamp},{logEvent.EventName}"
                         : $"{timestamp},{logEvent.EventName},{stringifiedData}";
 
-                    if (_isFirstLog && updatedLines.Count == 0)
-                    {
-                        writer.WriteLine($"0,starttime,{_startTime:yyyy-MM-dd HH:mm:ss}");
-                        _isFirstLog = false;
-                    }
-
                     writer.WriteLine(logEntry);
                 }
 
@@ -222,10 +251,36 @@ namespace Colorcrush.Logging
             }
         }
 
-        public void StartNewLogFile()
+        public static void StartNewLogFile()
         {
-            SaveLog(); // Save any remaining logs in the current file
-            InitializeNewLogFile();
+            LogEvent(new ResetEvent());
+            Instance.SaveLog(); // Save any remaining logs in the current file
+            Instance.InitializeNewLogFile();
+        }
+
+        public static List<string> GetLogDataLines()
+        {
+            List<string> logLines = new List<string>();
+
+            try
+            {
+                string currentLogFilePath = Instance._currentLogFilePath;
+                if (File.Exists(currentLogFilePath))
+                {
+                    logLines = File.ReadAllLines(currentLogFilePath).ToList();
+                }
+                else
+                {
+                    logLines = Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}").ToList();
+                    Debug.Log($"Yielding {logLines.Count} log entries from the queue since data is yet to be written to the file.");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error reading log file: {e.Message}");
+            }
+
+            return logLines;
         }
     }
 }

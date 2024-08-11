@@ -12,11 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 908a49a2b3bb6394083118f5252d0f7e, type: 3}
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
-  initiatingScenePath: Assets/Scenes/StartSceneNew.unity
+  initiatingScenePath: Assets/Scenes/StartScene.unity
   useInitiatingScene: 1
   resourcesPath: Assets/Resources/Colorcrush
   scenesPath: Assets/Scenes
   doPixelBalancing: 0
+  deleteAllLogFilesOnEditorStartup: 1
   randomSeed: 42
   numColorsToFilter: 12
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
@@ -30,6 +31,7 @@ MonoBehaviour:
   endOfFileSymbol: EOF
   logSaveInterval: 5
   minimumLogSeverity: 2
+  alwaysCreateNewLogFileOnStartup: 0
   globalGain: 1
   maxAudioSources: 32
   targetRMS: 0.01

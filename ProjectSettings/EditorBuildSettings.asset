@@ -8,15 +8,18 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 3fc8acdd13e6c734bafef6554d6fdbcd
+  - enabled: 0
+    path: Assets/Scenes/ColorSpaceTestScene.unity
+    guid: 2cef20a2fb2b7d74084d5ea2ef298cab
   - enabled: 1
     path: Assets/Scenes/StartScene.unity
-    guid: 3c69788dd2278b34c8a2d9bd1ea1ab0a
+    guid: aa0cbe097b73c8b4593dc4e7e5022190
   - enabled: 1
     path: Assets/Scenes/GameScene.unity
     guid: 5d8bd627c9eb5aa4996d1e4b14dac66f
   - enabled: 1
-    path: Assets/Scenes/MuralScene.unity
-    guid: d2e3c6dc7e059b84e9e8a450d284f1d8
+    path: Assets/Scenes/MenuScene.unity
+    guid: 787586239abfa93408339b9fb4491e9b
   m_configObjects:
     com.unity.adaptiveperformance.loader_settings: {fileID: 11400000, guid: 4f84b2d7b796171478449bf1be757e9f, type: 2}
     com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: cf8f807e4edf1084b86fa59ebdab4de5, type: 2}
