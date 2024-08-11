@@ -42,6 +42,7 @@ namespace Colorcrush.Game
             _animators = FindObjectsOfType<Animator>();
             StartCoroutine(PlayTwitchAnimationPeriodically());
             StartCoroutine(AddSmileyToTitle());
+            StartCoroutine(PlaySoundAfterDelay());
         }
 
         private IEnumerator PlayTwitchAnimationPeriodically()
@@ -60,10 +61,18 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
+            AudioManager.PlaySound("MENU_Pick");
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
+            AudioManager.PlaySound("MENU_Pick");
+        }
+
+        private IEnumerator PlaySoundAfterDelay()
+        {
+            yield return new WaitForSeconds(3f);
+            AudioManager.PlaySound("MENU A_Select");
         }
 
         public void OnTapTextClicked()

@@ -1,15 +1,21 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using System;
 using System.Collections;
 using UnityEngine;
+
+#endregion
 
 namespace Colorcrush.Util
 {
     public class SceneManager : MonoBehaviour
     {
         private static SceneManager _instance;
+        private Coroutine _activationWarningCoroutine;
         private AsyncOperation _asyncOperation;
         private string _previousSceneName;
-        private Coroutine _activationWarningCoroutine;
 
         public static SceneManager Instance
         {

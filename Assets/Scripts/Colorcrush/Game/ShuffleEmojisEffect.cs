@@ -3,6 +3,7 @@
 #region
 
 using System.Collections;
+using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
 using Animator = Colorcrush.Animation.Animator;
@@ -140,6 +141,8 @@ namespace Colorcrush.Game
             var bumpScale = originalScale * bumpScaleFactor;
             var elapsedTime = 0f;
             var startScale = targetImage.transform.localScale;
+
+            AudioManager.PlaySound("MENU_Pick");
 
             // Scale up
             while (elapsedTime < bumpDuration / 2)

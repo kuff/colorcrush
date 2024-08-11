@@ -30,3 +30,10 @@ MonoBehaviour:
   endOfFileSymbol: EOF
   logSaveInterval: 5
   minimumLogSeverity: 2
+  globalGain: 1
+  maxAudioSources: 32
+  targetRMS: 0.01
+  audioPath: Colorcrush/Audio/
+  mixerGainDB: 10
+  minVolumeAdjustment: 0.01
+  maxVolumeAdjustment: 2

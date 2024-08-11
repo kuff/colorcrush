@@ -69,5 +69,27 @@ namespace Colorcrush.Util
 
         [Tooltip("The minimum severity level for logs to be recorded. The severity scale is: Log (0), Warning (1), Assert (2), Error (3), Exception (4). Only logs with this severity or higher will be recorded.")]
         public LogType minimumLogSeverity = LogType.Log;
+
+        [Header("Audio Configuration")]
+        [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]
+        public float globalGain = 1f;
+
+        [Tooltip("The maximum number of simultaneous audio sources that can play at once.")]
+        public int maxAudioSources = 32;
+
+        [Tooltip("The target RMS (Root Mean Square) value for audio normalization.")]
+        public float targetRMS = 0.01f;
+
+        [Tooltip("The path within Resources where audio clips are stored.")]
+        public string audioPath = "Colorcrush/Audio/";
+
+        [Tooltip("The gain applied to the audio mixer in decibels.")]
+        public float mixerGainDB = 10f;
+
+        [Tooltip("The minimum volume adjustment factor for audio clips.")]
+        public float minVolumeAdjustment = 0.01f;
+
+        [Tooltip("The maximum volume adjustment factor for audio clips.")]
+        public float maxVolumeAdjustment = 2f;
     }
 }
