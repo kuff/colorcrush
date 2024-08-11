@@ -91,5 +91,21 @@ namespace Colorcrush.Util
 
         [Tooltip("The maximum volume adjustment factor for audio clips.")]
         public float maxVolumeAdjustment = 2f;
+
+        [Header("Animation Configuration")]
+        [Tooltip("The base speed multiplier for animations. Higher values result in faster animations.")]
+        public float baseAnimationSpeed = 1f;
+
+        [Tooltip("The default duration for animations, in seconds.")]
+        public float defaultAnimationDuration = 0.5f;
+
+        [Tooltip("The default scale factor for bump animations.")]
+        public float defaultBumpScaleFactor = 1.2f;
+
+        [Tooltip("The easing function to use for animations. 0 = Linear, 1 = EaseInOutQuad, 2 = Custom AnimationCurve")]
+        public int easingFunction = 1;
+
+        [Tooltip("The custom AnimationCurve to use when easingFunction is set to 2.")]
+        public AnimationCurve customEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     }
 }

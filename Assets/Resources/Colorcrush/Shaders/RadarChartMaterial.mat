@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: RevealBehindMaterial
-  m_Shader: {fileID: 4800000, guid: 24a61c4bf0b972c4287af6826bd58f7b, type: 3}
+  m_Name: RadarChartMaterial
+  m_Shader: {fileID: 4800000, guid: 906474b86f72af24989bca9bf26fd810, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,26 +41,26 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CircleRadius: 0.5
-    - _CircleSize: 2.0876935
-    - _DropSize: 0.3
-    - _DropTime: 1.0015206
-    - _EdgeSoftness: 0.1
+    - _Alpha: 1
+    - _Axis1: 0.707
+    - _Axis2: 0.605
+    - _Axis3: 0.483
+    - _Axis4: 0.543
+    - _Axis5: 0.362
+    - _Axis6: 0.326
+    - _Axis7: 0.5
+    - _Axis8: 0.567
+    - _AxisCount: 8
     - _EnableExternalAlpha: 0
-    - _ExpandSpeed: 2
-    - _Fade: 0.1
-    - _Glossiness: 0.5
-    - _Metallic: 0
-    - _RippleCount: 3
-    - _RippleSpeed: 20
-    - _RippleStrength: 0.05
-    - _TransparencySpeed: 2
-    - _TransparentCircleSize: 2.652606
+    - _LevelCount: 3
+    - _LineWidth: 0.02
     m_Colors:
-    - _Color: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    - _DropCenter: {r: 0.5, g: 0.5, b: 0, a: 0}
+    - _AxisValues: {r: 1.89, g: 2.37, b: 2.58, a: 0.53}
+    - _BackgroundColor: {r: 0.7283019, g: 0.7283019, b: 0.7283019, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _FillColor: {r: 0.854902, g: 0.4666667, b: 0.45882356, a: 0.5}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
-    - _InitialColor: {r: 1, g: 1, b: 1, a: 1}
+    - _LineColor: {r: 0.7803922, g: 0.7803922, b: 0.7803922, a: 1}
+    - _PointsData: {r: 0, g: 0, b: 0, a: 0}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RevealColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

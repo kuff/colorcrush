@@ -89,6 +89,12 @@ namespace Colorcrush.Util
             foreach (var clip in _audioClips)
             {
                 var volumeAdjustment = CalculateVolumeAdjustment(clip.Value);
+                if (volumeAdjustment > 1f)
+                {
+                    Debug.LogWarning($"Volume adjustment for {clip.Key} is {volumeAdjustment}. Clamping to 1.");
+                    volumeAdjustment = 1f;
+                }
+
                 _volumeAdjustments[clip.Key] = volumeAdjustment;
 
                 Debug.Log($"Clip: {clip.Key}, Volume Adjustment: {volumeAdjustment}");

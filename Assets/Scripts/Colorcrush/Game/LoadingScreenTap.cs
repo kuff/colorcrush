@@ -61,18 +61,18 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
-            AudioManager.PlaySound("MENU_Pick");
+            //AudioManager.PlaySound("click_2");
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
-            AudioManager.PlaySound("MENU_Pick");
+            //AudioManager.PlaySound("click_2");
         }
 
         private IEnumerator PlaySoundAfterDelay()
         {
             yield return new WaitForSeconds(3f);
-            AudioManager.PlaySound("MENU A_Select");
+            //AudioManager.PlaySound("MENU A_Select");
         }
 
         public void OnTapTextClicked()

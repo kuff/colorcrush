@@ -2,6 +2,7 @@
 
 #region
 
+using Colorcrush.Colorspace;
 using TMPro;
 using UnityEngine;
 
@@ -47,7 +48,7 @@ namespace Colorcrush.Game
         public int GetPercentComplete()
         {
             var totalColors = ColorArray.SRGBTargetColors.Length;
-            var currentColorIndex = ColorController.GetCurrentTargetColorIndex();
+            var currentColorIndex = ColorManager.GetCurrentTargetColorIndex();
             return Mathf.RoundToInt((float)currentColorIndex / totalColors * 100);
         }
 
@@ -84,7 +85,7 @@ namespace Colorcrush.Game
 
         private void UpdateVisibilityBasedOnTargetColor()
         {
-            var targetColorIndex = ColorController.GetCurrentTargetColorIndex();
+            var targetColorIndex = ColorManager.GetCurrentTargetColorIndex();
             _currentGroupCount = targetColorIndex;
 
             // Reset visibility texture

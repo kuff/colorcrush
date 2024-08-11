@@ -7,7 +7,10 @@ Shader "Custom/RevealBehindShader"
     }
     SubShader
     {
-        Tags { "Queue"="Overlay" }
+        Tags
+        {
+            "Queue"="Overlay"
+        }
         ZWrite Off
         Blend SrcAlpha OneMinusSrcAlpha
 
@@ -34,7 +37,7 @@ Shader "Custom/RevealBehindShader"
             fixed4 _Color;
             float _CircleSize;
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -43,11 +46,11 @@ Shader "Custom/RevealBehindShader"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
                 // Calculate the aspect ratio
                 float2 aspectRatio = float2(_ScreenParams.x / _ScreenParams.y, 1.0);
-                
+
                 // Calculate the distance from the center of the screen
                 float2 center = float2(0.5, 0.5);
                 float2 uv = (i.screenPos.xy / i.screenPos.w - center) * aspectRatio + center;

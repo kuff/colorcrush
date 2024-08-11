@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Colorcrush.Animation;
+using Colorcrush.Colorspace;
 using Colorcrush.Logging;
 using Colorcrush.Util;
 using TMPro;
@@ -35,9 +36,6 @@ namespace Colorcrush.Game
         [SerializeField] private Canvas uiCanvas;
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
-
-        private ColorController _colorController;
-
         private GameState _currentState = GameState.Setup;
         private EmojiManager _emojiManager;
         private float _initialProgressBarWidth;
@@ -162,12 +160,12 @@ namespace Colorcrush.Game
                 yield return null;
             }
 
+            ColorManager.AdvanceToNextTargetColor();
             SceneManager.ActivateLoadedScene();
         }
 
         private void InitializeComponents()
         {
-            _colorController = FindObjectOfType<ColorController>();
             _emojiManager = FindObjectOfType<EmojiManager>();
         }
 
@@ -248,7 +246,7 @@ namespace Colorcrush.Game
         private void UpdateButton(int index, bool ignoreAlpha = false)
         {
             _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
-            var nextColor = _colorController.GetNextColor();
+            var nextColor = ColorManager.GetNextColor();
             _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
             if (!ignoreAlpha)
             {
@@ -291,14 +289,6 @@ namespace Colorcrush.Game
             Debug.Log("Submit button clicked");
 
             AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
-
-            if (_targetReached)
-            {
-                _colorController.AdvanceToNextTargetColor();
-                submitButtonText.text = "...";
-                StartCoroutine(TeardownState());
-                return;
-            }
 
             _submitCount++;
             LoggingManager.LogEvent(new ColorsSubmittedEvent());
@@ -477,9 +467,9 @@ namespace Colorcrush.Game
 
         private void UpdateTargetButtonColor()
         {
-            if (_colorController != null && _targetEmojiImage != null && _targetEmojiImage.material != null)
+            if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
-                var targetColor = ColorController.GetCurrentTargetColor();
+                var targetColor = ColorManager.GetCurrentTargetColor();
                 _targetEmojiImage.material.SetColor("_TargetColor", targetColor);
                 LoggingManager.LogEvent(new NewTargetColorEvent(targetColor));
             }

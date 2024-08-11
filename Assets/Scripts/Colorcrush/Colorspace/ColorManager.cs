@@ -3,33 +3,28 @@
 #region
 
 using System.Collections.Generic;
+using Colorcrush.Game;
 using Colorcrush.Util;
 using UnityEngine;
 using Random = System.Random;
 
 #endregion
 
-namespace Colorcrush.Game
+namespace Colorcrush.Colorspace
 {
-    public class ColorController : MonoBehaviour
+    public static class ColorManager
     {
         private const int VariationsPerColor = 30;
         private const float VariationRange = 0.05f;
         private static int _currentTargetColorIndex;
         private static Color _currentTargetColor;
-        private readonly Queue<Color> _currentColorVariations = new();
-        private int _randomSeed;
+        private static readonly Queue<Color> _currentColorVariations = new();
+        private static int _randomSeed;
 
-        private void Start()
-        {
-            _randomSeed = ProjectConfig.InstanceConfig.randomSeed;
-            GenerateColorVariations();
-        }
-
-        private void GenerateColorVariations()
+        private static void GenerateColorVariations()
         {
             _currentColorVariations.Clear();
-            var random = new Random(_randomSeed);
+            var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
 
             _currentTargetColor = ColorArray.SRGBTargetColors[_currentTargetColorIndex];
 
@@ -45,7 +40,7 @@ namespace Colorcrush.Game
             }
         }
 
-        public Color GetNextColor()
+        public static Color GetNextColor()
         {
             if (_currentColorVariations.Count == 0)
             {
@@ -63,7 +58,7 @@ namespace Colorcrush.Game
             return Color.white;
         }
 
-        public void AdvanceToNextTargetColor()
+        public static void AdvanceToNextTargetColor()
         {
             _currentTargetColorIndex++;
             if (_currentTargetColorIndex >= ColorArray.SRGBTargetColors.Length)
