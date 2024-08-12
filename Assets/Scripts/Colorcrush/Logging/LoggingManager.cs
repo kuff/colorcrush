@@ -268,6 +268,15 @@ namespace Colorcrush.Logging
                 if (File.Exists(currentLogFilePath))
                 {
                     logLines = File.ReadAllLines(currentLogFilePath).ToList();
+                    if (logLines.Count > 0 && logLines[logLines.Count - 1] == ProjectConfig.InstanceConfig.endOfFileSymbol)
+                    {
+                        logLines.RemoveAt(logLines.Count - 1);
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"End of file symbol '{ProjectConfig.InstanceConfig.endOfFileSymbol}' not found at the end of the log file '{Instance._currentLogFilePath}'. This may indicate an incomplete or corrupted log file.");
+                    }
+                    logLines.AddRange(Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}"));
                 }
                 else
                 {

@@ -57,7 +57,7 @@ namespace Colorcrush.Game
 
         private void OnSceneUnloaded(Scene scene)
         {
-            RefreshProgressionState();
+            ProcessLogEventQueue();
         }
 
         private void OnLogEventQueued(ILogEvent logEvent)
@@ -65,21 +65,14 @@ namespace Colorcrush.Game
             _logEventQueue.Enqueue(logEvent);
         }
 
-        public static void RefreshProgressionState(List<string> logLines = null)
+        public static void RefreshProgressionState()
         {
-            if (logLines != null)
-            {
-                ProcessLogLines(logLines);
-            }
-            else
-            {
-                // Re-analyze the entire log file
-                List<string> allLogLines = LoggingManager.GetLogDataLines();
-                CompletedTargetColors.Clear();
-                RewardedEmojis.Clear();
-                ProcessLogLines(allLogLines);
-                ProcessLogEventQueue();
-            }
+            CompletedTargetColors.Clear();
+            RewardedEmojis.Clear();
+            
+            // Process all existing log data
+            List<string> allLogLines = LoggingManager.GetLogDataLines();
+            ProcessLogLines(allLogLines);
 
             // Log a summary of the refreshed progression state
             Debug.Log($"Progression State Refreshed: " +
@@ -110,13 +103,11 @@ namespace Colorcrush.Game
 
         private static void ProcessLogEventQueue()
         {
-            List<string> queuedLogLines = new List<string>();
             while (_logEventQueue.Count > 0)
             {
                 ILogEvent logEvent = _logEventQueue.Dequeue();
-                queuedLogLines.Add($"0,{logEvent.EventName},{logEvent.GetStringifiedData()}");
+                ProcessEvent(logEvent.EventName, logEvent.GetStringifiedData());
             }
-            ProcessLogLines(queuedLogLines);
         }
 
         [SuppressMessage("ReSharper", "StringLiteralTypo")]
