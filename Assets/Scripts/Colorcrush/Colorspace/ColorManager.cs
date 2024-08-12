@@ -71,11 +71,21 @@ namespace Colorcrush.Colorspace
 
         public static int GetCurrentTargetColorIndex()
         {
+            if (_currentColorVariations.Count == 0)
+            {
+                GenerateColorVariations();
+            }
+
             return _currentTargetColorIndex;
         }
 
         public static Color GetCurrentTargetColor()
         {
+            if (_currentColorVariations.Count == 0)
+            {
+                GenerateColorVariations();
+            }
+
             return _currentTargetColor;
         }
     }

@@ -239,6 +239,7 @@ MonoBehaviour:
   nextSceneName: MenuScene
   submitButton: {fileID: 1510623099}
   uiCanvas: {fileID: 1299182424}
+  targetEmojiImage: {fileID: 1403780955}
 --- !u!1 &725762304
 GameObject:
   m_ObjectHideFlags: 0
@@ -553,6 +554,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7183290296564391428, guid: 398b5ddfe5125dd47bb5c7618c53efe9, type: 3}
   m_PrefabInstance: {fileID: 3080231790019705614}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1403780955 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6966023700780069002, guid: 398b5ddfe5125dd47bb5c7618c53efe9, type: 3}
+  m_PrefabInstance: {fileID: 3080231790019705614}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &1510623098 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8338299866613642620, guid: a9a4a67d33642e343a33e50738da8675, type: 3}

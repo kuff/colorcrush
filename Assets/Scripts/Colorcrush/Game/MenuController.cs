@@ -1,5 +1,11 @@
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using UnityEngine;
 using UnityEngine.UI;
+
+#endregion
 
 namespace Colorcrush.Game
 {
@@ -18,7 +24,7 @@ namespace Colorcrush.Game
             {
                 // Reset the horizontal scroll position to 0 (beginning)
                 scrollViewToReset.horizontalNormalizedPosition = 0f;
-                
+
                 // Force the scroll view to update immediately
                 Canvas.ForceUpdateCanvases();
                 //scrollViewToReset.content.anchoredPosition = Vector2.zero;

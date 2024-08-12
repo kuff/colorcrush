@@ -57,19 +57,29 @@ namespace Colorcrush.Logging
         }
     }
 
-    public class NewTargetColorEvent : ILogEvent
+    public class GameLevelBeginEvent : ILogEvent
     {
-        public NewTargetColorEvent(Color targetValue)
+        public GameLevelBeginEvent(Color targetColor)
         {
-            TargetValue = targetValue;
+            TargetValue = targetColor;
         }
 
         public Color TargetValue { get; }
-        public string EventName => "newtargetvalue";
+        public string EventName => "gamelevelbegun";
 
         public string GetStringifiedData()
         {
             return ColorUtility.ToHtmlStringRGBA(TargetValue);
+        }
+    }
+
+    public class GameLevelEndEvent : ILogEvent
+    {
+        public string EventName => "gamelevelend";
+
+        public string GetStringifiedData()
+        {
+            return "";
         }
     }
 
@@ -93,19 +103,17 @@ namespace Colorcrush.Logging
 
     public class ColorSelectedEvent : ILogEvent
     {
-        public ColorSelectedEvent(int buttonIndex, string sadSpriteName)
+        public ColorSelectedEvent(int buttonIndex)
         {
             ButtonIndex = buttonIndex;
-            SadSpriteName = sadSpriteName;
         }
 
         public int ButtonIndex { get; }
-        public string SadSpriteName { get; }
         public string EventName => "colorselected";
 
         public string GetStringifiedData()
         {
-            return $"{ButtonIndex} {SadSpriteName}";
+            return ButtonIndex.ToString();
         }
     }
 
@@ -159,15 +167,15 @@ namespace Colorcrush.Logging
         }
     }
 
-    public class RewardEmojiEvent : ILogEvent
+    public class EmojiRewardedEvent : ILogEvent
     {
-        public RewardEmojiEvent(string emojiName)
+        public EmojiRewardedEvent(string emojiName)
         {
             EmojiName = emojiName;
         }
 
         public string EmojiName { get; }
-        public string EventName => "rewardemoji";
+        public string EventName => "emojirewarded";
 
         public string GetStringifiedData()
         {

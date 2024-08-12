@@ -18,6 +18,8 @@ namespace Colorcrush.Logging
 {
     public class LoggingManager : MonoBehaviour
     {
+        public delegate void LogEventQueuedHandler(ILogEvent logEvent);
+
         private static LoggingManager _instance;
 
         // Define the severity scale
@@ -33,9 +35,6 @@ namespace Colorcrush.Logging
         private readonly Queue<(long timestamp, ILogEvent logEvent)> _eventQueue = new();
         private string _currentLogFilePath;
         private DateTime _startTime;
-
-        public delegate void LogEventQueuedHandler(ILogEvent logEvent);
-        public static event LogEventQueuedHandler OnLogEventQueued;
 
         public static LoggingManager Instance
         {
@@ -78,6 +77,7 @@ namespace Colorcrush.Logging
             {
                 InitializeMostRecentLogFile();
             }
+
             StartCoroutine(SaveLogRoutine());
 
             Application.logMessageReceived += HandleLog;
@@ -105,6 +105,8 @@ namespace Colorcrush.Logging
             LogEvent(new AppClosedEvent());
             SaveLog(); // Ensure all remaining logs are saved before quitting
         }
+
+        public static event LogEventQueuedHandler OnLogEventQueued;
 
         private void HandleLog(string logString, string stackTrace, LogType type)
         {
@@ -260,11 +262,11 @@ namespace Colorcrush.Logging
 
         public static List<string> GetLogDataLines()
         {
-            List<string> logLines = new List<string>();
+            var logLines = new List<string>();
 
             try
             {
-                string currentLogFilePath = Instance._currentLogFilePath;
+                var currentLogFilePath = Instance._currentLogFilePath;
                 if (File.Exists(currentLogFilePath))
                 {
                     logLines = File.ReadAllLines(currentLogFilePath).ToList();
@@ -276,6 +278,7 @@ namespace Colorcrush.Logging
                     {
                         Debug.LogWarning($"End of file symbol '{ProjectConfig.InstanceConfig.endOfFileSymbol}' not found at the end of the log file '{Instance._currentLogFilePath}'. This may indicate an incomplete or corrupted log file.");
                     }
+
                     logLines.AddRange(Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}"));
                 }
                 else

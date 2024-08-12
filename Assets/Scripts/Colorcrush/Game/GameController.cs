@@ -2,6 +2,7 @@
 
 #region
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,32 +27,53 @@ namespace Colorcrush.Game
         private const int TargetSubmitCount = 5;
         private const float SetupScaleFactor = 1.2f;
         private const float SetupAnimationDuration = 0.5f;
-        private const float SubmitButtonMoveDistance = 50f; // Distance to move the submit button
-        private const float ButtonFadeInDelay = 0.025f; // Delay between each button fading in
+        private const float ButtonFadeInDelay = 0.025f;
 
         [SerializeField] private TextMeshProUGUI submitButtonText;
         [SerializeField] private Image progressBar;
         [SerializeField] private string nextSceneName = "MuralScene";
         [SerializeField] private Button submitButton;
         [SerializeField] private Canvas uiCanvas;
+        [SerializeField] private Image targetEmojiImage;
+
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
         private GameState _currentState = GameState.Setup;
-        private EmojiManager _emojiManager;
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
-        private Vector3 _originalSubmitButtonPosition;
         private Vector3 _originalTargetScale;
         private GameObject[] _selectionButtons;
         private Button[] _selectionGridButtons;
         private Image[] _selectionGridImages;
         private int _submitCount;
+        private Color _targetColor;
         private Animator _targetEmojiAnimator;
         private Image _targetEmojiImage;
         private bool _targetReached;
 
         private void Awake()
         {
+            // Get the target color from PlayerPrefs
+            var targetColorHex = PlayerPrefs.GetString("TargetColor");
+            if (string.IsNullOrEmpty(targetColorHex))
+            {
+#if DEBUG
+                _targetColor = ColorManager.GetCurrentTargetColor();
+                Debug.LogWarning($"Target color not found in PlayerPrefs. Using ColorManager's current target color for debugging: {ColorUtility.ToHtmlStringRGBA(_targetColor)}");
+#else
+                throw new Exception("Target color not found in PlayerPrefs.");
+#endif
+            }
+            else
+            {
+                if (!ColorUtility.TryParseHtmlString(targetColorHex, out _targetColor))
+                {
+                    throw new Exception($"Failed to parse target color '{targetColorHex}' from PlayerPrefs.");
+                }
+            }
+
+            LoggingManager.LogEvent(new GameLevelBeginEvent(_targetColor));
+
             InitializeComponents();
             InitializeButtons();
             InitializeProgressBar();
@@ -68,6 +90,17 @@ namespace Colorcrush.Game
 
         private IEnumerator SetupState()
         {
+            // Set the target color and alpha for the target emoji image
+            if (_targetEmojiImage != null && _targetEmojiImage.material != null)
+            {
+                _targetEmojiImage.material.SetColor("_TargetColor", _targetColor);
+                _targetEmojiImage.material.SetFloat("_Alpha", 1f);
+            }
+            else
+            {
+                Debug.LogError("Target emoji image or its material is null. Unable to set target color and alpha.");
+            }
+
             _currentState = GameState.Setup;
             _targetEmojiImage.transform.localScale = _originalTargetScale * SetupScaleFactor;
 
@@ -106,7 +139,6 @@ namespace Colorcrush.Game
 
             // Fade in submit button
             submitButton.gameObject.SetActive(true);
-            _originalSubmitButtonPosition = submitButton.transform.position;
             AnimationManager.PlayAnimation(submitButtonAnimator, new FadeAnimation(0f, DefaultAlpha, SetupAnimationDuration / 2));
 
             yield return new WaitForSeconds(SetupAnimationDuration / 2);
@@ -128,6 +160,8 @@ namespace Colorcrush.Game
 
         private IEnumerator TeardownState()
         {
+            LoggingManager.LogEvent(new GameLevelEndEvent());
+
             _currentState = GameState.Teardown;
             _buttonsInteractable = false;
 
@@ -160,13 +194,12 @@ namespace Colorcrush.Game
                 yield return null;
             }
 
-            ColorManager.AdvanceToNextTargetColor();
             SceneManager.ActivateLoadedScene();
         }
 
         private void InitializeComponents()
         {
-            _emojiManager = FindObjectOfType<EmojiManager>();
+            FindObjectOfType<EmojiManager>();
         }
 
         private void InitializeButtons()
@@ -270,12 +303,18 @@ namespace Colorcrush.Game
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
 
+            // Log the button selected or deselected event
+            if (_buttonToggledStates[index])
+            {
+                LoggingManager.LogEvent(new ColorSelectedEvent(index));
+            }
+            else
+            {
+                LoggingManager.LogEvent(new ColorDeselectedEvent(index));
+            }
+
             // Add debug info
             Debug.Log($"Button {index} {(_buttonToggledStates[index] ? "selected" : "deselected")}. New alpha: {alpha}, New scale: {targetScale}");
-
-            LoggingManager.LogEvent(_buttonToggledStates[index]
-                ? new ColorSelectedEvent(index, _selectionGridImages[index].sprite.name)
-                : new ColorDeselectedEvent(index));
         }
 
         public void OnSubmitButtonClicked()
@@ -468,9 +507,7 @@ namespace Colorcrush.Game
         {
             if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
-                var targetColor = ColorManager.GetCurrentTargetColor();
-                _targetEmojiImage.material.SetColor("_TargetColor", targetColor);
-                LoggingManager.LogEvent(new NewTargetColorEvent(targetColor));
+                _targetEmojiImage.material.SetColor("_TargetColor", _targetColor);
             }
         }
 

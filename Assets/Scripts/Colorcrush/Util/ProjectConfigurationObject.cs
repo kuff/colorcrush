@@ -35,9 +35,6 @@ namespace Colorcrush.Util
         [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;
 
-        [Tooltip("The number of colors that need to be filtered before the game progresses to the next stage.")]
-        public int numColorsToFilter = 12;
-
         [Header("Emoji Configuration")]
         [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
@@ -74,7 +71,7 @@ namespace Colorcrush.Util
         public LogType minimumLogSeverity = LogType.Log;
 
         [Tooltip("If true, a new log file will always be created on startup, regardless of existing log files.")]
-        public bool alwaysCreateNewLogFileOnStartup = false;
+        public bool alwaysCreateNewLogFileOnStartup;
 
         [Header("Audio Configuration")]
         [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]

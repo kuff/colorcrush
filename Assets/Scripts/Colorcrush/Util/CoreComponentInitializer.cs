@@ -1,12 +1,17 @@
-using UnityEngine;
+// Copyright (C) 2024 Peter Guld Leth
+
+#region
+
 using System.Collections.Generic;
+using UnityEngine;
+
+#endregion
 
 namespace Colorcrush.Util
 {
     public class CoreComponentInitializer : MonoBehaviour
     {
-        [SerializeField]
-        private List<GameObject> objectsToMove = new List<GameObject>();
+        [SerializeField] private List<GameObject> objectsToMove = new();
 
         private void Awake()
         {
@@ -15,7 +20,7 @@ namespace Colorcrush.Util
 
         private void MoveObjectsToRoot()
         {
-            foreach (GameObject obj in objectsToMove)
+            foreach (var obj in objectsToMove)
             {
                 if (obj != null)
                 {
@@ -29,4 +34,3 @@ namespace Colorcrush.Util
         }
     }
 }
-
