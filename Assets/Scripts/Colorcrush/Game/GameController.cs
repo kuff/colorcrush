@@ -380,7 +380,7 @@ namespace Colorcrush.Game
         private GameObject CreateEmojiInstance(int index)
         {
             var button = _selectionGridButtons[index].gameObject;
-            var prefab = Resources.Load<GameObject>("Colorcrush/Misc/ColorPickButton");
+            var prefab = Resources.Load<GameObject>("Colorcrush/Prefabs/ColorPickButton");
             var instance = Instantiate(prefab, button.transform.position, button.transform.rotation, uiCanvas.transform);
             instance.transform.SetAsLastSibling();
 

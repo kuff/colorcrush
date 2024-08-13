@@ -1,6 +1,6 @@
 // Copyright (C) 2024 Peter Guld Leth
 
-Shader "Misc/SmoothRollingGradientShader"
+Shader "Colorcrush/RollingGradientShader"
 {
     Properties
     {

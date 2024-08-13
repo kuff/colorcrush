@@ -30,6 +30,7 @@ namespace Colorcrush.Game
         {
             get
             {
+                EnsureInstance();
                 ProcessLogEventQueue();
                 return _completedTargetColors;
             }
@@ -39,6 +40,7 @@ namespace Colorcrush.Game
         {
             get
             {
+                EnsureInstance();
                 ProcessLogEventQueue();
                 return _rewardedEmojis;
             }
@@ -48,6 +50,7 @@ namespace Colorcrush.Game
         {
             get
             {
+                EnsureInstance();
                 ProcessLogEventQueue();
                 return _selectedColors;
             }
@@ -57,6 +60,7 @@ namespace Colorcrush.Game
         {
             get
             {
+                EnsureInstance();
                 ProcessLogEventQueue();
                 return _mostRecentCompletedTargetColor;
             }
@@ -67,13 +71,7 @@ namespace Colorcrush.Game
         {
             get
             {
-                if (_instance == null)
-                {
-                    var go = new GameObject("ProgressManager");
-                    _instance = go.AddComponent<ProgressManager>();
-                    DontDestroyOnLoad(go);
-                }
-
+                EnsureInstance();
                 return _instance;
             }
         }
@@ -101,6 +99,16 @@ namespace Colorcrush.Game
             LoggingManager.OnLogEventQueued -= OnLogEventQueued;
         }
 
+        private static void EnsureInstance()
+        {
+            if (_instance == null)
+            {
+                var go = new GameObject("ProgressManager");
+                _instance = go.AddComponent<ProgressManager>();
+                DontDestroyOnLoad(go);
+            }
+        }
+
         private void OnSceneUnloaded(Scene scene)
         {
             ProcessLogEventQueue();
@@ -113,6 +121,7 @@ namespace Colorcrush.Game
 
         public static void RefreshProgressionState()
         {
+            EnsureInstance();
             _completedTargetColors.Clear();
             _rewardedEmojis.Clear();
             _selectedColors.Clear();
@@ -135,6 +144,7 @@ namespace Colorcrush.Game
 
         public static void ResetProgressionState()
         {
+            EnsureInstance();
             LoggingManager.StartNewLogFile();
             RefreshProgressionState();
         }

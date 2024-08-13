@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: ColorfulLoadingMaterial
+  m_Name: RollingGradientMaterial
   m_Shader: {fileID: 4800000, guid: bee23d115f2724b4d989f61245980cbf, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

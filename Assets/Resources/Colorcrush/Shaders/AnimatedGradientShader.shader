@@ -1,6 +1,6 @@
 // Copyright (C) 2024 Peter Guld Leth
 
-Shader "Misc/AnimatedGradient"
+Shader "Colorcrush/AnimatedGradientShader"
 {
     Properties
     {

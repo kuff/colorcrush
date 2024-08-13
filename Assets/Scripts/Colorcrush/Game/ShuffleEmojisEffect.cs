@@ -51,7 +51,7 @@ namespace Colorcrush.Game
 
         private void InstantiateTargetImage()
         {
-            var prefab = Resources.Load<GameObject>("Colorcrush/Misc/TargetImage");
+            var prefab = Resources.Load<GameObject>("Colorcrush/Prefabs/TargetImage");
             if (prefab != null)
             {
                 var canvas = FindObjectOfType<Canvas>();

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
   useInitiatingScene: 1
-  resourcesPath: Assets/Resources/Colorcrush
-  scenesPath: Assets/Scenes
+  mainResourcesPath: Assets/Resources/Colorcrush
+  mainScenesPath: Assets/Scenes
+  mainScriptsPath: Assets/Scripts/Colorcrush
   doPixelBalancing: 0
   deleteAllLogFilesOnEditorStartup: 1
   randomSeed: 42

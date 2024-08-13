@@ -19,11 +19,14 @@ namespace Colorcrush.Util
         [Tooltip("If true, the game will start from the initiating scene specified above. If false, it will use the default Unity scene loading behavior.")]
         public bool useInitiatingScene = true;
 
-        [Tooltip("The path where Colorcrush resources are stored. This should be a subfolder of the Unity 'Resources' folder.")]
-        public string resourcesPath = "Assets/Resources/Colorcrush";
+        [FormerlySerializedAs("resourcesPath")] [Tooltip("The path where Colorcrush resources are stored. This should be a subfolder of the Unity 'Resources' folder.")]
+        public string mainResourcesPath = "Assets/Resources/Colorcrush";
 
-        [Tooltip("The path where Colorcrush scenes are stored.")]
-        public string scenesPath = "Assets/Scenes";
+        [FormerlySerializedAs("scenesPath")] [Tooltip("The path where Colorcrush scenes are stored.")]
+        public string mainScenesPath = "Assets/Scenes";
+
+        [Tooltip("The path where Colorcrush scripts are stored.")]
+        public string mainScriptsPath = "Assets/Scripts/Colorcrush";
 
         [Tooltip("If true, the game will attempt to balance pixel colors in the final image. This may affect performance.")]
         public bool doPixelBalancing = true;
@@ -34,6 +37,7 @@ namespace Colorcrush.Util
         [Header("Game Configuration")]
         [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;
+
         [Tooltip("If true, all shaders will be reset to their initial state when the game is shut down.")]
         public bool resetShadersOnShutdown = true;
 

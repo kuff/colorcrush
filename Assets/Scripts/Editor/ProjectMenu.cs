@@ -14,8 +14,9 @@ namespace Editor
     public class ProjectMenu : MonoBehaviour
     {
         private const string ConfigPath = "Assets/Resources/Colorcrush/ProjectConfigurationObject.asset";
+        private const string MenuItemPrefix = "Colorcrush/";
 
-        [MenuItem("Colorcrush/Edit Configuration", false, 1)]
+        [MenuItem(MenuItemPrefix + "Edit Configuration %#e", false, 1)]
         public static void ShowConfiguration()
         {
             var config = AssetDatabase.LoadAssetAtPath<ProjectConfigurationObject>(ConfigPath);
@@ -27,9 +28,11 @@ namespace Editor
             }
 
             Selection.activeObject = config;
+            EditorUtility.FocusProjectWindow();
+            EditorGUIUtility.PingObject(config);
         }
 
-        [MenuItem("Colorcrush/Create Configuration", false, 1)]
+        [MenuItem(MenuItemPrefix + "Create Configuration", false, 1)]
         public static void CreateConfiguration()
         {
             var config = AssetDatabase.LoadAssetAtPath<ProjectConfigurationObject>(ConfigPath);
@@ -62,50 +65,59 @@ namespace Editor
             Selection.activeObject = config;
         }
 
-        [MenuItem("Colorcrush/Show Resources Folder")]
-        public static void OpenResourcesPath()
+        [MenuItem(MenuItemPrefix + "Open Main Resources Path %#y")]
+        private static void OpenMainResourcesPath()
         {
-            var config = InstanceConfig;
-            if (config != null)
-            {
-                var path = config.resourcesPath;
-                var obj = AssetDatabase.LoadAssetAtPath<Object>(path);
-                if (obj != null)
-                {
-                    Selection.activeObject = obj;
-                    EditorGUIUtility.PingObject(obj);
-                }
-                else
-                {
-                    Debug.LogError("Resources path not found: " + path);
-                }
-            }
+            RevealInProjectWindow(InstanceConfig.mainResourcesPath);
         }
 
-        [MenuItem("Colorcrush/Show Scenes Folder")]
-        public static void OpenScenesPath()
+        [MenuItem(MenuItemPrefix + "Open Main Scenes Path %#u")]
+        private static void OpenMainScenesPath()
         {
-            var config = InstanceConfig;
-            if (config != null)
-            {
-                var path = config.scenesPath;
-                var obj = AssetDatabase.LoadAssetAtPath<Object>(path);
-                if (obj != null)
-                {
-                    Selection.activeObject = obj;
-                    EditorGUIUtility.PingObject(obj);
-                }
-                else
-                {
-                    Debug.LogError("Scenes path not found: " + path);
-                }
-            }
+            RevealInProjectWindow(InstanceConfig.mainScenesPath);
         }
 
-        [MenuItem("Colorcrush/Open Persistent Data Path")]
+        [MenuItem(MenuItemPrefix + "Open Main Scripts Path %#i")]
+        private static void OpenMainScriptsPath()
+        {
+            RevealInProjectWindow(InstanceConfig.mainScriptsPath);
+        }
+
+        [MenuItem(MenuItemPrefix + "Toggle Use Initiating Scene %#t")]
+        private static void ToggleUseInitiatingScene()
+        {
+            var config = InstanceConfig;
+            config.useInitiatingScene = !config.useInitiatingScene;
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"Use Initiating Scene: {config.useInitiatingScene}");
+        }
+
+        [MenuItem(MenuItemPrefix + "Open Persistent Data Path %#o")]
         public static void OpenPersistentDataPath()
         {
             EditorUtility.RevealInFinder(Application.persistentDataPath);
+        }
+
+        private static void RevealInProjectWindow(string path)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                Debug.LogWarning("Path is null or empty.");
+                return;
+            }
+
+            var asset = AssetDatabase.LoadAssetAtPath<Object>(path);
+            if (asset != null)
+            {
+                EditorUtility.FocusProjectWindow();
+                EditorGUIUtility.PingObject(asset);
+                Selection.activeObject = asset;
+            }
+            else
+            {
+                Debug.LogWarning($"Asset not found at path: {path}");
+            }
         }
     }
 }
