@@ -1,4 +1,6 @@
-Shader "Custom/ColorTransposeShader"
+// Copyright (C) 2024 Peter Guld Leth
+
+Shader "Colorcrush/ColorTransposeShader"
 {
     Properties
     {
@@ -23,6 +25,7 @@ Shader "Custom/ColorTransposeShader"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
 
             #include "UnityCG.cginc"
 
@@ -39,6 +42,7 @@ Shader "Custom/ColorTransposeShader"
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_ST;
             fixed4 _TargetColor;
             fixed4 _SkinColor;
             float _Tolerance;
@@ -49,7 +53,7 @@ Shader "Custom/ColorTransposeShader"
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.texcoord = v.texcoord;
+                o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
                 return o;
             }
 
@@ -64,14 +68,14 @@ Shader "Custom/ColorTransposeShader"
                 }
 
                 // Check if the pixel is white
-                float whiteDistance = length(texColor.rgb - float3(1.0, 1.0, 1.0));
+                float whiteDistance = distance(texColor.rgb, float3(1.0, 1.0, 1.0));
                 if (whiteDistance < _WhiteTolerance)
                 {
                     return fixed4(texColor.rgb, texColor.a * _Alpha); // Return original color if it's white
                 }
 
                 // Calculate the distance between the texture color and the skin color
-                float skinDistance = length(texColor.rgb - _SkinColor.rgb);
+                float skinDistance = distance(texColor.rgb, _SkinColor.rgb);
 
                 if (skinDistance < _Tolerance)
                 {

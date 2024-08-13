@@ -34,6 +34,8 @@ namespace Colorcrush.Util
         [Header("Game Configuration")]
         [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;
+        [Tooltip("If true, all shaders will be reset to their initial state when the game is shut down.")]
+        public bool resetShadersOnShutdown = true;
 
         [Header("Emoji Configuration")]
         [Tooltip("The name of the default emoji sprite (without the file extension).")]

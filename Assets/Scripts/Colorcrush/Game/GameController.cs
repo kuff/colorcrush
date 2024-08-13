@@ -93,8 +93,8 @@ namespace Colorcrush.Game
             // Set the target color and alpha for the target emoji image
             if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
-                _targetEmojiImage.material.SetColor("_TargetColor", _targetColor);
-                _targetEmojiImage.material.SetFloat("_Alpha", 1f);
+                ShaderManager.SetColor(_targetEmojiImage.material, "_TargetColor", _targetColor);
+                ShaderManager.SetFloat(_targetEmojiImage.material, "_Alpha", 1f);
             }
             else
             {
@@ -110,7 +110,7 @@ namespace Colorcrush.Game
                 var image = button.GetComponent<Image>();
                 if (image != null && image.material != null)
                 {
-                    image.material.SetFloat("_Alpha", 0f);
+                    ShaderManager.SetFloat(image.material, "_Alpha", 0f);
                 }
 
                 button.gameObject.SetActive(true);
@@ -283,7 +283,7 @@ namespace Colorcrush.Game
             _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
             if (!ignoreAlpha)
             {
-                _selectionGridImages[index].material.SetFloat("_Alpha", DefaultAlpha);
+                ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", DefaultAlpha);
             }
 
             LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
@@ -296,9 +296,11 @@ namespace Colorcrush.Game
                 return;
             }
 
+            AudioManager.PlaySound("MENU_Pick");
+
             _buttonToggledStates[index] = !_buttonToggledStates[index];
             var alpha = _buttonToggledStates[index] ? ToggledAlpha : DefaultAlpha;
-            _selectionGridImages[index].material.SetFloat("_Alpha", alpha);
+            ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", alpha);
 
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
@@ -319,6 +321,8 @@ namespace Colorcrush.Game
 
         public void OnSubmitButtonClicked()
         {
+            AudioManager.PlaySound("click_2");
+
             if (_currentState != GameState.Main || SceneManager.IsLoading || !_buttonsInteractable)
             {
                 AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new ShakeAnimation(0.1f, 9f));
@@ -399,7 +403,7 @@ namespace Colorcrush.Game
             foreach (var button in _selectionGridButtons)
             {
                 var image = button.GetComponent<Image>();
-                image.material.SetFloat("_Alpha", 0.0f);
+                ShaderManager.SetFloat(image.material, "_Alpha", 0f);
                 button.interactable = false;
             }
         }
@@ -443,6 +447,7 @@ namespace Colorcrush.Game
             var targetPosition = progressBar.transform.position;
             AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 0.5f, Vector3.zero));
             yield return new WaitForSeconds(0.05f);
+            AudioManager.PlaySound("misc_menu");
         }
 
         private void ResetButtons()
@@ -507,7 +512,7 @@ namespace Colorcrush.Game
         {
             if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
-                _targetEmojiImage.material.SetColor("_TargetColor", _targetColor);
+                ShaderManager.SetColor(_targetEmojiImage.material, "_TargetColor", _targetColor);
             }
         }
 

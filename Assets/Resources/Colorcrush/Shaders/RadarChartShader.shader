@@ -1,4 +1,6 @@
-Shader "Custom/RadarChartShader"
+// Copyright (C) 2024 Peter Guld Leth
+
+Shader "Colorcrush/RadarChartShader"
 {
     Properties
     {
@@ -32,6 +34,7 @@ Shader "Custom/RadarChartShader"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.0
 
             #include "UnityCG.cginc"
 
@@ -56,8 +59,8 @@ Shader "Custom/RadarChartShader"
                 float4 vertex : SV_POSITION;
             };
 
-            static const float PI = 3.14159265359;
-            static const int AXIS_COUNT = 8;
+            #define PI 3.14159265359
+            #define AXIS_COUNT 8
 
             v2f vert(appdata v)
             {
@@ -83,7 +86,7 @@ Shader "Custom/RadarChartShader"
 
             float2 getPointOnAxis(int axisIndex)
             {
-                float angle = axisIndex * (2 * PI / AXIS_COUNT);
+                float angle = axisIndex * (2.0 * PI / AXIS_COUNT);
                 float radius;
                 if (axisIndex == 0) radius = _Axis1;
                 else if (axisIndex == 1) radius = _Axis2;
@@ -130,7 +133,7 @@ Shader "Custom/RadarChartShader"
                 // Draw axis lines
                 for (int a = 0; a < AXIS_COUNT; a++)
                 {
-                    float angle = a * (2 * PI / AXIS_COUNT);
+                    float angle = a * (2.0 * PI / AXIS_COUNT);
                     float2 axisEnd = float2(cos(angle), sin(angle));
                     radarLine = max(radarLine, drawLine(uv, float2(0, 0), axisEnd));
                 }

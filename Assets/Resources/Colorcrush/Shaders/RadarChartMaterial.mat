@@ -42,14 +42,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 1
-    - _Axis1: 0.707
-    - _Axis2: 0.605
-    - _Axis3: 0.483
-    - _Axis4: 0.543
-    - _Axis5: 0.362
-    - _Axis6: 0.326
-    - _Axis7: 0.5
-    - _Axis8: 0.567
+    - _Axis1: 0.519
+    - _Axis2: 0.617
+    - _Axis3: 0.515
+    - _Axis4: 0.362
+    - _Axis5: 0.438
+    - _Axis6: 0.334
+    - _Axis7: 0.288
+    - _Axis8: 0.467
     - _AxisCount: 8
     - _EnableExternalAlpha: 0
     - _LevelCount: 3

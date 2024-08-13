@@ -1,4 +1,6 @@
-Shader "Custom/RevealBehindShader"
+// Copyright (C) 2024 Peter Guld Leth
+
+Shader "Colorcrush/RevealBehindShader"
 {
     Properties
     {

@@ -1,4 +1,6 @@
-Shader "Custom/AnimatedGradient"
+// Copyright (C) 2024 Peter Guld Leth
+
+Shader "Misc/AnimatedGradient"
 {
     Properties
     {

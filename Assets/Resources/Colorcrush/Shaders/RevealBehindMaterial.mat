@@ -42,7 +42,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _CircleRadius: 0.5
-    - _CircleSize: 0
+    - _CircleSize: 0.7489196
     - _DropSize: 0.3
     - _DropTime: 1.0015206
     - _EdgeSoftness: 0.1

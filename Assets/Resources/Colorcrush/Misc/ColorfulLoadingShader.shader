@@ -1,4 +1,6 @@
-Shader "Custom/SmoothRollingGradientShader"
+// Copyright (C) 2024 Peter Guld Leth
+
+Shader "Misc/SmoothRollingGradientShader"
 {
     Properties
     {
