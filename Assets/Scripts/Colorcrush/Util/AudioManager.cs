@@ -115,12 +115,12 @@ namespace Colorcrush.Util
             return Mathf.Clamp(volumeAdjustment, ProjectConfig.InstanceConfig.minVolumeAdjustment, ProjectConfig.InstanceConfig.maxVolumeAdjustment);
         }
 
-        public static void PlaySound(string soundName, float? gain = null)
+        public static void PlaySound(string soundName, float? gain = null, float? pitchShift = null)
         {
-            Instance.PlaySoundInternal(soundName, gain);
+            Instance.PlaySoundInternal(soundName, gain, pitchShift);
         }
 
-        private void PlaySoundInternal(string soundName, float? gain = null)
+        private void PlaySoundInternal(string soundName, float? gain = null, float? pitchShift = null)
         {
             if (_audioClips.TryGetValue(soundName, out var clip))
             {
@@ -137,14 +137,30 @@ namespace Colorcrush.Util
 
                     if (gain.HasValue)
                     {
-                        finalVolume *= Mathf.Clamp01(gain.Value);
+                        finalVolume *= gain.Value;
                     }
 
                     finalVolume *= ProjectConfig.InstanceConfig.globalGain;
 
+                    if (finalVolume > 1f)
+                    {
+                        Debug.LogWarning($"Resulting volume for {soundName} is {finalVolume}, which is larger than the maximum playable volume. Clamping to 1.");
+                        finalVolume = 1f;
+                    }
+
                     audioSource.volume = finalVolume;
+
+                    if (pitchShift.HasValue)
+                    {
+                        audioSource.pitch = pitchShift.Value;
+                    }
+                    else
+                    {
+                        audioSource.pitch = 1;
+                    }
+
                     audioSource.Play();
-                    Debug.Log($"Playing sound: {soundName} with volume: {finalVolume}");
+                    Debug.Log($"Playing sound: {soundName} with volume: {finalVolume} and pitch: {audioSource.pitch}");
                 }
                 else
                 {

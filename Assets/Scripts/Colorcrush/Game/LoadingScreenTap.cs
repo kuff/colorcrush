@@ -77,18 +77,18 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
-            AudioManager.PlaySound("click_2");
+            AudioManager.PlaySound("MENU_Pick", pitchShift: 1.25f);
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
-            AudioManager.PlaySound("click_2");
+            AudioManager.PlaySound("MENU_Pick", pitchShift: 0.5f);
         }
 
         private IEnumerator PlaySoundAfterDelay()
         {
             yield return new WaitForSeconds(3f);
-            AudioManager.PlaySound("MENU A_Select");
+            AudioManager.PlaySound("MESSAGE-B_Accept", pitchShift: 0.85f, gain: 2f);
         }
 
         public void OnTapTextClicked()
@@ -98,7 +98,7 @@ namespace Colorcrush.Game
                 return; // Prevent multiple clicks
             }
 
-            AudioManager.PlaySound("click_2");
+            //AudioManager.PlaySound("click_2");
 
             _isLoading = true;
             if (ProgressManager.CompletedTargetColors.Count > 0)

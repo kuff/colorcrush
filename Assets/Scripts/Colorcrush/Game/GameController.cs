@@ -104,6 +104,8 @@ namespace Colorcrush.Game
             _currentState = GameState.Setup;
             _targetEmojiImage.transform.localScale = _originalTargetScale * SetupScaleFactor;
 
+            AudioManager.PlaySound("MENU B_Back");
+
             // Set grid buttons' opacity to 0 and activate them
             foreach (var button in _selectionGridButtons)
             {
@@ -185,6 +187,7 @@ namespace Colorcrush.Game
 
             // Scale up target
             AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale * SetupScaleFactor, SetupAnimationDuration));
+            AudioManager.PlaySound("MENU B_Select");
 
             yield return new WaitForSeconds(SetupAnimationDuration);
 
@@ -296,8 +299,6 @@ namespace Colorcrush.Game
                 return;
             }
 
-            AudioManager.PlaySound("MENU_Pick");
-
             _buttonToggledStates[index] = !_buttonToggledStates[index];
             var alpha = _buttonToggledStates[index] ? ToggledAlpha : DefaultAlpha;
             ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", alpha);
@@ -309,10 +310,12 @@ namespace Colorcrush.Game
             if (_buttonToggledStates[index])
             {
                 LoggingManager.LogEvent(new ColorSelectedEvent(index));
+                AudioManager.PlaySound("MENU_Pick");
             }
             else
             {
                 LoggingManager.LogEvent(new ColorDeselectedEvent(index));
+                AudioManager.PlaySound("MENU_Pick", pitchShift: 0.85f);
             }
 
             // Add debug info
@@ -321,13 +324,14 @@ namespace Colorcrush.Game
 
         public void OnSubmitButtonClicked()
         {
-            AudioManager.PlaySound("click_2");
-
             if (_currentState != GameState.Main || SceneManager.IsLoading || !_buttonsInteractable)
             {
                 AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new ShakeAnimation(0.1f, 9f));
+                AudioManager.PlaySound("misc_menu", pitchShift: 0.85f);
                 return;
             }
+
+            AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
 
             Debug.Log("Submit button clicked");
 
@@ -410,6 +414,10 @@ namespace Colorcrush.Game
 
         private IEnumerator AnimateEmojis(List<EmojiAnimator> emojiAnimators)
         {
+            var nonSelectedCount = emojiAnimators.Count(i => !_buttonToggledStates[emojiAnimators.IndexOf(i)]);
+            var pitchStep = nonSelectedCount > 1 ? 5f / (nonSelectedCount - 1) : 0f;
+            var currentPitch = 3f;
+
             for (var i = 0; i < emojiAnimators.Count; i++)
             {
                 if (_buttonToggledStates[i])
@@ -418,7 +426,8 @@ namespace Colorcrush.Game
                 }
                 else
                 {
-                    yield return AnimateNonSelectedEmoji(emojiAnimators[i]);
+                    yield return AnimateNonSelectedEmoji(emojiAnimators[i], currentPitch);
+                    currentPitch += pitchStep;
                 }
             }
 
@@ -436,7 +445,7 @@ namespace Colorcrush.Game
             AnimationManager.PlayAnimation(animator, new FadeAnimation(ToggledAlpha, 0f, 0.5f));
         }
 
-        private IEnumerator AnimateNonSelectedEmoji(EmojiAnimator animator)
+        private IEnumerator AnimateNonSelectedEmoji(EmojiAnimator animator, float pitch)
         {
             var image = animator.GetComponent<Image>();
             if (image != null)
@@ -447,7 +456,7 @@ namespace Colorcrush.Game
             var targetPosition = progressBar.transform.position;
             AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 0.5f, Vector3.zero));
             yield return new WaitForSeconds(0.05f);
-            AudioManager.PlaySound("misc_menu");
+            AudioManager.PlaySound("misc_menu", pitchShift: pitch);
         }
 
         private void ResetButtons()
