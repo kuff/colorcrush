@@ -2,6 +2,7 @@
 
 #region
 
+using Colorcrush.Util;
 using UnityEngine;
 
 #endregion
@@ -10,25 +11,29 @@ namespace Colorcrush.Game
 {
     public class RevealBehindEffect : MonoBehaviour
     {
-        public Material circleMaterial;
-        public float expandSpeed = 1.0f;
+        [SerializeField]
+        [Tooltip("Material used for the reveal circle effect")]
+        private Material circleMaterial;
 
-        private float circleSize;
-        private float startTime;
+        [SerializeField]
+        [Tooltip("Speed at which the reveal circle expands")]
+        private float expandSpeed = 1.0f;
 
-        private void Start()
+        private float _circleSize;
+        private float _startTime;
+
+        private void Awake()
         {
-            startTime = Time.time;
-            circleMaterial.SetFloat("_CircleSize", 0f);
+            _startTime = Time.time;
         }
 
         private void Update()
         {
-            var elapsedTime = Time.time - startTime;
+            var elapsedTime = Time.time - _startTime;
             if (elapsedTime >= 3.0f)
             {
-                circleSize += Time.deltaTime * expandSpeed;
-                circleMaterial.SetFloat("_CircleSize", circleSize);
+                _circleSize += Time.deltaTime * expandSpeed;
+                ShaderManager.SetFloat(circleMaterial, "_CircleSize", _circleSize);
             }
         }
     }
