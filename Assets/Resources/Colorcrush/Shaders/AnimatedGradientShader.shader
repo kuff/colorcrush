@@ -12,7 +12,10 @@ Shader "Colorcrush/AnimatedGradientShader"
     }
     SubShader
     {
-        Tags { "Queue" = "Overlay" }
+        Tags
+        {
+            "Queue" = "Overlay"
+        }
         Pass
         {
             CGPROGRAM
@@ -38,7 +41,7 @@ Shader "Colorcrush/AnimatedGradientShader"
             float4 _Color4;
             float _Speed;
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -46,7 +49,7 @@ Shader "Colorcrush/AnimatedGradientShader"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
                 float time = _Time.y * _Speed;
                 float t1 = abs(sin(time * 0.3));

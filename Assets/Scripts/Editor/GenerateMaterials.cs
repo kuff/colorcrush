@@ -4,9 +4,13 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using Colorcrush.Util;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
+using SceneManager = UnityEngine.SceneManagement.SceneManager;
 
 #endregion
 
@@ -15,7 +19,6 @@ namespace Editor
     public class GenerateMaterials : EditorWindow
     {
         private string _fileNamePrefix = "";
-        private const string MaterialPath = "Assets/Resources/GeneratedMaterials";
 
         private void OnGUI()
         {
@@ -28,7 +31,7 @@ namespace Editor
             }
         }
 
-        [MenuItem("Colorcrush/Generate Transpose Materials for Images In Selection", false, 10)]
+        [MenuItem("Colorcrush/Generate Transpose Materials for Images In Selection", false, 1)]
         private static void ShowWindow()
         {
             GetWindow<GenerateMaterials>("Generate Materials");
@@ -38,29 +41,49 @@ namespace Editor
         {
             var selectedObjects = Selection.gameObjects;
 
-            foreach (var obj in selectedObjects)
+            if (selectedObjects.Length == 0)
             {
-                var images = obj.GetComponentsInChildren<Image>(true);
+                Debug.LogError("No objects selected. Please select at least one object containing Image components.");
+                return;
+            }
 
-                foreach (var image in images)
+            var allImages = selectedObjects.SelectMany(obj => obj.GetComponentsInChildren<Image>(true)).ToArray();
+
+            if (allImages.Length == 0)
+            {
+                Debug.LogError("No Image components found in the selected objects. Please select objects containing Image components.");
+                return;
+            }
+
+            foreach (var image in allImages)
+            {
+                CreateAndAssignMaterial(image);
+                if (ProjectConfig.InstanceConfig.disableMaskingOnGenerate)
                 {
-                    CreateAndAssignMaterial(image);
+                    image.maskable = false;
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(image);
+                    Debug.Log($"Disabled masking for image: {image.gameObject.name}");
                 }
             }
+
+            // Save the changes to the scene
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            EditorSceneManager.SaveOpenScenes();
         }
 
         private void CreateAndAssignMaterial(Image image)
         {
-            var uniqueIdentifier = Guid.NewGuid().ToString().Substring(0, 8);
+            var uniqueIdentifier = Guid.NewGuid().ToString()[..8];
             var materialName = $"{_fileNamePrefix}{image.gameObject.name}_{uniqueIdentifier}_Material";
 
             // Create the directory if it doesn't exist
-            if (!Directory.Exists(MaterialPath))
+            var generatedMaterialsPath = ProjectConfig.InstanceConfig.generatedMaterialsPath;
+            if (!Directory.Exists(generatedMaterialsPath))
             {
-                Directory.CreateDirectory(MaterialPath);
+                Directory.CreateDirectory(generatedMaterialsPath);
             }
 
-            var fullPath = $"{MaterialPath}/{materialName}.mat";
+            var fullPath = $"{generatedMaterialsPath}/{materialName}.mat";
 
             // Create a new material
             var material = new Material(Shader.Find("Colorcrush/ColorTransposeShader"));
@@ -68,6 +91,9 @@ namespace Editor
 
             // Assign the material to the Image component
             image.material = material;
+
+            // Ensure the change is registered in the prefab if this is a prefab instance
+            PrefabUtility.RecordPrefabInstancePropertyModifications(image);
 
             Debug.Log($"Created and assigned material: {fullPath}");
         }

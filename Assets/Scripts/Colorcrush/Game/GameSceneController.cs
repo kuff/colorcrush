@@ -296,7 +296,7 @@ namespace Colorcrush.Game
         {
             _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
             var nextColor = ColorManager.GetNextColor();
-            _selectionGridImages[index].material.SetColor("_TargetColor", nextColor);
+            ShaderManager.SetColor(_selectionGridImages[index].material, "_TargetColor", nextColor);
             if (!ignoreAlpha)
             {
                 ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", DefaultAlpha);

@@ -31,6 +31,12 @@ namespace Colorcrush.Util
         [Tooltip("If true, all log files will be deleted on startup when running in the Unity Editor.")]
         public bool deleteAllLogFilesOnEditorStartup = true;
 
+        [Tooltip("The path where generated materials will be saved.")]
+        public string generatedMaterialsPath = "Assets/Resources/GeneratedMaterials";
+
+        [Tooltip("If true, masking will be disabled for images when generating materials.")]
+        public bool disableMaskingOnGenerate = true;
+
         [Header("Game Configuration")]
         [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;

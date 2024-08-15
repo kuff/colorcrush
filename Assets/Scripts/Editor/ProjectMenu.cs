@@ -16,7 +16,7 @@ namespace Editor
         private const string ConfigPath = "Assets/Resources/Colorcrush/ProjectConfigurationObject.asset";
         private const string MenuItemPrefix = "Colorcrush/";
 
-        [MenuItem(MenuItemPrefix + "Edit Configuration %#e", false, 1)]
+        [MenuItem(MenuItemPrefix + "Edit Configuration %#e", false, 10)]
         public static void ShowConfiguration()
         {
             var config = AssetDatabase.LoadAssetAtPath<ProjectConfigurationObject>(ConfigPath);
@@ -32,7 +32,7 @@ namespace Editor
             EditorGUIUtility.PingObject(config);
         }
 
-        [MenuItem(MenuItemPrefix + "Create Configuration", false, 1)]
+        [MenuItem(MenuItemPrefix + "Create Configuration", false, 10)]
         public static void CreateConfiguration()
         {
             var config = AssetDatabase.LoadAssetAtPath<ProjectConfigurationObject>(ConfigPath);

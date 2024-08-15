@@ -9,7 +9,10 @@ Shader "Colorcrush/RollingGradientShader"
     }
     SubShader
     {
-        Tags { "Queue" = "Overlay" }
+        Tags
+        {
+            "Queue" = "Overlay"
+        }
         LOD 100
 
         Pass
@@ -35,7 +38,7 @@ Shader "Colorcrush/RollingGradientShader"
             sampler2D main_tex;
             float time_speed;
 
-            v2_f vert (const appdata_t v)
+            v2_f vert(const appdata_t v)
             {
                 v2_f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -43,7 +46,7 @@ Shader "Colorcrush/RollingGradientShader"
                 return o;
             }
 
-            fixed4 frag (const v2_f i) : SV_Target
+            fixed4 frag(const v2_f i) : SV_Target
             {
                 float2 p = i.uv * 2.0 - 1.0;
                 const float time = _Time.y * time_speed;

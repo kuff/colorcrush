@@ -18,6 +18,8 @@ MonoBehaviour:
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
   deleteAllLogFilesOnEditorStartup: 1
+  generatedMaterialsPath: Assets/Resources/GeneratedMaterials
+  disableMaskingOnGenerate: 1
   randomSeed: 42
   resetShadersOnShutdown: 1
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
