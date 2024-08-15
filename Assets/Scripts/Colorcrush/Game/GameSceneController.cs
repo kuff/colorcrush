@@ -19,7 +19,7 @@ using Animator = Colorcrush.Animation.Animator;
 
 namespace Colorcrush.Game
 {
-    public class GameController : MonoBehaviour
+    public class GameSceneController : MonoBehaviour
     {
         private const float ShrinkFactor = 0.9f;
         private const float ToggledAlpha = 0.5f;
@@ -29,12 +29,25 @@ namespace Colorcrush.Game
         private const float SetupAnimationDuration = 0.5f;
         private const float ButtonFadeInDelay = 0.025f;
 
-        [SerializeField] private TextMeshProUGUI submitButtonText;
-        [SerializeField] private Image progressBar;
-        [SerializeField] private string nextSceneName = "MuralScene";
-        [SerializeField] private Button submitButton;
-        [SerializeField] private Canvas uiCanvas;
-        [SerializeField] private Image targetEmojiImage;
+        [Header("UI Elements")]
+        [Tooltip("Text component for the submit button")] [SerializeField]
+        private TextMeshProUGUI submitButtonText;
+
+        [Tooltip("Image component for the progress bar")] [SerializeField]
+        private Image progressBar;
+
+        [Tooltip("Button component for submitting")] [SerializeField]
+        private Button submitButton;
+
+        [Tooltip("Canvas containing the UI elements")] [SerializeField]
+        private Canvas uiCanvas;
+
+        [Tooltip("Image component for displaying the target emoji")] [SerializeField]
+        private Image targetEmojiImage;
+
+        [Header("Scene Management")]
+        [Tooltip("Name of the scene to load after completing the game")] [SerializeField]
+        private string nextSceneName = "MuralScene";
 
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;

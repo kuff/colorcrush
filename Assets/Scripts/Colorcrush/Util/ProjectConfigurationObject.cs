@@ -28,9 +28,6 @@ namespace Colorcrush.Util
         [Tooltip("The path where Colorcrush scripts are stored.")]
         public string mainScriptsPath = "Assets/Scripts/Colorcrush";
 
-        [Tooltip("If true, the game will attempt to balance pixel colors in the final image. This may affect performance.")]
-        public bool doPixelBalancing = true;
-
         [Tooltip("If true, all log files will be deleted on startup when running in the Unity Editor.")]
         public bool deleteAllLogFilesOnEditorStartup = true;
 

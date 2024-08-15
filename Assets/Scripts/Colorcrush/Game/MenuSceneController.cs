@@ -9,17 +9,54 @@ using UnityEngine.UI;
 
 namespace Colorcrush.Game
 {
-    public class ScrollBarEffect : MonoBehaviour
+    public class MenuSceneController : MonoBehaviour
     {
-        [SerializeField] private Image scrollbarImage;
-        [SerializeField] private ScrollRect scrollView;
+        [SerializeField] [Tooltip("The ScrollRect to reset to the beginning")]
+        private ScrollRect scrollViewToReset;
+
+        [SerializeField] [Tooltip("The Image component of the scrollbar")]
+        private Image scrollbarImage;
+
+        [SerializeField] [Tooltip("The ScrollRect component of the main scroll view")]
+        private ScrollRect scrollView;
+
+        [SerializeField] [Range(0.1f, 0.9f)] [Tooltip("The size ratio of the scrollbar (0.1 to 0.9)")]
+        private float scrollbarSizeRatio = 0.5f;
+
         private float _adjustedWidth;
         private float _originalWidth;
         private float _scrollableWidth;
-
         private RectTransform _scrollbarRectTransform;
 
-        private void Start()
+        private void Awake()
+        {
+            ResetScrollViewToBeginning();
+            InitializeScrollBarEffect();
+        }
+
+        private void OnDestroy()
+        {
+            if (scrollView != null)
+            {
+                scrollView.onValueChanged.RemoveListener(OnScrollValueChanged);
+            }
+        }
+
+        private void ResetScrollViewToBeginning()
+        {
+            if (scrollViewToReset != null)
+            {
+                scrollViewToReset.horizontalNormalizedPosition = 0f;
+                Canvas.ForceUpdateCanvases();
+                scrollViewToReset.velocity = Vector2.zero;
+            }
+            else
+            {
+                Debug.LogWarning("ScrollRect to reset is not assigned in the inspector.");
+            }
+        }
+
+        private void InitializeScrollBarEffect()
         {
             if (scrollbarImage == null || scrollView == null)
             {
@@ -38,9 +75,7 @@ namespace Colorcrush.Game
                 return;
             }
 
-            // Adjust the scrollbar width based on the content size
-            var scrollbarWidthRatio = scrollView.viewport.rect.width / scrollView.content.rect.width;
-            _adjustedWidth = _originalWidth * scrollbarWidthRatio;
+            _adjustedWidth = _originalWidth * scrollbarSizeRatio;
             _scrollbarRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _adjustedWidth);
 
             // Add listener for scroll value changes
@@ -48,14 +83,6 @@ namespace Colorcrush.Game
 
             // Initial position update
             UpdateScrollbarPosition(scrollView.normalizedPosition);
-        }
-
-        private void OnDestroy()
-        {
-            if (scrollView != null)
-            {
-                scrollView.onValueChanged.RemoveListener(OnScrollValueChanged);
-            }
         }
 
         private void OnScrollValueChanged(Vector2 scrollPosition)

@@ -17,7 +17,6 @@ MonoBehaviour:
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
-  doPixelBalancing: 0
   deleteAllLogFilesOnEditorStartup: 1
   randomSeed: 42
   resetShadersOnShutdown: 1

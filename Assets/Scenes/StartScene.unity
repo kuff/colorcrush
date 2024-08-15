@@ -526,37 +526,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 440928364}
-  - component: {fileID: 440928363}
   - component: {fileID: 440928365}
-  - component: {fileID: 440928366}
-  - component: {fileID: 440928367}
-  - component: {fileID: 440928368}
   m_Layer: 0
-  m_Name: LogicObject
+  m_Name: StartSceneController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &440928363
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 440928362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f67330287796e74ab05c6daa779b70e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  tapText: {fileID: 34146521}
-  titleText: {fileID: 724237949}
-  freshStartupScene: GameScene
-  recurringStartupScene: MenuScene
-  initialDelay: 5
-  delayBetweenCharacters: 0.5
-  shakeInterval: 10
 --- !u!4 &440928364
 Transform:
   m_ObjectHideFlags: 0
@@ -581,80 +558,39 @@ MonoBehaviour:
   m_GameObject: {fileID: 440928362}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d836286d6c97e4840a510c98c21c6e31, type: 3}
+  m_Script: {fileID: 11500000, guid: 3e0f741441ea443691d37e32b8296903, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  infoText: {fileID: 1799598394}
---- !u!114 &440928366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 440928362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 706639f76f7618e48aefc7be04d70e63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  titleText: {fileID: 724237949}
   versionText: {fileID: 1979448836}
---- !u!114 &440928367
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 440928362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 19fa6f75850203d42a51ff49d69c7d9b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  circleMaterial: {fileID: 2100000, guid: 630aaaf3cc0e0b640bb78751e4375dd6, type: 2}
-  expandSpeed: 1
---- !u!114 &440928368
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 440928362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9be7f0b419ff70d4ab0f660d26a88dd1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  totalAnimationDuration: 2.75
-  scaleDuration: 0.175
+  debugColorspaceInfoText: {fileID: 1799598394}
+  freshStartupScene: GameScene
+  recurringStartupScene: MenuScene
+  initialDelay: 5.5
+  delayBetweenCharacters: 0.5
+  shakeInterval: 10
+  totalAnimationDuration: 3
+  scaleDuration: 0.25
   shuffleSpeedCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
       value: 0
-      inSlope: 0.18722779
-      outSlope: 0.18722779
+      inSlope: 0.3313504
+      outSlope: 0.3313504
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.24666668
-    - serializedVersion: 3
-      time: 0.80267113
-      value: 0.30875325
-      inSlope: 0.8977975
-      outSlope: 0.8977975
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.56080097
+      outWeight: 0.21333335
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 2
-      outSlope: 2
+      inSlope: 3.1359832
+      outSlope: 3.1359832
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0
+      inWeight: 0.03666663
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -663,6 +599,8 @@ MonoBehaviour:
   bumpDuration: 0.1
   bumpScaleFactor: 1.1
   targetScale: 0
+  circleMaterial: {fileID: 2100000, guid: 630aaaf3cc0e0b640bb78751e4375dd6, type: 2}
+  expandSpeed: 1
 --- !u!1 &724237947
 GameObject:
   m_ObjectHideFlags: 0
@@ -1281,9 +1219,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 440928363}
-        m_TargetAssemblyTypeName: LoadingScreenTap, Scripts.Colorcrush
-        m_MethodName: OnTapTextClicked
+      - m_Target: {fileID: 440928365}
+        m_TargetAssemblyTypeName: Colorcrush.Game.StartController, Scripts.Colorcrush
+        m_MethodName: OnStartButtonClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

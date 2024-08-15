@@ -1389,9 +1389,8 @@ GameObject:
   m_Component:
   - component: {fileID: 478530786}
   - component: {fileID: 478530787}
-  - component: {fileID: 478530788}
   m_Layer: 0
-  m_Name: LogicObject
+  m_Name: MenuSceneController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1421,24 +1420,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 478530784}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 01c667ab9b13f2649a4a6650b987dbd2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scrollbarImage: {fileID: 1437737379}
-  scrollView: {fileID: 694629470}
---- !u!114 &478530788
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 478530784}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 867cbb7898d114845ac74b69f512a733, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   scrollViewToReset: {fileID: 694629470}
+  scrollbarImage: {fileID: 1437737379}
+  scrollView: {fileID: 694629470}
+  scrollbarSizeRatio: 0.5
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0

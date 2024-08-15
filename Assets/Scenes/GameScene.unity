@@ -201,7 +201,7 @@ GameObject:
   - component: {fileID: 478530786}
   - component: {fileID: 478530787}
   m_Layer: 0
-  m_Name: LogicObject
+  m_Name: GameSceneManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -236,10 +236,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   submitButtonText: {fileID: 1169758037}
   progressBar: {fileID: 1590817002}
-  nextSceneName: MenuScene
   submitButton: {fileID: 1510623099}
   uiCanvas: {fileID: 1299182424}
   targetEmojiImage: {fileID: 1403780955}
+  nextSceneName: MenuScene
 --- !u!1 &725762304
 GameObject:
   m_ObjectHideFlags: 0
