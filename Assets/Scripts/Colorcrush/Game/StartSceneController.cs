@@ -19,59 +19,106 @@ namespace Colorcrush.Game
 {
     public class StartSceneController : MonoBehaviour
     {
-        [Header("Loading Screen")]
-        [Tooltip("Text component for displaying the title")] [SerializeField]
+        [Header("General")]
+        [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
         private TextMeshProUGUI titleText;
 
-        [Tooltip("Text component for displaying the version")] [SerializeField]
+        [Tooltip("TextMeshProUGUI component for displaying the current version of the game.")] [SerializeField]
         private TextMeshProUGUI versionText;
 
-        [Tooltip("Text component for displaying debug colorspace information")] [SerializeField]
+        [Tooltip("TextMeshProUGUI component for displaying technical information about the color space (used for debugging).")] [SerializeField]
         private TextMeshProUGUI debugColorspaceInfoText;
 
-        [Tooltip("Scene to load on fresh startup")] [FormerlySerializedAs("nextSceneName")] [SerializeField]
+        [Tooltip("Name of the scene to load when the game is started for the first time.")] [FormerlySerializedAs("nextSceneName")] [SerializeField]
         private string freshStartupScene = "GameScene";
 
-        [Tooltip("Scene to load on recurring startup")] [FormerlySerializedAs("menuSceneName")] [SerializeField]
+        [Tooltip("Name of the scene to load when the game is started subsequent times.")] [FormerlySerializedAs("menuSceneName")] [SerializeField]
         private string recurringStartupScene = "MenuScene";
 
-        [Tooltip("Initial delay before starting animations")] [SerializeField]
+        [Tooltip("Time in seconds to wait before starting the shake animations on the start screen.")] [SerializeField]
         private float initialDelay = 6f;
 
-        [Tooltip("Delay between adding characters to the title text")] [SerializeField]
+        [Tooltip("Time in seconds to wait between adding each character to the title text animation.")] [SerializeField]
         private float delayBetweenCharacters = 0.5f;
 
-        [Tooltip("Interval between shake animations")] [SerializeField]
+        [Tooltip("Time in seconds between each shake animation of the title.")] [SerializeField]
         private float shakeInterval = 10f;
 
         [Header("Emoji Shuffle Effect")]
-        [Tooltip("Total duration of the emoji shuffle animation")] [SerializeField]
+        [Tooltip("Total duration in seconds of the emoji shuffling animation.")] [SerializeField]
         private float totalAnimationDuration = 3f;
 
-        [Tooltip("Duration of the scaling animation")] [SerializeField]
+        [Tooltip("Duration in seconds of the scaling animation for the final emoji. This will be subtracted from the total animation duration to determine the duration of the shuffling animation.")] [SerializeField]
         private float scaleDuration = 1f;
 
-        [Tooltip("Animation curve for controlling shuffle speed")] [SerializeField]
+        [Tooltip("Animation curve that controls the speed of the emoji shuffling over time.")] [SerializeField]
         private AnimationCurve shuffleSpeedCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
-        [Tooltip("Total number of emojis to shuffle through")] [SerializeField]
+        [Tooltip("Total number of different emojis to cycle through during the shuffle animation.")] [SerializeField]
         private int totalEmojis = 20;
 
-        [Tooltip("Duration of the bump animation for each emoji")] [SerializeField]
+        [Tooltip("Duration in seconds of the small 'bump' animation for each emoji during shuffling.")] [SerializeField]
         private float bumpDuration = 0.01f;
 
-        [Tooltip("Scale factor for the bump animation")] [SerializeField]
+        [Tooltip("Scale factor for the 'bump' animation (e.g., 1.1 means the emoji grows 10% larger).")] [SerializeField]
         private float bumpScaleFactor = 1.1f;
 
-        [Tooltip("Target scale for the final emoji")] [SerializeField]
+        [Tooltip("Final scale of the emoji after the shuffling animation completes.")] [SerializeField]
         private float targetScale = 0.5f;
 
+        [Tooltip("Color to apply to the shuffled emojis.")] [SerializeField]
+        private Color emojiColor = new(0.82f, 0.47f, 0.46f); // D27975 in RGB
+
+        [Tooltip("Color of the background behind the shuffling emojis.")] [SerializeField]
+        private Color backgroundColor = Color.white;
+
+        [Tooltip("Image component for the background of the start screen.")] [SerializeField]
+        private Image backgroundImage;
+
         [Header("Reveal Behind Effect")]
-        [Tooltip("Material used for the reveal circle effect")] [SerializeField]
+        [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
         private Material circleMaterial;
 
-        [Tooltip("Speed at which the reveal circle expands")] [SerializeField]
+        [Tooltip("Speed at which the reveal circle expands behind the emoji.")] [SerializeField]
         private float expandSpeed = 1.0f;
+
+        [Header("Sound Effects")]
+        [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
+        private string smileySound = "MENU_Pick";
+
+        [Tooltip("Pitch adjustment for the colon sound in the smiley face (higher values = higher pitch).")] [SerializeField]
+        private float smileyColonPitchShift = 1.25f;
+
+        [Tooltip("Pitch adjustment for the parenthesis sound in the smiley face (lower values = lower pitch).")] [SerializeField]
+        private float smileyParenthesisPitchShift = 0.5f;
+
+        [Tooltip("Name of the sound effect to play after the initial delay.")] [SerializeField]
+        private string initialDelaySound = "MESSAGE-B_Accept";
+
+        [Tooltip("Pitch adjustment for the sound played after the initial delay.")] [SerializeField]
+        private float initialDelayPitchShift = 0.85f;
+
+        [Tooltip("Volume adjustment for the sound played after the initial delay.")] [SerializeField]
+        private float initialDelayGain = 2f;
+
+        [Tooltip("Name of the sound effect to play during each emoji 'bump' in the shuffle animation.")] [SerializeField]
+        private string emojiBumpSound = "MENU_Pick";
+
+        [Tooltip("Pitch adjustment for the emoji bump sound.")] [SerializeField]
+        private float emojiBumpPitchShift = 1f;
+
+        [Tooltip("Volume adjustment for the emoji bump sound.")] [SerializeField]
+        private float emojiBumpGain = 1f;
+
+        [Header("Shake Animation")]
+        [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
+        private float shakeDuration = 0.75f;
+
+        [Tooltip("Intensity of the shake animation (higher values = more intense shaking).")] [SerializeField]
+        private float shakeStrength = 5f;
+
+        [Tooltip("Number of shakes per second in the shake animation.")] [SerializeField]
+        private float shakeVibrato = 15f;
 
         private Animator[] _animators;
         private float _circleSize;
@@ -98,14 +145,24 @@ namespace Colorcrush.Game
             InstantiateTargetImage();
             if (_targetImage != null)
             {
-                var animator = _targetImage.gameObject.GetComponent<Animator>() ?? _targetImage.gameObject.AddComponent<Animator>();
+                _ = _targetImage.gameObject.GetComponent<Animator>() ?? _targetImage.gameObject.AddComponent<Animator>();
                 _originalScale = _targetImage.transform.localScale;
                 _shuffleDuration = Mathf.Max(0, totalAnimationDuration - scaleDuration);
                 StartCoroutine(ShuffleAndScaleCoroutine());
+                ShaderManager.SetColor(_targetImage.material, "_TargetColor", emojiColor);
             }
             else
             {
                 Debug.LogError("Failed to instantiate target image for ShuffleEmojisEffect.");
+            }
+
+            if (backgroundImage != null)
+            {
+                backgroundImage.color = backgroundColor;
+            }
+            else
+            {
+                Debug.LogWarning("Background Image component not assigned in the inspector.");
             }
 
             _startTime = Time.time;
@@ -155,7 +212,7 @@ namespace Colorcrush.Game
             {
                 yield return new WaitForSeconds(shakeInterval);
                 var animatorsList = new List<Animator>(_animators);
-                AnimationManager.PlayAnimation(animatorsList, new ShakeAnimation(0.75f));
+                AnimationManager.PlayAnimation(animatorsList, new ShakeAnimation(shakeDuration, shakeStrength, shakeVibrato));
             }
         }
 
@@ -165,18 +222,18 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
-            AudioManager.PlaySound("MENU_Pick", pitchShift: 1.25f);
+            AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
-            AudioManager.PlaySound("MENU_Pick", pitchShift: 0.5f);
+            AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
         }
 
         private IEnumerator PlaySoundAfterDelay()
         {
             yield return new WaitForSeconds(3f);
-            AudioManager.PlaySound("MESSAGE-B_Accept", pitchShift: 0.85f, gain: 2f);
+            AudioManager.PlaySound(initialDelaySound, pitchShift: initialDelayPitchShift, gain: initialDelayGain);
         }
 
         public void OnStartButtonClicked()
@@ -284,7 +341,7 @@ namespace Colorcrush.Game
             var elapsedTime = 0f;
             var startScale = _targetImage.transform.localScale;
 
-            AudioManager.PlaySound("MENU_Pick");
+            AudioManager.PlaySound(emojiBumpSound, pitchShift: emojiBumpPitchShift, gain: emojiBumpGain);
 
             while (elapsedTime < bumpDuration / 2)
             {

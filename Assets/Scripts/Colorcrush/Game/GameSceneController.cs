@@ -21,32 +21,69 @@ namespace Colorcrush.Game
 {
     public class GameSceneController : MonoBehaviour
     {
-        private const float ShrinkFactor = 0.9f;
-        private const float ToggledAlpha = 0.5f;
-        private const float DefaultAlpha = 1f;
-        private const int TargetSubmitCount = 5;
-        private const float SetupScaleFactor = 1.2f;
-        private const float SetupAnimationDuration = 0.5f;
-        private const float ButtonFadeInDelay = 0.025f;
+        [Header("General")]
+        [Tooltip("Factor to shrink buttons when toggled. A value of 0.9 means the button will shrink to 90% of its original size.")] [SerializeField]
+        private float shrinkFactor = 0.9f;
+
+        [Tooltip("Alpha (transparency) value for toggled buttons. 0 is fully transparent, 1 is fully opaque.")] [SerializeField]
+        private float toggledAlpha = 0.5f;
+
+        [Tooltip("Default alpha (transparency) value for buttons when not toggled. 0 is fully transparent, 1 is fully opaque.")] [SerializeField]
+        private float defaultAlpha = 1f;
+
+        [Tooltip("Number of color submissions required to complete the game and progress to the next scene.")] [SerializeField]
+        private int targetSubmitCount = 5;
+
+        [Tooltip("Scale factor for initial setup animation. A value greater than 1 will make the target emoji appear larger before settling to their normal size.")] [SerializeField]
+        private float setupScaleFactor = 1.2f;
+
+        [Tooltip("Duration in seconds of the initial setup animation for buttons.")] [SerializeField]
+        private float setupAnimationDuration = 0.5f;
+
+        [Tooltip("Delay in seconds between each button's fade-in animation during the initial setup.")] [SerializeField]
+        private float buttonFadeInDelay = 0.025f;
+
+        [Header("Emoji Animation Settings")]
+        [Tooltip("Duration in seconds of the fade-out animation for emojis that were selected.")] [SerializeField]
+        private float selectedEmojiFadeDuration = 0.5f;
+
+        [Tooltip("Duration in seconds of the movement animation for emojis that were not selected.")] [SerializeField]
+        private float nonSelectedEmojiMoveDuration = 0.5f;
+
+        [Tooltip("Vector3 offset for the movement of non-selected emojis. Determines direction and distance of movement.")] [SerializeField]
+        private Vector3 nonSelectedEmojiMoveOffset = Vector3.zero;
+
+        [Header("Sound Settings")]
+        [Tooltip("Name of the sound effect to play for non-selected emojis.")] [SerializeField]
+        private string nonSelectedEmojiSound = "misc_menu";
+
+        [Tooltip("Base pitch for the first non-selected emoji sound. Values above 1 increase pitch, below 1 decrease pitch.")] [SerializeField]
+        private float nonSelectedEmojiBasePitch = 3f;
+
+        [Tooltip("Incremental pitch change for each subsequent non-selected emoji sound.")] [SerializeField]
+        private float nonSelectedEmojiPitchStep = 5f;
+
+        [Tooltip("Volume adjustment for the non-selected emoji sounds. Higher values increase volume.")] [SerializeField]
+        private float nonSelectedEmojiGain = 1f;
 
         [Header("UI Elements")]
-        [Tooltip("Text component for the submit button")] [SerializeField]
+        [Tooltip("TextMeshProUGUI component for displaying text on the submit button.")] [SerializeField]
         private TextMeshProUGUI submitButtonText;
 
-        [Tooltip("Image component for the progress bar")] [SerializeField]
+        [Tooltip("Image component representing the progress bar fill.")] [SerializeField]
         private Image progressBar;
 
-        [Tooltip("Button component for submitting")] [SerializeField]
+        [Tooltip("Button component for the submit action.")] [SerializeField]
         private Button submitButton;
 
-        [Tooltip("Canvas containing the UI elements")] [SerializeField]
+        [Tooltip("Canvas containing all the UI elements for the game scene.")] [SerializeField]
         private Canvas uiCanvas;
 
-        [Tooltip("Image component for displaying the target emoji")] [SerializeField]
+        [Tooltip("Image component for displaying the target emoji that players need to match.")] [SerializeField]
         private Image targetEmojiImage;
 
         [Header("Scene Management")]
-        [Tooltip("Name of the scene to load after completing the game")] [SerializeField]
+        [Tooltip("Name of the scene to load after successfully completing all color submissions.")] [SerializeField]
         private string nextSceneName = "MuralScene";
 
         private bool _buttonsInteractable = true;
@@ -115,7 +152,7 @@ namespace Colorcrush.Game
             }
 
             _currentState = GameState.Setup;
-            _targetEmojiImage.transform.localScale = _originalTargetScale * SetupScaleFactor;
+            _targetEmojiImage.transform.localScale = _originalTargetScale * setupScaleFactor;
 
             AudioManager.PlaySound("MENU B_Back");
 
@@ -137,16 +174,16 @@ namespace Colorcrush.Game
             submitButton.interactable = false;
 
             // Scale down target
-            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale, SetupAnimationDuration));
+            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale, setupAnimationDuration));
 
-            yield return new WaitForSeconds(SetupAnimationDuration / 2); // Start fading in buttons halfway through target scaling
+            yield return new WaitForSeconds(setupAnimationDuration / 2); // Start fading in buttons halfway through target scaling
 
             // Fade in grid buttons with staggered delay
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
-                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, DefaultAlpha, 0.5f));
-                yield return new WaitForSeconds(ButtonFadeInDelay);
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, 0.5f));
+                yield return new WaitForSeconds(buttonFadeInDelay);
             }
 
             // Wait for all grid buttons to finish fading in
@@ -154,9 +191,9 @@ namespace Colorcrush.Game
 
             // Fade in submit button
             submitButton.gameObject.SetActive(true);
-            AnimationManager.PlayAnimation(submitButtonAnimator, new FadeAnimation(0f, DefaultAlpha, SetupAnimationDuration / 2));
+            AnimationManager.PlayAnimation(submitButtonAnimator, new FadeAnimation(0f, defaultAlpha, setupAnimationDuration / 2));
 
-            yield return new WaitForSeconds(SetupAnimationDuration / 2);
+            yield return new WaitForSeconds(setupAnimationDuration / 2);
 
             // Make submit button interactable after it's fully revealed
             submitButton.interactable = true;
@@ -184,7 +221,7 @@ namespace Colorcrush.Game
             foreach (var button in _selectionGridButtons)
             {
                 var buttonAnimator = button.GetComponent<Animator>();
-                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(DefaultAlpha, 0f, SetupAnimationDuration / 2));
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(defaultAlpha, 0f, setupAnimationDuration / 2));
             }
 
             yield return new WaitForSeconds(1f);
@@ -193,16 +230,16 @@ namespace Colorcrush.Game
             SceneManager.LoadSceneAsync(nextSceneName, () => sceneIsLoaded = true);
 
             var submitAnimator = submitButton.GetComponent<Animator>();
-            AnimationManager.PlayAnimation(submitAnimator, new FadeAnimation(DefaultAlpha, 0f, SetupAnimationDuration / 2));
+            AnimationManager.PlayAnimation(submitAnimator, new FadeAnimation(defaultAlpha, 0f, setupAnimationDuration / 2));
 
             // Wait for an additional second before scaling up the target
-            yield return new WaitForSeconds(SetupAnimationDuration / 2);
+            yield return new WaitForSeconds(setupAnimationDuration / 2);
 
             // Scale up target
-            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale * SetupScaleFactor, SetupAnimationDuration));
+            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale * setupScaleFactor, setupAnimationDuration));
             AudioManager.PlaySound("MENU B_Select");
 
-            yield return new WaitForSeconds(SetupAnimationDuration);
+            yield return new WaitForSeconds(setupAnimationDuration);
 
             // Allow scene to load
             while (!sceneIsLoaded)
@@ -299,7 +336,7 @@ namespace Colorcrush.Game
             ShaderManager.SetColor(_selectionGridImages[index].material, "_TargetColor", nextColor);
             if (!ignoreAlpha)
             {
-                ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", DefaultAlpha);
+                ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", defaultAlpha);
             }
 
             LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
@@ -313,10 +350,10 @@ namespace Colorcrush.Game
             }
 
             _buttonToggledStates[index] = !_buttonToggledStates[index];
-            var alpha = _buttonToggledStates[index] ? ToggledAlpha : DefaultAlpha;
+            var alpha = _buttonToggledStates[index] ? toggledAlpha : defaultAlpha;
             ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", alpha);
 
-            var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * ShrinkFactor : _originalButtonScales[index];
+            var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * shrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
 
             // Log the button selected or deselected event
@@ -356,7 +393,7 @@ namespace Colorcrush.Game
             UpdateTargetButtonColor();
             StartCoroutine(ShowHappyEmojiCoroutine());
 
-            if (_submitCount >= TargetSubmitCount)
+            if (_submitCount >= targetSubmitCount)
             {
                 _targetReached = true;
                 foreach (var button in _selectionButtons)
@@ -409,7 +446,7 @@ namespace Colorcrush.Game
                 instanceImage.material = new Material(buttonImage.material);
                 instance.transform.localScale = button.transform.localScale;
                 var color = buttonImage.color;
-                instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[index] ? ToggledAlpha : DefaultAlpha);
+                instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[index] ? toggledAlpha : defaultAlpha);
             }
 
             return instance;
@@ -428,8 +465,8 @@ namespace Colorcrush.Game
         private IEnumerator AnimateEmojis(List<EmojiAnimator> emojiAnimators)
         {
             var nonSelectedCount = emojiAnimators.Count(i => !_buttonToggledStates[emojiAnimators.IndexOf(i)]);
-            var pitchStep = nonSelectedCount > 1 ? 5f / (nonSelectedCount - 1) : 0f;
-            var currentPitch = 3f;
+            var pitchStep = nonSelectedCount > 1 ? nonSelectedEmojiPitchStep / (nonSelectedCount - 1) : 0f;
+            var currentPitch = nonSelectedEmojiBasePitch;
 
             for (var i = 0; i < emojiAnimators.Count; i++)
             {
@@ -455,7 +492,7 @@ namespace Colorcrush.Game
                 image.sprite = EmojiManager.GetNextSadEmoji();
             }
 
-            AnimationManager.PlayAnimation(animator, new FadeAnimation(ToggledAlpha, 0f, 0.5f));
+            AnimationManager.PlayAnimation(animator, new FadeAnimation(toggledAlpha, 0f, selectedEmojiFadeDuration));
         }
 
         private IEnumerator AnimateNonSelectedEmoji(EmojiAnimator animator, float pitch)
@@ -466,10 +503,10 @@ namespace Colorcrush.Game
                 image.sprite = EmojiManager.GetNextHappyEmoji();
             }
 
-            var targetPosition = progressBar.transform.position;
-            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, 0.5f, Vector3.zero));
+            var targetPosition = progressBar.transform.position + nonSelectedEmojiMoveOffset;
+            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, nonSelectedEmojiMoveDuration, Vector3.zero));
             yield return new WaitForSeconds(0.05f);
-            AudioManager.PlaySound("misc_menu", pitchShift: pitch);
+            AudioManager.PlaySound(nonSelectedEmojiSound, pitchShift: pitch, gain: nonSelectedEmojiGain);
         }
 
         private void ResetButtons()
@@ -495,11 +532,11 @@ namespace Colorcrush.Game
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
-                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, DefaultAlpha, 0.5f));
-                yield return new WaitForSeconds(0.025f);
+                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, setupAnimationDuration));
+                yield return new WaitForSeconds(buttonFadeInDelay);
             }
 
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(setupAnimationDuration);
 
             foreach (var button in _selectionGridButtons)
             {
@@ -524,7 +561,7 @@ namespace Colorcrush.Game
         {
             if (progressBar != null)
             {
-                var progress = Mathf.Min((float)_submitCount / TargetSubmitCount, 1f);
+                var progress = Mathf.Min((float)_submitCount / targetSubmitCount, 1f);
                 var newWidth = _initialProgressBarWidth * progress;
                 progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, newWidth);
             }

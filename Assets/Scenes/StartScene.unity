@@ -586,11 +586,11 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 1
       value: 1
-      inSlope: 3.1359832
-      outSlope: 3.1359832
+      inSlope: 3.5061252
+      outSlope: 3.5061252
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.03666663
+      inWeight: 0.03333336
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -599,6 +599,9 @@ MonoBehaviour:
   bumpDuration: 0.1
   bumpScaleFactor: 1.1
   targetScale: 0
+  emojiColor: {r: 0.82, g: 0.47, b: 0.46, a: 1}
+  backgroundColor: {r: 0.8196079, g: 0.47058827, b: 0.45882356, a: 1}
+  backgroundImage: {fileID: 838381131}
   circleMaterial: {fileID: 2100000, guid: 630aaaf3cc0e0b640bb78751e4375dd6, type: 2}
   expandSpeed: 1
 --- !u!1 &724237947

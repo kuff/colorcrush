@@ -201,7 +201,7 @@ GameObject:
   - component: {fileID: 478530786}
   - component: {fileID: 478530787}
   m_Layer: 0
-  m_Name: GameSceneManager
+  m_Name: GameSceneController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -234,6 +234,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53ae074490d281349873577333aaa6e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  shrinkFactor: 0.9
+  toggledAlpha: 0.5
+  defaultAlpha: 1
+  targetSubmitCount: 5
+  setupScaleFactor: 1.2
+  setupAnimationDuration: 0.5
+  buttonFadeInDelay: 0.025
+  selectedEmojiFadeDuration: 0.5
+  nonSelectedEmojiMoveDuration: 0.5
+  nonSelectedEmojiMoveOffset: {x: 0, y: 0, z: 0}
+  selectedEmojiSound: misc_menu
+  selectedEmojiPitch: 0.85
+  selectedEmojiGain: 1
+  nonSelectedEmojiSound: misc_menu
+  nonSelectedEmojiBasePitch: 3
+  nonSelectedEmojiPitchStep: 5
+  nonSelectedEmojiGain: 1
   submitButtonText: {fileID: 1169758037}
   progressBar: {fileID: 1590817002}
   submitButton: {fileID: 1510623099}
