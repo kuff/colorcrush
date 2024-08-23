@@ -87,6 +87,7 @@ namespace Colorcrush.Game
 
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
+        private Queue<Color> _colorQueue;
         private GameState _currentState = GameState.Setup;
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
@@ -107,8 +108,8 @@ namespace Colorcrush.Game
             if (string.IsNullOrEmpty(targetColorHex))
             {
 #if DEBUG
-                _targetColor = ColorManager.GetCurrentTargetColor();
-                Debug.LogWarning($"Target color not found in PlayerPrefs. Using ColorManager's current target color for debugging: {ColorUtility.ToHtmlStringRGBA(_targetColor)}");
+                _targetColor = new Color(0.82f, 0.47f, 0.46f); // D27975 in RGB
+                Debug.LogWarning($"Target color not found in PlayerPrefs. Using preset target color for debugging: {ColorUtility.ToHtmlStringRGBA(_targetColor)}");
 #else
                 throw new Exception("Target color not found in PlayerPrefs.");
 #endif
@@ -126,8 +127,19 @@ namespace Colorcrush.Game
             InitializeComponents();
             InitializeButtons();
             InitializeProgressBar();
+            InitializeColorQueue();
             UpdateUI();
             StartCoroutine(GameLoop());
+        }
+
+        private void InitializeColorQueue()
+        {
+            _colorQueue = new Queue<Color>();
+            var colorVariations = ColorManager.GenerateColorVariations(_targetColor);
+            foreach (var color in colorVariations)
+            {
+                _colorQueue.Enqueue(color);
+            }
         }
 
         private IEnumerator GameLoop()
@@ -331,7 +343,7 @@ namespace Colorcrush.Game
         private void UpdateButton(int index, bool ignoreAlpha = false)
         {
             _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
-            var nextColor = ColorManager.GetNextColor();
+            var nextColor = GetNextColor();
             ShaderManager.SetColor(_selectionGridImages[index].material, "_TargetColor", nextColor);
             if (!ignoreAlpha)
             {
@@ -572,6 +584,16 @@ namespace Colorcrush.Game
             {
                 ShaderManager.SetColor(_targetEmojiImage.material, "_TargetColor", _targetColor);
             }
+        }
+
+        private Color GetNextColor()
+        {
+            if (_colorQueue.Count == 0)
+            {
+                InitializeColorQueue();
+            }
+
+            return _colorQueue.Dequeue();
         }
 
         private enum GameState

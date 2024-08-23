@@ -34,7 +34,7 @@ namespace Colorcrush
 
         [Tooltip("The path where generated emoji materials will be saved.")]
         public string generatedMaterialsPath = "Assets/Resources/GeneratedMaterials";
-        
+
         [Tooltip("The prefix used for generated emoji materials.")]
         public string emojiMaterialPrefix = "EmojiMaterial_";
 
@@ -47,7 +47,7 @@ namespace Colorcrush
 
         [Tooltip("If true, all shaders will be reset to their initial state when the game is shut down.")]
         public bool resetShadersOnShutdown = true;
-        
+
         [Tooltip("The file path for loading color data.")]
         public string colorDataFilePath = "Assets/Resources/Colorcrush/ColorData.txt";
 

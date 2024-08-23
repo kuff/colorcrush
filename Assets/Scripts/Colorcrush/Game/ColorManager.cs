@@ -10,81 +10,48 @@ using Random = System.Random;
 
 namespace Colorcrush.Game
 {
+    /*
+     * For now, this just generates random variations and analysis values.
+     */
     public static class ColorManager
     {
         private const int VariationsPerColor = 30;
         private const float VariationRange = 0.05f;
-        private static int _currentTargetColorIndex;
-        private static Color _currentTargetColor;
-        private static readonly Queue<Color> CurrentColorVariations = new();
-        private static int _randomSeed;
+        private static readonly Random RandomInstance = new(ProjectConfig.InstanceConfig.randomSeed);
 
-        private static void GenerateColorVariations()
+        public static List<Color> GenerateColorVariations(Color baseColor)
         {
-            CurrentColorVariations.Clear();
-            var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
-
-            _currentTargetColor = ColorArray.SRGBTargetColors[_currentTargetColorIndex];
+            var variations = new List<Color>();
 
             for (var i = 0; i < VariationsPerColor; i++)
             {
+                // DEBUG: Generate a random color
                 var variation = new Color(
-                    Mathf.Clamp01(_currentTargetColor.r + (float)(random.NextDouble() * 2 - 1) * VariationRange),
-                    Mathf.Clamp01(_currentTargetColor.g + (float)(random.NextDouble() * 2 - 1) * VariationRange),
-                    Mathf.Clamp01(_currentTargetColor.b + (float)(random.NextDouble() * 2 - 1) * VariationRange),
-                    _currentTargetColor.a
+                    Mathf.Clamp01(baseColor.r + (float)(RandomInstance.NextDouble() * 2 - 1) * VariationRange),
+                    Mathf.Clamp01(baseColor.g + (float)(RandomInstance.NextDouble() * 2 - 1) * VariationRange),
+                    Mathf.Clamp01(baseColor.b + (float)(RandomInstance.NextDouble() * 2 - 1) * VariationRange),
+                    baseColor.a
                 );
-                CurrentColorVariations.Enqueue(variation);
+                variations.Add(variation);
             }
+
+            return variations;
         }
 
-        public static Color GetNextColor()
+        public static float[] GenerateColorAnalysis(List<Color> selections)
         {
-            if (CurrentColorVariations.Count == 0)
+            var analysis = new float[8];
+
+            for (var i = 0; i < 8; i++)
             {
-                GenerateColorVariations();
+                // DEBUG: Generate a random value between 0 and 1, with a skew towards 0.5
+                var u = RandomInstance.NextDouble();
+                var v = RandomInstance.NextDouble();
+                var skewedValue = (u + v) / 2.0;
+                analysis[i] = (float)skewedValue;
             }
 
-            if (CurrentColorVariations.Count > 0)
-            {
-                var nextColor = CurrentColorVariations.Dequeue();
-                CurrentColorVariations.Enqueue(nextColor);
-                return nextColor;
-            }
-
-            Debug.LogError("Failed to get next color. Returning default color.");
-            return Color.white;
-        }
-
-        public static void AdvanceToNextTargetColor()
-        {
-            _currentTargetColorIndex++;
-            if (_currentTargetColorIndex >= ColorArray.SRGBTargetColors.Length)
-            {
-                _currentTargetColorIndex = 0;
-            }
-
-            GenerateColorVariations();
-        }
-
-        public static int GetCurrentTargetColorIndex()
-        {
-            if (CurrentColorVariations.Count == 0)
-            {
-                GenerateColorVariations();
-            }
-
-            return _currentTargetColorIndex;
-        }
-
-        public static Color GetCurrentTargetColor()
-        {
-            if (CurrentColorVariations.Count == 0)
-            {
-                GenerateColorVariations();
-            }
-
-            return _currentTargetColor;
+            return analysis;
         }
     }
 }

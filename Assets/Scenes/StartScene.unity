@@ -569,7 +569,7 @@ MonoBehaviour:
   initialDelay: 5.5
   delayBetweenCharacters: 0.5
   shakeInterval: 10
-  enableEmojiShuffle: 1
+  enableEmojiShuffle: 0
   totalAnimationDuration: 3
   scaleDuration: 0.25
   shuffleSpeedCurve:
