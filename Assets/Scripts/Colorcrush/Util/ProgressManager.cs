@@ -188,7 +188,6 @@ namespace Colorcrush.Util
                         _currentLevelSelectedColors.Clear();
                         _generatedColors.Clear();
                     }
-
                     break;
                 case "gamelevelend":
                     if (!_currentLevelCompleted && _currentTargetColor != null)
@@ -202,16 +201,16 @@ namespace Colorcrush.Util
                             _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
                         }
                     }
-
+                    break;
+                case "emojirewarded":
+                    _rewardedEmojis.Add(eventData);
                     break;
                 case "colorssubmitted":
                     if (!_currentLevelCompleted)
                     {
-                        _rewardedEmojis.Add(eventData);
                         _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
                         _currentLevelSelectedColors.Clear();
                     }
-
                     break;
                 case "colorsgenerated":
                     var parts = eventData.Split(' ');
@@ -220,7 +219,6 @@ namespace Colorcrush.Util
                         int.TryParse(parts[0], out var buttonIndex);
                         _generatedColors[buttonIndex] = parts[1];
                     }
-
                     break;
                 case "colorselected":
                     if (!_currentLevelCompleted)
@@ -231,7 +229,6 @@ namespace Colorcrush.Util
                             _currentLevelSelectedColors.Add(selectedColor);
                         }
                     }
-
                     break;
                 case "colordeselected":
                     if (!_currentLevelCompleted)
@@ -242,7 +239,6 @@ namespace Colorcrush.Util
                             _currentLevelSelectedColors.Remove(deselectedColor);
                         }
                     }
-
                     break;
             }
         }

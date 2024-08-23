@@ -116,7 +116,7 @@ namespace Colorcrush.Game
             }
             else
             {
-                if (!ColorUtility.TryParseHtmlString(targetColorHex, out _targetColor))
+                if (!ColorUtility.TryParseHtmlString("#" + targetColorHex, out _targetColor))
                 {
                     throw new Exception($"Failed to parse target color '{targetColorHex}' from PlayerPrefs.");
                 }
@@ -402,7 +402,6 @@ namespace Colorcrush.Game
             StartCoroutine(AnimateEmojisAndResetButtons());
             UpdateProgressBar();
             UpdateTargetButtonColor();
-            StartCoroutine(ShowHappyEmojiCoroutine());
 
             if (_submitCount >= targetSubmitCount)
             {
@@ -412,8 +411,14 @@ namespace Colorcrush.Game
                     button.SetActive(false);
                 }
 
-                // Set the target emoji to the default happy emoji
-                _targetEmojiImage.sprite = EmojiManager.GetDefaultHappyEmoji();
+                // Set the target emoji to the reward emoji
+                Sprite emoji = EmojiManager.GetRewardEmojiForColor(_targetColor);
+                _targetEmojiImage.sprite = emoji;
+                LoggingManager.LogEvent(new EmojiRewardedEvent(emoji.name));
+            }
+            else
+            {
+                StartCoroutine(ShowHappyEmojiCoroutine());
             }
         }
 
@@ -560,12 +565,9 @@ namespace Colorcrush.Game
         private IEnumerator ShowHappyEmojiCoroutine()
         {
             _targetEmojiImage.sprite = EmojiManager.GetNextHappyEmoji();
-            LoggingManager.LogEvent(new ColorsSubmittedEvent(_targetEmojiImage.sprite.name));
+            LoggingManager.LogEvent(new ColorsSubmittedEvent(EmojiManager.GetNextHappyEmoji().name));
             yield return new WaitForSeconds(1f);
-            if (!_targetReached)
-            {
-                _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
-            }
+            _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
         }
 
         private void UpdateProgressBar()

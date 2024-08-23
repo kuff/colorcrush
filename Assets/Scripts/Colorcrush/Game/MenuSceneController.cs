@@ -4,6 +4,10 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using Colorcrush.Util;
+using System.Linq;
+using TMPro;
+using System.Collections.Generic;
 
 #endregion
 
@@ -23,15 +27,25 @@ namespace Colorcrush.Game
         [SerializeField] [Range(0.1f, 0.9f)] [Tooltip("The size ratio of the scrollbar (0.1 to 0.9)")]
         private float scrollbarSizeRatio = 0.5f;
 
+        [SerializeField] [Tooltip("GridLayoutGroup containing the buttons")]
+        private GridLayoutGroup buttonGrid;
+
+        [SerializeField] [Tooltip("The submit button")]
+        private Button submitButton;
+
         private float _adjustedWidth;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
+        private int _selectedLevelIndex = -1;
 
         private void Awake()
         {
             ResetScrollViewToBeginning();
             InitializeScrollBarEffect();
+            SetSelectedLevel();
+            SetupButtons();
+            UpdateSubmitButton();
         }
 
         private void OnDestroy()
@@ -39,6 +53,20 @@ namespace Colorcrush.Game
             if (scrollView != null)
             {
                 scrollView.onValueChanged.RemoveListener(OnScrollValueChanged);
+            }
+        }
+
+        private void SetSelectedLevel()
+        {
+            var completedColors = ProgressManager.CompletedTargetColors;
+            if (SceneManager.GetPreviousSceneName() == "GameScene" && PlayerPrefs.HasKey("TargetColor"))
+            {
+                string targetColor = PlayerPrefs.GetString("TargetColor");
+                _selectedLevelIndex = ColorArray.SRGBTargetColors.ToList().FindIndex(c => ColorUtility.ToHtmlStringRGB(c) == targetColor);
+            }
+            else
+            {
+                _selectedLevelIndex = completedColors.Count;
             }
         }
 
@@ -52,7 +80,7 @@ namespace Colorcrush.Game
             }
             else
             {
-                Debug.LogWarning("ScrollRect to reset is not assigned in the inspector.");
+                Debug.LogError("ScrollRect to reset is not assigned in the inspector.");
             }
         }
 
@@ -106,6 +134,118 @@ namespace Colorcrush.Game
             var localPosition = _scrollbarRectTransform.localPosition;
             localPosition.x = newXPosition;
             _scrollbarRectTransform.localPosition = localPosition;
+        }
+
+        private void SetupButtons()
+        {
+            if (buttonGrid == null)
+            {
+                Debug.LogError("Button grid is not assigned.");
+                return;
+            }
+
+            Button[] buttons = buttonGrid.GetComponentsInChildren<Button>();
+            var completedColors = ProgressManager.CompletedTargetColors;
+            var rewardedEmojis = ProgressManager.RewardedEmojis;
+            var uniqueCompletedColors = new HashSet<string>(completedColors);
+            int nextColorIndex = uniqueCompletedColors.Count;
+
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                Image buttonImage = buttons[i].GetComponent<Image>();
+                if (buttonImage == null || buttonImage.material == null)
+                {
+                    Debug.LogError($"Button {i} is missing Image component or material.");
+                    continue;
+                }
+
+                Color targetColor = ColorArray.SRGBTargetColors[i];
+                string targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+
+                if (i <= nextColorIndex)
+                {
+                    // Enable button and set color
+                    buttons[i].interactable = true;
+                    ShaderManager.SetColor(buttonImage.material, "_TargetColor", targetColor);
+                    ShaderManager.SetFloat(buttonImage.material, "_Alpha", 1f);
+                    int index = i;
+                    buttons[i].onClick.AddListener(() => OnButtonClicked(index));
+
+                    // Set the rewarded emoji if available
+                    if (uniqueCompletedColors.Contains(targetColorHex))
+                    {
+                        int colorIndex = completedColors.IndexOf(targetColorHex);
+                        if (colorIndex < rewardedEmojis.Count)
+                        {
+                            buttonImage.sprite = EmojiManager.GetEmojiByName(rewardedEmojis[colorIndex]);
+                        }
+                        else
+                        {
+                            buttonImage.sprite = EmojiManager.GetDefaultEmoji();
+                            Debug.LogError($"No rewarded emoji found for color index {colorIndex}. Using default emoji.");
+                        }
+                    }
+                    else
+                    {
+                        buttonImage.sprite = EmojiManager.GetDefaultEmoji();
+                    }
+
+                    buttons[i].transform.localScale = Vector3.one;
+                }
+                else
+                {
+                    // Disable button and set to black with 20% transparency
+                    buttons[i].interactable = false;
+                    ShaderManager.SetColor(buttonImage.material, "_TargetColor", Color.black);
+                    ShaderManager.SetFloat(buttonImage.material, "_Alpha", 0.2f);
+                    buttons[i].transform.localScale = Vector3.one * 0.8f;
+                }
+            }
+
+            if (submitButton != null)
+            {
+                submitButton.onClick.AddListener(OnSubmitButtonClicked);
+            }
+        }
+
+        private void OnButtonClicked(int index)
+        {
+            Debug.Log($"Button clicked at index: {index}");
+            _selectedLevelIndex = index;
+            UpdateSubmitButton();
+        }
+
+        private void UpdateSubmitButton()
+        {
+            if (submitButton != null)
+            {
+                var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
+                bool isNewLevel = _selectedLevelIndex == uniqueCompletedColors.Count;
+                
+                Image buttonImage = submitButton.GetComponent<Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = isNewLevel ? Color.green : Color.red;
+                }
+                else
+                {
+                    Debug.LogError("Submit button is missing Image component.");
+                }
+
+                submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= uniqueCompletedColors.Count;
+            }
+        }
+
+        private void OnSubmitButtonClicked()
+        {
+            var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
+            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= uniqueCompletedColors.Count && _selectedLevelIndex < ColorArray.SRGBTargetColors.Length)
+            {
+                Color targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+                PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
+                PlayerPrefs.Save();
+                SceneManager.LoadSceneAsync("GameScene");
+            }
         }
     }
 }

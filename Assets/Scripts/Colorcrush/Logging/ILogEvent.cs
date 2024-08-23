@@ -69,7 +69,7 @@ namespace Colorcrush.Logging
 
         public string GetStringifiedData()
         {
-            return ColorUtility.ToHtmlStringRGBA(TargetValue);
+            return ColorUtility.ToHtmlStringRGB(TargetValue);
         }
     }
 
@@ -88,7 +88,7 @@ namespace Colorcrush.Logging
         public ColorGeneratedEvent(int buttonIndex, Color colorValue)
         {
             ButtonIndex = buttonIndex;
-            ColorValue = ColorUtility.ToHtmlStringRGBA(colorValue);
+            ColorValue = ColorUtility.ToHtmlStringRGB(colorValue);
         }
 
         public int ButtonIndex { get; }

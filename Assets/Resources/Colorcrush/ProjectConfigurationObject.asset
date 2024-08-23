@@ -17,7 +17,7 @@ MonoBehaviour:
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
-  deleteAllLogFilesOnEditorStartup: 1
+  deleteAllLogFilesOnEditorStartup: 0
   generatedMaterialsPath: Assets/Resources/GeneratedMaterials
   emojiMaterialPrefix: EmojiMaterial_
   disableMaskingOnGenerate: 1

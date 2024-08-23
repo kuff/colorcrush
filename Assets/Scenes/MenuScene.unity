@@ -1352,6 +1352,8 @@ MonoBehaviour:
   scrollbarImage: {fileID: 1437737379}
   scrollView: {fileID: 694629470}
   scrollbarSizeRatio: 0.5
+  buttonGrid: {fileID: 1039757014}
+  submitButton: {fileID: 1450659821}
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0
@@ -3100,6 +3102,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6016962155353396041, guid: 2147a3d3a4ca5354fb6210afc4765393, type: 3}
   m_PrefabInstance: {fileID: 2463330837502414765}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1039757014 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2499085699531627031, guid: 2147a3d3a4ca5354fb6210afc4765393, type: 3}
+  m_PrefabInstance: {fileID: 2463330837502414765}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1065327059
 GameObject:
   m_ObjectHideFlags: 0
@@ -4650,6 +4663,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1450659821 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4843042717486305306, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
+  m_PrefabInstance: {fileID: 1437737377}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1460812255

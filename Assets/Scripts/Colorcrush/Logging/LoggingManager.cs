@@ -34,6 +34,7 @@ namespace Colorcrush.Logging
         private readonly Queue<(long timestamp, ILogEvent logEvent)> _eventQueue = new();
         private string _currentLogFilePath;
         private DateTime _startTime;
+        private long _lastTimestamp;
 
         public static LoggingManager Instance
         {
@@ -123,6 +124,10 @@ namespace Colorcrush.Logging
             {
                 _currentLogFilePath = logFiles.OrderByDescending(f => new FileInfo(f).CreationTime).First();
                 _startTime = DateTime.Now;
+                if (ProjectConfig.InstanceConfig.useAdditiveTimestamps)
+                {
+                    _lastTimestamp = GetLastTimestampFromFile(_currentLogFilePath);
+                }
                 LogEvent(new StartTimeEvent(_startTime));
                 Debug.Log($"Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
             }
@@ -133,11 +138,36 @@ namespace Colorcrush.Logging
             }
         }
 
+        private long GetLastTimestampFromFile(string filePath)
+        {
+            try
+            {
+                var lines = File.ReadAllLines(filePath);
+                for (int i = lines.Length - 1; i >= 0; i--)
+                {
+                    if (lines[i] != ProjectConfig.InstanceConfig.endOfFileSymbol)
+                    {
+                        var parts = lines[i].Split(',');
+                        if (parts.Length > 0 && long.TryParse(parts[0], out long timestamp))
+                        {
+                            return timestamp;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error reading last timestamp from file: {e.Message}");
+            }
+            return 0;
+        }
+
         private void InitializeNewLogFile()
         {
             _startTime = DateTime.Now;
             var timestamp = _startTime.ToString("yyyyMMdd_HHmmss");
             _currentLogFilePath = Path.Combine(Application.persistentDataPath, $"{ProjectConfig.InstanceConfig.logFilePrefix}{timestamp}{ProjectConfig.InstanceConfig.logFileExtension}");
+            _lastTimestamp = 0;
             LogEvent(new StartTimeEvent(_startTime));
         }
 
@@ -148,7 +178,16 @@ namespace Colorcrush.Logging
 
         private void LogEventInternal(ILogEvent logEvent)
         {
-            var timestamp = (long)(DateTime.Now - _startTime).TotalMilliseconds;
+            long timestamp;
+            if (ProjectConfig.InstanceConfig.useAdditiveTimestamps)
+            {
+                timestamp = _lastTimestamp + (long)(DateTime.Now - _startTime).TotalMilliseconds;
+                _lastTimestamp = timestamp;
+            }
+            else
+            {
+                timestamp = (long)(DateTime.Now - _startTime).TotalMilliseconds;
+            }
             _eventQueue.Enqueue((timestamp, logEvent));
             OnLogEventQueued?.Invoke(logEvent);
         }

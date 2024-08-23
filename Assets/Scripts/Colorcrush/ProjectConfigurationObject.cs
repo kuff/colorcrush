@@ -74,6 +74,9 @@ namespace Colorcrush
         [Tooltip("The prefix used for log file names.")]
         public string logFilePrefix = "game_log_";
 
+        [Tooltip("If true, timestamps in log files will be relative to the creation of the log file, and not reset between restarts.")]
+        public bool useAdditiveTimestamps = true;
+
         [Tooltip("The file extension for log files.")]
         public string logFileExtension = ".txt";
 

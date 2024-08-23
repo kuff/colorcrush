@@ -20,6 +20,7 @@ namespace Colorcrush.Util
 
         private Queue<Sprite> _happyEmojiQueue;
         private Queue<Sprite> _sadEmojiQueue;
+        private Dictionary<string, Sprite> _emojiDictionary;
 
         public static EmojiManager Instance
         {
@@ -50,6 +51,7 @@ namespace Colorcrush.Util
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
                 InitializeEmojiQueues();
+                InitializeEmojiDictionary();
             }
         }
 
@@ -72,6 +74,18 @@ namespace Colorcrush.Util
             emojiList = emojiList.OrderBy(x => random.Next()).ToList();
 
             return new Queue<Sprite>(emojiList);
+        }
+
+        private void InitializeEmojiDictionary()
+        {
+            _emojiDictionary = new Dictionary<string, Sprite>();
+            var happyEmojis = Resources.LoadAll<Sprite>(ProjectConfig.InstanceConfig.happyEmojiFolder);
+            var sadEmojis = Resources.LoadAll<Sprite>(ProjectConfig.InstanceConfig.sadEmojiFolder);
+
+            foreach (var emoji in happyEmojis.Concat(sadEmojis))
+            {
+                _emojiDictionary[emoji.name] = emoji;
+            }
         }
 
         public static Sprite GetNextHappyEmoji()
@@ -134,6 +148,49 @@ namespace Colorcrush.Util
             var nextEmoji = queue.Dequeue();
             queue.Enqueue(nextEmoji); // Add back onto the end for roll-over behavior
             return nextEmoji;
+        }
+
+        public static Sprite GetEmojiByName(string emojiName)
+        {
+            if (Instance._emojiDictionary.TryGetValue(emojiName, out Sprite emoji))
+            {
+                return emoji;
+            }
+            else
+            {
+                Debug.LogWarning($"Emoji with name '{emojiName}' not found. Returning default emoji.");
+                return GetDefaultEmoji();
+            }
+        }
+
+        public static Sprite GetRewardEmojiForColor(Color targetColor)
+        {
+            string targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+            var completedColors = ProgressManager.CompletedTargetColors;
+            var rewardedEmojis = ProgressManager.RewardedEmojis;
+
+            // Check if the color has been completed before
+            int colorIndex = completedColors.IndexOf(targetColorHex);
+            if (colorIndex != -1 && colorIndex < rewardedEmojis.Count)
+            {
+                // Return the previously rewarded emoji for this color
+                return GetEmojiByName(rewardedEmojis[colorIndex]);
+            }
+
+            // If the color hasn't been completed, find a new emoji to reward
+            HashSet<string> usedEmojis = new HashSet<string>(rewardedEmojis);
+            while (Instance._happyEmojiQueue.Count > 0)
+            {
+                Sprite nextEmoji = GetNextHappyEmoji();
+                if (!usedEmojis.Contains(nextEmoji.name))
+                {
+                    return nextEmoji;
+                }
+            }
+
+            // If we've exhausted all happy emojis, return the default happy emoji
+            Debug.LogWarning("All happy emojis have been used. Returning default happy emoji.");
+            return GetDefaultHappyEmoji();
         }
     }
 }
