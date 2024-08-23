@@ -5,7 +5,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
-using static Colorcrush.Util.ProjectConfig;
+using static Colorcrush.ProjectConfig;
 
 #endregion
 

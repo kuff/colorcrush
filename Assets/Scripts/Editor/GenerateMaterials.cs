@@ -5,6 +5,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using Colorcrush;
 using Colorcrush.Util;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -18,7 +19,12 @@ namespace Editor
 {
     public class GenerateMaterials : EditorWindow
     {
-        private string _fileNamePrefix = "";
+        private string _fileNamePrefix;
+
+        private void OnEnable()
+        {
+            _fileNamePrefix = ProjectConfig.InstanceConfig.emojiMaterialPrefix;
+        }
 
         private void OnGUI()
         {
@@ -74,7 +80,8 @@ namespace Editor
         private void CreateAndAssignMaterial(Image image)
         {
             var uniqueIdentifier = Guid.NewGuid().ToString()[..8];
-            var materialName = $"{_fileNamePrefix}{image.gameObject.name}_{uniqueIdentifier}_Material";
+            var prefix = string.IsNullOrEmpty(_fileNamePrefix) ? ProjectConfig.InstanceConfig.emojiMaterialPrefix : _fileNamePrefix;
+            var materialName = $"{prefix}{image.gameObject.name}_{uniqueIdentifier}_Material";
 
             // Create the directory if it doesn't exist
             var generatedMaterialsPath = ProjectConfig.InstanceConfig.generatedMaterialsPath;

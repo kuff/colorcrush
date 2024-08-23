@@ -45,6 +45,9 @@ namespace Colorcrush.Game
         private float shakeInterval = 10f;
 
         [Header("Emoji Shuffle Effect")]
+        [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
+        private bool enableEmojiShuffle = true;
+
         [Tooltip("Total duration in seconds of the emoji shuffling animation.")] [SerializeField]
         private float totalAnimationDuration = 3f;
 
@@ -142,18 +145,21 @@ namespace Colorcrush.Game
             StartCoroutine(AddSmileyToTitle());
             StartCoroutine(PlaySoundAfterDelay());
 
-            InstantiateTargetImage();
-            if (_targetImage != null)
+            if (enableEmojiShuffle)
             {
-                _ = _targetImage.gameObject.GetComponent<Animator>() ?? _targetImage.gameObject.AddComponent<Animator>();
-                _originalScale = _targetImage.transform.localScale;
-                _shuffleDuration = Mathf.Max(0, totalAnimationDuration - scaleDuration);
-                StartCoroutine(ShuffleAndScaleCoroutine());
-                ShaderManager.SetColor(_targetImage.material, "_TargetColor", emojiColor);
-            }
-            else
-            {
-                Debug.LogError("Failed to instantiate target image for ShuffleEmojisEffect.");
+                InstantiateTargetImage();
+                if (_targetImage != null)
+                {
+                    _ = _targetImage.gameObject.GetComponent<Animator>() ?? _targetImage.gameObject.AddComponent<Animator>();
+                    _originalScale = _targetImage.transform.localScale;
+                    _shuffleDuration = Mathf.Max(0, totalAnimationDuration - scaleDuration);
+                    StartCoroutine(ShuffleAndScaleCoroutine());
+                    ShaderManager.SetColor(_targetImage.material, "_TargetColor", emojiColor);
+                }
+                else
+                {
+                    Debug.LogError("Failed to instantiate target image for ShuffleEmojisEffect.");
+                }
             }
 
             if (backgroundImage != null)
@@ -171,7 +177,7 @@ namespace Colorcrush.Game
         private void Update()
         {
             var elapsedTime = Time.time - _startTime;
-            if (elapsedTime >= 3.0f)
+            if (elapsedTime >= (enableEmojiShuffle ? 3.0f : 0f))
             {
                 _circleSize += Time.deltaTime * expandSpeed;
                 ShaderManager.SetFloat(circleMaterial, "_CircleSize", _circleSize);
@@ -218,7 +224,7 @@ namespace Colorcrush.Game
 
         private IEnumerator AddSmileyToTitle()
         {
-            yield return new WaitForSeconds(initialDelay);
+            yield return new WaitForSeconds(enableEmojiShuffle ? initialDelay : Mathf.Max(0, initialDelay - 3f));
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
@@ -232,7 +238,7 @@ namespace Colorcrush.Game
 
         private IEnumerator PlaySoundAfterDelay()
         {
-            yield return new WaitForSeconds(3f);
+            yield return new WaitForSeconds(enableEmojiShuffle ? 3f : 0f);
             AudioManager.PlaySound(initialDelaySound, pitchShift: initialDelayPitchShift, gain: initialDelayGain);
         }
 

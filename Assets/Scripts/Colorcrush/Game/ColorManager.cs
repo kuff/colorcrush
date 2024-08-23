@@ -3,14 +3,12 @@
 #region
 
 using System.Collections.Generic;
-using Colorcrush.Game;
-using Colorcrush.Util;
 using UnityEngine;
 using Random = System.Random;
 
 #endregion
 
-namespace Colorcrush.Colorspace
+namespace Colorcrush.Game
 {
     public static class ColorManager
     {
@@ -18,12 +16,12 @@ namespace Colorcrush.Colorspace
         private const float VariationRange = 0.05f;
         private static int _currentTargetColorIndex;
         private static Color _currentTargetColor;
-        private static readonly Queue<Color> _currentColorVariations = new();
+        private static readonly Queue<Color> CurrentColorVariations = new();
         private static int _randomSeed;
 
         private static void GenerateColorVariations()
         {
-            _currentColorVariations.Clear();
+            CurrentColorVariations.Clear();
             var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
 
             _currentTargetColor = ColorArray.SRGBTargetColors[_currentTargetColorIndex];
@@ -36,21 +34,21 @@ namespace Colorcrush.Colorspace
                     Mathf.Clamp01(_currentTargetColor.b + (float)(random.NextDouble() * 2 - 1) * VariationRange),
                     _currentTargetColor.a
                 );
-                _currentColorVariations.Enqueue(variation);
+                CurrentColorVariations.Enqueue(variation);
             }
         }
 
         public static Color GetNextColor()
         {
-            if (_currentColorVariations.Count == 0)
+            if (CurrentColorVariations.Count == 0)
             {
                 GenerateColorVariations();
             }
 
-            if (_currentColorVariations.Count > 0)
+            if (CurrentColorVariations.Count > 0)
             {
-                var nextColor = _currentColorVariations.Dequeue();
-                _currentColorVariations.Enqueue(nextColor);
+                var nextColor = CurrentColorVariations.Dequeue();
+                CurrentColorVariations.Enqueue(nextColor);
                 return nextColor;
             }
 
@@ -71,7 +69,7 @@ namespace Colorcrush.Colorspace
 
         public static int GetCurrentTargetColorIndex()
         {
-            if (_currentColorVariations.Count == 0)
+            if (CurrentColorVariations.Count == 0)
             {
                 GenerateColorVariations();
             }
@@ -81,7 +79,7 @@ namespace Colorcrush.Colorspace
 
         public static Color GetCurrentTargetColor()
         {
-            if (_currentColorVariations.Count == 0)
+            if (CurrentColorVariations.Count == 0)
             {
                 GenerateColorVariations();
             }

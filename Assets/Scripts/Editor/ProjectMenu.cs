@@ -2,10 +2,11 @@
 
 #region
 
+using Colorcrush;
 using Colorcrush.Util;
 using UnityEditor;
 using UnityEngine;
-using static Colorcrush.Util.ProjectConfig;
+using static Colorcrush.ProjectConfig;
 
 #endregion
 

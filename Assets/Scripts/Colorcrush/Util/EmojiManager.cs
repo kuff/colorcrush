@@ -4,13 +4,12 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Colorcrush.Util;
 using UnityEngine;
 using Random = System.Random;
 
 #endregion
 
-namespace Colorcrush.Game
+namespace Colorcrush.Util
 {
     public class EmojiManager : MonoBehaviour
     {

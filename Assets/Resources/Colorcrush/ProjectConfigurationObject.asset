@@ -19,15 +19,17 @@ MonoBehaviour:
   mainScriptsPath: Assets/Scripts/Colorcrush
   deleteAllLogFilesOnEditorStartup: 1
   generatedMaterialsPath: Assets/Resources/GeneratedMaterials
+  emojiMaterialPrefix: EmojiMaterial_
   disableMaskingOnGenerate: 1
   randomSeed: 42
   resetShadersOnShutdown: 1
+  colorDataFilePath: Assets/Resources/Colorcrush/ColorData.txt
+  colorSplitRegex: '(\d{1,3})\s+\d{1,3}\s+\d{1,3}\s*$  '
+  colorDataFormat: 3
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4
   happyEmojiFolder: Colorcrush/Emoji/Happy
   sadEmojiFolder: Colorcrush/Emoji/Sad
-  emojiMaterialsFolder: GeneratedMaterials
-  emojiMaterialPrefix: EmojiMaterial_
   logFilePrefix: game_log_
   logFileExtension: .txt
   endOfFileSymbol: EOF
@@ -41,31 +43,3 @@ MonoBehaviour:
   mixerGainDB: 20
   minVolumeAdjustment: 0.01
   maxVolumeAdjustment: 10
-  baseAnimationSpeed: 1
-  defaultAnimationDuration: 0.5
-  defaultBumpScaleFactor: 1.2
-  easingFunction: 1
-  customEasingCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4

@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 
 #endregion
 
-namespace Colorcrush.Game
+namespace Colorcrush.Util
 {
     public class ProgressManager : MonoBehaviour
     {
@@ -86,7 +86,7 @@ namespace Colorcrush.Game
 
             _instance = this;
             DontDestroyOnLoad(gameObject);
-            SceneManager.sceneUnloaded += OnSceneUnloaded;
+            UnityEngine.SceneManagement.SceneManager.sceneUnloaded += OnSceneUnloaded;
             LoggingManager.OnLogEventQueued += OnLogEventQueued;
 
             // Initial refresh using existing log data
@@ -95,7 +95,7 @@ namespace Colorcrush.Game
 
         private void OnDestroy()
         {
-            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            UnityEngine.SceneManagement.SceneManager.sceneUnloaded -= OnSceneUnloaded;
             LoggingManager.OnLogEventQueued -= OnLogEventQueued;
         }
 

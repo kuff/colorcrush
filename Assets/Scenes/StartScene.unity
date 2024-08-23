@@ -569,6 +569,7 @@ MonoBehaviour:
   initialDelay: 5.5
   delayBetweenCharacters: 0.5
   shakeInterval: 10
+  enableEmojiShuffle: 1
   totalAnimationDuration: 3
   scaleDuration: 0.25
   shuffleSpeedCurve:
@@ -604,6 +605,18 @@ MonoBehaviour:
   backgroundImage: {fileID: 838381131}
   circleMaterial: {fileID: 2100000, guid: 630aaaf3cc0e0b640bb78751e4375dd6, type: 2}
   expandSpeed: 1
+  smileySound: MENU_Pick
+  smileyColonPitchShift: 1.25
+  smileyParenthesisPitchShift: 0.5
+  initialDelaySound: MESSAGE-B_Accept
+  initialDelayPitchShift: 0.85
+  initialDelayGain: 2
+  emojiBumpSound: MENU_Pick
+  emojiBumpPitchShift: 1
+  emojiBumpGain: 1
+  shakeDuration: 0.75
+  shakeStrength: 5
+  shakeVibrato: 15
 --- !u!1 &724237947
 GameObject:
   m_ObjectHideFlags: 0

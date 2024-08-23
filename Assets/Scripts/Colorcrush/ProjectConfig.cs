@@ -6,7 +6,7 @@ using UnityEngine;
 
 #endregion
 
-namespace Colorcrush.Util
+namespace Colorcrush
 {
     public static class ProjectConfig
     {

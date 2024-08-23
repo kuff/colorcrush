@@ -2,12 +2,13 @@
 
 #region
 
+using Colorcrush.Game;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 #endregion
 
-namespace Colorcrush.Util
+namespace Colorcrush
 {
     [CreateAssetMenu(fileName = "ProjectConfigurationObject", menuName = "Colorcrush/Project Configuration")]
     public class ProjectConfigurationObject : ScriptableObject
@@ -31,8 +32,11 @@ namespace Colorcrush.Util
         [Tooltip("If true, all log files will be deleted on startup when running in the Unity Editor.")]
         public bool deleteAllLogFilesOnEditorStartup = true;
 
-        [Tooltip("The path where generated materials will be saved.")]
+        [Tooltip("The path where generated emoji materials will be saved.")]
         public string generatedMaterialsPath = "Assets/Resources/GeneratedMaterials";
+        
+        [Tooltip("The prefix used for generated emoji materials.")]
+        public string emojiMaterialPrefix = "EmojiMaterial_";
 
         [Tooltip("If true, masking will be disabled for images when generating materials.")]
         public bool disableMaskingOnGenerate = true;
@@ -43,6 +47,15 @@ namespace Colorcrush.Util
 
         [Tooltip("If true, all shaders will be reset to their initial state when the game is shut down.")]
         public bool resetShadersOnShutdown = true;
+        
+        [Tooltip("The file path for loading color data.")]
+        public string colorDataFilePath = "Assets/Resources/Colorcrush/ColorData.txt";
+
+        [Tooltip("The regex pattern used to split color values in the data file.")]
+        public string colorSplitRegex = @"\s+";
+
+        [Tooltip("The format of the color data in the file.")]
+        public ColorDataLoader.ColorFormat colorDataFormat = ColorDataLoader.ColorFormat.SRGBZeroToOne;
 
         [Header("Emoji Configuration")]
         [Tooltip("The name of the default emoji sprite (without the file extension).")]
@@ -56,12 +69,6 @@ namespace Colorcrush.Util
 
         [Tooltip("The path to the folder containing sad emoji sprites.")]
         public string sadEmojiFolder = "Colorcrush/Emoji/Sad";
-
-        [Tooltip("The folder name within Resources where emoji materials are stored.")]
-        public string emojiMaterialsFolder = "GeneratedMaterials";
-
-        [Tooltip("The prefix used for emoji material names.")]
-        public string emojiMaterialPrefix = "EmojiMaterial_";
 
         [Header("Logging Configuration")]
         [Tooltip("The prefix used for log file names.")]
@@ -103,21 +110,5 @@ namespace Colorcrush.Util
 
         [Tooltip("The maximum volume adjustment factor for audio clips.")]
         public float maxVolumeAdjustment = 2f;
-
-        [Header("Animation Configuration")]
-        [Tooltip("The base speed multiplier for animations. Higher values result in faster animations.")]
-        public float baseAnimationSpeed = 1f;
-
-        [Tooltip("The default duration for animations, in seconds.")]
-        public float defaultAnimationDuration = 0.5f;
-
-        [Tooltip("The default scale factor for bump animations.")]
-        public float defaultBumpScaleFactor = 1.2f;
-
-        [Tooltip("The easing function to use for animations. 0 = Linear, 1 = EaseInOutQuad, 2 = Custom AnimationCurve")]
-        public int easingFunction = 1;
-
-        [Tooltip("The custom AnimationCurve to use when easingFunction is set to 2.")]
-        public AnimationCurve customEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     }
 }
