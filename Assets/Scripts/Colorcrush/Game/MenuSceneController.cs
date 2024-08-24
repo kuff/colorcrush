@@ -2,12 +2,14 @@
 
 #region
 
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using Colorcrush.Animation;
+using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
-using Colorcrush.Util;
-using System.Linq;
-using TMPro;
-using System.Collections.Generic;
+using Animator = Colorcrush.Animation.Animator;
 
 #endregion
 
@@ -33,11 +35,27 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The submit button")]
         private Button submitButton;
 
+        [SerializeField] [Tooltip("Color for the submit button when selecting a new level")]
+        private Color newLevelColor = Color.green;
+
+        [SerializeField] [Tooltip("Accent color for the submit button when selecting a new level")]
+        private Color newLevelAccentColor = Color.white;
+
+        [SerializeField] [Tooltip("Color for the submit button when selecting a completed level")]
+        private Color completedLevelColor = Color.red;
+
+        [SerializeField] [Tooltip("Image with the RadarChartShader material")]
+        private Image colorAnalysisImage;
+
         private float _adjustedWidth;
+        private Material _colorAnalysisMaterial;
+        private readonly float[] _currentAxisValues = new float[8];
+        private Color _currentFillColor = Color.clear;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
         private int _selectedLevelIndex = -1;
+        private Coroutine _shakeCoroutine;
 
         private void Awake()
         {
@@ -46,6 +64,7 @@ namespace Colorcrush.Game
             SetSelectedLevel();
             SetupButtons();
             UpdateSubmitButton();
+            InitializeColorAnalysis();
         }
 
         private void OnDestroy()
@@ -54,19 +73,25 @@ namespace Colorcrush.Game
             {
                 scrollView.onValueChanged.RemoveListener(OnScrollValueChanged);
             }
+
+            if (_shakeCoroutine != null)
+            {
+                StopCoroutine(_shakeCoroutine);
+            }
         }
 
         private void SetSelectedLevel()
         {
             var completedColors = ProgressManager.CompletedTargetColors;
-            if (SceneManager.GetPreviousSceneName() == "GameScene" && PlayerPrefs.HasKey("TargetColor"))
+            var uniqueCompletedColors = new HashSet<string>(completedColors);
+            _selectedLevelIndex = uniqueCompletedColors.Count;
+            UpdateColorAnalysis();
+
+            // Scale the initially selected button
+            if (_selectedLevelIndex < buttonGrid.transform.childCount)
             {
-                string targetColor = PlayerPrefs.GetString("TargetColor");
-                _selectedLevelIndex = ColorArray.SRGBTargetColors.ToList().FindIndex(c => ColorUtility.ToHtmlStringRGB(c) == targetColor);
-            }
-            else
-            {
-                _selectedLevelIndex = completedColors.Count;
+                var buttonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
+                ScaleButton(buttonTransform, Vector3.one * 0.8f);
             }
         }
 
@@ -144,23 +169,23 @@ namespace Colorcrush.Game
                 return;
             }
 
-            Button[] buttons = buttonGrid.GetComponentsInChildren<Button>();
+            var buttons = buttonGrid.GetComponentsInChildren<Button>();
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
             var uniqueCompletedColors = new HashSet<string>(completedColors);
-            int nextColorIndex = uniqueCompletedColors.Count;
+            var nextColorIndex = uniqueCompletedColors.Count;
 
-            for (int i = 0; i < buttons.Length; i++)
+            for (var i = 0; i < buttons.Length; i++)
             {
-                Image buttonImage = buttons[i].GetComponent<Image>();
+                var buttonImage = buttons[i].GetComponent<Image>();
                 if (buttonImage == null || buttonImage.material == null)
                 {
                     Debug.LogError($"Button {i} is missing Image component or material.");
                     continue;
                 }
 
-                Color targetColor = ColorArray.SRGBTargetColors[i];
-                string targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+                var targetColor = ColorArray.SRGBTargetColors[i];
+                var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
 
                 if (i <= nextColorIndex)
                 {
@@ -168,13 +193,13 @@ namespace Colorcrush.Game
                     buttons[i].interactable = true;
                     ShaderManager.SetColor(buttonImage.material, "_TargetColor", targetColor);
                     ShaderManager.SetFloat(buttonImage.material, "_Alpha", 1f);
-                    int index = i;
+                    var index = i;
                     buttons[i].onClick.AddListener(() => OnButtonClicked(index));
 
                     // Set the rewarded emoji if available
                     if (uniqueCompletedColors.Contains(targetColorHex))
                     {
-                        int colorIndex = completedColors.IndexOf(targetColorHex);
+                        var colorIndex = completedColors.IndexOf(targetColorHex);
                         if (colorIndex < rewardedEmojis.Count)
                         {
                             buttonImage.sprite = EmojiManager.GetEmojiByName(rewardedEmojis[colorIndex]);
@@ -191,6 +216,12 @@ namespace Colorcrush.Game
                     }
 
                     buttons[i].transform.localScale = Vector3.one;
+
+                    // Start shake animation for the button representing the color level that is yet to be completed
+                    if (i == nextColorIndex && _shakeCoroutine == null)
+                    {
+                        _shakeCoroutine = StartCoroutine(ShakeButtonPeriodically(buttons[i], i));
+                    }
                 }
                 else
                 {
@@ -211,8 +242,48 @@ namespace Colorcrush.Game
         private void OnButtonClicked(int index)
         {
             Debug.Log($"Button clicked at index: {index}");
+
+            // Scale back the previously selected button, if any
+            if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
+            {
+                ScaleButton(buttonGrid.transform.GetChild(_selectedLevelIndex), Vector3.one);
+            }
+
             _selectedLevelIndex = index;
+
+            // Scale down the newly selected button
+            if (index < buttonGrid.transform.childCount)
+            {
+                var buttonTransform = buttonGrid.transform.GetChild(index);
+                var animator = buttonTransform.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    // Remove existing animations before applying new ones
+                    AnimationManager.RemoveExistingAnimations(animator);
+                    ScaleButton(buttonTransform, Vector3.one * 0.8f);
+                }
+                else
+                {
+                    Debug.LogError("Button is missing Animator component.");
+                }
+            }
+
             UpdateSubmitButton();
+            UpdateColorAnalysis();
+        }
+
+        private void ScaleButton(Transform buttonTransform, Vector3 targetScale)
+        {
+            var animator = buttonTransform.GetComponent<Animator>();
+            if (animator != null)
+            {
+                var scaleAnimation = new ScaleAnimation(targetScale, 0.25f);
+                AnimationManager.PlayAnimation(animator, scaleAnimation);
+            }
+            else
+            {
+                Debug.LogError("Button is missing Animator component.");
+            }
         }
 
         private void UpdateSubmitButton()
@@ -220,16 +291,26 @@ namespace Colorcrush.Game
             if (submitButton != null)
             {
                 var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
-                bool isNewLevel = _selectedLevelIndex == uniqueCompletedColors.Count;
-                
-                Image buttonImage = submitButton.GetComponent<Image>();
-                if (buttonImage != null)
+                var isNewLevel = _selectedLevelIndex == uniqueCompletedColors.Count;
+
+                var buttonImage = submitButton.GetComponent<Image>();
+                if (buttonImage != null && buttonImage.material != null)
                 {
-                    buttonImage.color = isNewLevel ? Color.green : Color.red;
+                    if (isNewLevel)
+                    {
+                        ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", newLevelColor);
+                        ShaderManager.SetColor(buttonImage.material, "_AccentColor", newLevelAccentColor);
+                        ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 1f);
+                    }
+                    else
+                    {
+                        ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", completedLevelColor);
+                        ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 0f);
+                    }
                 }
                 else
                 {
-                    Debug.LogError("Submit button is missing Image component.");
+                    Debug.LogError("Submit button is missing Image component or material.");
                 }
 
                 submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= uniqueCompletedColors.Count;
@@ -241,10 +322,134 @@ namespace Colorcrush.Game
             var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
             if (_selectedLevelIndex != -1 && _selectedLevelIndex <= uniqueCompletedColors.Count && _selectedLevelIndex < ColorArray.SRGBTargetColors.Length)
             {
-                Color targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+                var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
                 PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
                 PlayerPrefs.Save();
                 SceneManager.LoadSceneAsync("GameScene");
+            }
+        }
+
+        private void InitializeColorAnalysis()
+        {
+            if (colorAnalysisImage == null)
+            {
+                Debug.LogError("Color analysis image is not assigned.");
+                return;
+            }
+
+            _colorAnalysisMaterial = colorAnalysisImage.material;
+            if (_colorAnalysisMaterial == null)
+            {
+                Debug.LogError("Color analysis material is not assigned to the image.");
+                return;
+            }
+
+            UpdateColorAnalysis();
+        }
+
+        private void UpdateColorAnalysis()
+        {
+            if (_selectedLevelIndex == -1 || _colorAnalysisMaterial == null)
+            {
+                return;
+            }
+
+            var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+            var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
+
+            if (_selectedLevelIndex == uniqueCompletedColors.Count)
+            {
+                // This is a new, uncompleted level
+                var zeroValues = new float[8];
+                StartCoroutine(AnimateAxisValuesAndColor(zeroValues, targetColor));
+            }
+            else
+            {
+                var selectedColors = new List<Color>();
+
+                if (_selectedLevelIndex < ProgressManager.SelectedColors.Count)
+                {
+                    selectedColors = ProgressManager.SelectedColors[_selectedLevelIndex]
+                        .Select(colorHex => ColorUtility.TryParseHtmlString(colorHex, out var color) ? color : Color.black)
+                        .ToList();
+                }
+
+                var analysisValues = ColorManager.GenerateColorAnalysis(targetColor, selectedColors);
+
+                StartCoroutine(AnimateAxisValuesAndColor(analysisValues, targetColor));
+            }
+        }
+
+        private IEnumerator AnimateAxisValuesAndColor(float[] targetValues, Color targetColor)
+        {
+            var animationDuration = 0.25f;
+            var staggerDelay = 0.02f;
+            var elapsedTime = 0f;
+
+            var startValues = new float[8];
+            for (var i = 0; i < 8; i++)
+            {
+                startValues[i] = _currentAxisValues[i];
+            }
+
+            var startColor = _currentFillColor;
+
+            while (elapsedTime < animationDuration + 7 * staggerDelay)
+            {
+                elapsedTime += Time.deltaTime;
+
+                for (var i = 0; i < 8; i++)
+                {
+                    var axisElapsedTime = elapsedTime - i * staggerDelay;
+                    if (axisElapsedTime > 0)
+                    {
+                        var t = Mathf.Clamp01(axisElapsedTime / animationDuration);
+                        var easedT = EaseInOutCubic(t);
+                        _currentAxisValues[i] = Mathf.Lerp(startValues[i], targetValues[i], easedT);
+                        ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
+                    }
+                }
+
+                var colorT = Mathf.Clamp01(elapsedTime / animationDuration);
+                var easedColorT = EaseInOutCubic(colorT);
+                _currentFillColor = Color.Lerp(startColor, new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f), easedColorT);
+                ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
+
+                yield return null;
+            }
+
+            // Ensure final values are set
+            for (var i = 0; i < 8; i++)
+            {
+                _currentAxisValues[i] = targetValues[i];
+                ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
+            }
+
+            _currentFillColor = new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f);
+            ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
+        }
+
+        private float EaseInOutCubic(float t)
+        {
+            return t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
+        }
+
+        private IEnumerator ShakeButtonPeriodically(Button button, int buttonIndex)
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(5f);
+                if (button != null && buttonIndex != _selectedLevelIndex)
+                {
+                    var animator = button.GetComponent<Animator>();
+                    if (animator != null)
+                    {
+                        var shakeAnimation = new ShakeAnimation(0.75f, 10f);
+                        var bumpAnimation = new BumpAnimation(0.1f, 1.05f);
+                        AnimationManager.PlayAnimation(animator, shakeAnimation);
+                        AnimationManager.PlayAnimation(animator, bumpAnimation);
+                    }
+                }
             }
         }
     }

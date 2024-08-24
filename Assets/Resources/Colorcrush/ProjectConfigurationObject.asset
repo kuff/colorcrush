@@ -31,6 +31,7 @@ MonoBehaviour:
   happyEmojiFolder: Colorcrush/Emoji/Happy
   sadEmojiFolder: Colorcrush/Emoji/Sad
   logFilePrefix: game_log_
+  useAdditiveTimestamps: 1
   logFileExtension: .txt
   endOfFileSymbol: EOF
   logSaveInterval: 5

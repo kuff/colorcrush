@@ -14,7 +14,7 @@ namespace Colorcrush.Animation
         private static AnimationManager _instance;
 
         private readonly Dictionary<Animation, List<AnimationState>> _activeAnimations = new();
-        private readonly Dictionary<Animator, List<Animation>> _animatorAnimations = new();
+        private readonly Dictionary<Animator, HashSet<Animation>> _animatorAnimations = new();
 
         public static AnimationManager Instance
         {
@@ -112,8 +112,6 @@ namespace Colorcrush.Animation
             {
                 if (animator != null)
                 {
-                    // Remove any existing animations for this animator
-                    Instance.RemoveExistingAnimations(animator);
                     // Add a new state for this animator
                     states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
                     Instance.AddAnimatorAnimation(animator, animation);
@@ -135,19 +133,19 @@ namespace Colorcrush.Animation
             }
         }
 
-        private void RemoveExistingAnimations(Animator animator)
+        public static void RemoveExistingAnimations(Animator animator)
         {
-            if (_animatorAnimations.TryGetValue(animator, out var animations))
+            if (Instance._animatorAnimations.TryGetValue(animator, out var animations))
             {
                 foreach (var anim in animations)
                 {
-                    if (_activeAnimations.TryGetValue(anim, out var states))
+                    if (Instance._activeAnimations.TryGetValue(anim, out var states))
                     {
                         states.RemoveAll(s => s.Animator == animator);
                     }
                 }
 
-                _animatorAnimations.Remove(animator);
+                Instance._animatorAnimations.Remove(animator);
             }
         }
 
@@ -155,7 +153,7 @@ namespace Colorcrush.Animation
         {
             if (!_animatorAnimations.TryGetValue(animator, out var animations))
             {
-                animations = new List<Animation>();
+                animations = new HashSet<Animation>();
                 _animatorAnimations[animator] = animations;
             }
 

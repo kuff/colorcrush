@@ -412,7 +412,7 @@ namespace Colorcrush.Game
                 }
 
                 // Set the target emoji to the reward emoji
-                Sprite emoji = EmojiManager.GetRewardEmojiForColor(_targetColor);
+                var emoji = EmojiManager.GetRewardEmojiForColor(_targetColor);
                 _targetEmojiImage.sprite = emoji;
                 LoggingManager.LogEvent(new EmojiRewardedEvent(emoji.name));
             }

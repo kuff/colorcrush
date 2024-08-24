@@ -1354,6 +1354,10 @@ MonoBehaviour:
   scrollbarSizeRatio: 0.5
   buttonGrid: {fileID: 1039757014}
   submitButton: {fileID: 1450659821}
+  newLevelColor: {r: 0.17517261, g: 0.6679245, b: 0.17517261, a: 1}
+  newLevelAccentColor: {r: 0.16078432, g: 0.6901961, b: 0.16078432, a: 1}
+  completedLevelColor: {r: 0.87169814, g: 0.15624769, b: 0.15624769, a: 1}
+  colorAnalysisImage: {fileID: 1422549168}
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0
@@ -4113,9 +4117,9 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1437737378}
-  - {fileID: 694629469}
   - {fileID: 158107506}
+  - {fileID: 694629469}
+  - {fileID: 1437737378}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -4536,6 +4540,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1339247103}
   m_CullTransparentMesh: 1
+--- !u!114 &1422549168 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6966023700780069002, guid: 398b5ddfe5125dd47bb5c7618c53efe9, type: 3}
+  m_PrefabInstance: {fileID: 158107505}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1437737377
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4544,9 +4559,29 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1299182425}
     m_Modifications:
+    - target: {fileID: 1964402931717368463, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
+      propertyPath: m_Color.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1964402931717368463, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
+      propertyPath: m_Color.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1964402931717368463, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
+      propertyPath: m_Color.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1964402931717368463, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 2100000, guid: 42d7ff2e8d661a444a3c5e405d2c5435, type: 2}
     - target: {fileID: 4880765031668487310, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
       propertyPath: m_Name
       value: SubmitButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880765031668487310, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6864929849383357570, guid: a9a4a67d33642e343a33e50738da8675, type: 3}
       propertyPath: m_AnchorMax.x

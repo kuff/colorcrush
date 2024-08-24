@@ -18,6 +18,7 @@ namespace Colorcrush.Game
         private const int VariationsPerColor = 30;
         private const float VariationRange = 0.05f;
         private static readonly Random RandomInstance = new(ProjectConfig.InstanceConfig.randomSeed);
+        private static readonly Dictionary<Color, float[]> ColorAnalysisCache = new();
 
         public static List<Color> GenerateColorVariations(Color baseColor)
         {
@@ -38,8 +39,13 @@ namespace Colorcrush.Game
             return variations;
         }
 
-        public static float[] GenerateColorAnalysis(List<Color> selections)
+        public static float[] GenerateColorAnalysis(Color targetColor, List<Color> selections)
         {
+            if (ColorAnalysisCache.TryGetValue(targetColor, out var cachedAnalysis))
+            {
+                return cachedAnalysis;
+            }
+
             var analysis = new float[8];
 
             for (var i = 0; i < 8; i++)
@@ -51,6 +57,7 @@ namespace Colorcrush.Game
                 analysis[i] = (float)skewedValue;
             }
 
+            ColorAnalysisCache[targetColor] = analysis;
             return analysis;
         }
     }

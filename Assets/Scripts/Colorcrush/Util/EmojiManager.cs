@@ -17,10 +17,10 @@ namespace Colorcrush.Util
 
         private Sprite _defaultEmojiSprite;
         private Sprite _defaultHappyEmojiSprite;
+        private Dictionary<string, Sprite> _emojiDictionary;
 
         private Queue<Sprite> _happyEmojiQueue;
         private Queue<Sprite> _sadEmojiQueue;
-        private Dictionary<string, Sprite> _emojiDictionary;
 
         public static EmojiManager Instance
         {
@@ -152,25 +152,23 @@ namespace Colorcrush.Util
 
         public static Sprite GetEmojiByName(string emojiName)
         {
-            if (Instance._emojiDictionary.TryGetValue(emojiName, out Sprite emoji))
+            if (Instance._emojiDictionary.TryGetValue(emojiName, out var emoji))
             {
                 return emoji;
             }
-            else
-            {
-                Debug.LogWarning($"Emoji with name '{emojiName}' not found. Returning default emoji.");
-                return GetDefaultEmoji();
-            }
+
+            Debug.LogWarning($"Emoji with name '{emojiName}' not found. Returning default emoji.");
+            return GetDefaultEmoji();
         }
 
         public static Sprite GetRewardEmojiForColor(Color targetColor)
         {
-            string targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+            var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
 
             // Check if the color has been completed before
-            int colorIndex = completedColors.IndexOf(targetColorHex);
+            var colorIndex = completedColors.IndexOf(targetColorHex);
             if (colorIndex != -1 && colorIndex < rewardedEmojis.Count)
             {
                 // Return the previously rewarded emoji for this color
@@ -178,10 +176,10 @@ namespace Colorcrush.Util
             }
 
             // If the color hasn't been completed, find a new emoji to reward
-            HashSet<string> usedEmojis = new HashSet<string>(rewardedEmojis);
+            var usedEmojis = new HashSet<string>(rewardedEmojis);
             while (Instance._happyEmojiQueue.Count > 0)
             {
-                Sprite nextEmoji = GetNextHappyEmoji();
+                var nextEmoji = GetNextHappyEmoji();
                 if (!usedEmojis.Contains(nextEmoji.name))
                 {
                     return nextEmoji;

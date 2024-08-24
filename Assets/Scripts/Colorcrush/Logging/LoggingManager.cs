@@ -33,8 +33,8 @@ namespace Colorcrush.Logging
 
         private readonly Queue<(long timestamp, ILogEvent logEvent)> _eventQueue = new();
         private string _currentLogFilePath;
-        private DateTime _startTime;
         private long _lastTimestamp;
+        private DateTime _startTime;
 
         public static LoggingManager Instance
         {
@@ -128,6 +128,7 @@ namespace Colorcrush.Logging
                 {
                     _lastTimestamp = GetLastTimestampFromFile(_currentLogFilePath);
                 }
+
                 LogEvent(new StartTimeEvent(_startTime));
                 Debug.Log($"Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
             }
@@ -143,12 +144,12 @@ namespace Colorcrush.Logging
             try
             {
                 var lines = File.ReadAllLines(filePath);
-                for (int i = lines.Length - 1; i >= 0; i--)
+                for (var i = lines.Length - 1; i >= 0; i--)
                 {
                     if (lines[i] != ProjectConfig.InstanceConfig.endOfFileSymbol)
                     {
                         var parts = lines[i].Split(',');
-                        if (parts.Length > 0 && long.TryParse(parts[0], out long timestamp))
+                        if (parts.Length > 0 && long.TryParse(parts[0], out var timestamp))
                         {
                             return timestamp;
                         }
@@ -159,6 +160,7 @@ namespace Colorcrush.Logging
             {
                 Debug.LogError($"Error reading last timestamp from file: {e.Message}");
             }
+
             return 0;
         }
 
@@ -188,6 +190,7 @@ namespace Colorcrush.Logging
             {
                 timestamp = (long)(DateTime.Now - _startTime).TotalMilliseconds;
             }
+
             _eventQueue.Enqueue((timestamp, logEvent));
             OnLogEventQueued?.Invoke(logEvent);
         }
