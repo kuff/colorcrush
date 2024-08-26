@@ -360,6 +360,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: TargetImage
       objectReference: {fileID: 0}
+    - target: {fileID: 6488422049960114370, guid: 398b5ddfe5125dd47bb5c7618c53efe9, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6966023700780069002, guid: 398b5ddfe5125dd47bb5c7618c53efe9, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -1358,6 +1362,14 @@ MonoBehaviour:
   newLevelAccentColor: {r: 0.16078432, g: 0.6901961, b: 0.16078432, a: 1}
   completedLevelColor: {r: 0.87169814, g: 0.15624769, b: 0.15624769, a: 1}
   colorAnalysisImage: {fileID: 1422549168}
+  colorAnalysisAnimationDuration: 0.25
+  colorAnalysisStaggerDelay: 0.02
+  selectedButtonScale: 0.8
+  buttonShakeDuration: 0.75
+  buttonShakeStrength: 10
+  buttonBumpDuration: 0.1
+  buttonBumpScaleFactor: 1.05
+  buttonShakeInterval: 5
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0

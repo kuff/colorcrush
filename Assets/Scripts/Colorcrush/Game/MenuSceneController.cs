@@ -17,35 +17,85 @@ namespace Colorcrush.Game
 {
     public class MenuSceneController : MonoBehaviour
     {
-        [SerializeField] [Tooltip("The ScrollRect to reset to the beginning")]
+        [Header("Scroll View Settings")]
+        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
-        [SerializeField] [Tooltip("The Image component of the scrollbar")]
+        [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
         private Image scrollbarImage;
 
-        [SerializeField] [Tooltip("The ScrollRect component of the main scroll view")]
+        [SerializeField] [Tooltip("The main ScrollRect component that handles the scrolling functionality of the view.")]
         private ScrollRect scrollView;
 
-        [SerializeField] [Range(0.1f, 0.9f)] [Tooltip("The size ratio of the scrollbar (0.1 to 0.9)")]
+        [SerializeField] [Range(0.1f, 0.9f)] [Tooltip("The size ratio of the scrollbar handle relative to the scroll view's content size. Value ranges from 0.1 (small) to 0.9 (large).")]
         private float scrollbarSizeRatio = 0.5f;
 
-        [SerializeField] [Tooltip("GridLayoutGroup containing the buttons")]
+        [SerializeField] [Range(1, 10)] [Tooltip("The number of visible columns in the scroll view. This determines how many columns of items are displayed at once.")]
+        private int visibleColumns = 4;
+
+        [SerializeField] [Range(0.1f, 2f)] [Tooltip("The duration of the smooth scroll animation in seconds. This controls how long it takes for the scroll view to smoothly transition to a new position.")]
+        private float scrollDuration = 0.5f;
+
+        [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
+        private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+        [Header("Button Grid Settings")]
+        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
-        [SerializeField] [Tooltip("The submit button")]
+        [SerializeField] [Tooltip("The button that submits the player's selection.")]
         private Button submitButton;
 
-        [SerializeField] [Tooltip("Color for the submit button when selecting a new level")]
+        [SerializeField] [Tooltip("The color of the submit button when a new level is selected.")]
         private Color newLevelColor = Color.green;
 
-        [SerializeField] [Tooltip("Accent color for the submit button when selecting a new level")]
+        [SerializeField] [Tooltip("The accent color of the submit button when a new level is selected.")]
         private Color newLevelAccentColor = Color.white;
 
-        [SerializeField] [Tooltip("Color for the submit button when selecting a completed level")]
+        [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [SerializeField] [Tooltip("Image with the RadarChartShader material")]
+        [Header("Color Analysis Settings")]
+        [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
         private Image colorAnalysisImage;
+
+        [SerializeField] [Tooltip("The duration of the animation for the color analysis transition.")]
+        private float colorAnalysisAnimationDuration = 0.25f;
+
+        [SerializeField] [Tooltip("The delay between staggered animations of different color analysis axes.")]
+        private float colorAnalysisStaggerDelay = 0.02f;
+
+        [Header("Button Animation Settings")]
+        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        private float selectedButtonScale = 0.8f;
+
+        [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
+        private float buttonShakeDuration = 0.75f;
+
+        [SerializeField] [Tooltip("The strength of the shake animation applied to buttons.")]
+        private float buttonShakeStrength = 10f;
+
+        [SerializeField] [Tooltip("The duration of the bump animation applied to buttons.")]
+        private float buttonBumpDuration = 0.1f;
+
+        [SerializeField] [Tooltip("The scale factor applied during the bump animation of buttons. A value greater than 1 will enlarge the button temporarily.")]
+        private float buttonBumpScaleFactor = 1.05f;
+
+        [SerializeField] [Tooltip("The interval in seconds between periodic shake animations for buttons.")]
+        private float buttonShakeInterval = 5f;
+
+        [SerializeField] [Tooltip("The duration of the bump animation applied to the submit button when a menu button is clicked.")]
+        private float submitButtonBumpDuration = 0.05f;
+
+        [SerializeField] [Tooltip("The scale factor applied during the bump animation of the submit button when a menu button is clicked.")]
+
+        private float submitButtonBumpScaleFactor = 1.05f;
+
+        [SerializeField] [Tooltip("The duration of the bump animation applied to the submit button when clicked.")]
+        private float submitButtonClickBumpDuration = 0.1f;
+
+        [SerializeField] [Tooltip("The scale factor applied during the bump animation of the submit button when clicked.")]
+        private float submitButtonClickBumpScaleFactor = 0.9f;
 
         private float _adjustedWidth;
         private Material _colorAnalysisMaterial;
@@ -59,12 +109,87 @@ namespace Colorcrush.Game
 
         private void Awake()
         {
-            ResetScrollViewToBeginning();
+            ScrollToButtonIndex(0);
             InitializeScrollBarEffect();
             SetSelectedLevel();
             SetupButtons();
             UpdateSubmitButton();
             InitializeColorAnalysis();
+        }
+
+        private void ScrollToButtonIndex(int index)
+        {
+            if (scrollView == null || buttonGrid == null)
+            {
+                Debug.LogError("ScrollView or ButtonGrid not assigned.");
+                return;
+            }
+
+            if (index < 0 || index >= buttonGrid.transform.childCount)
+            {
+                Debug.LogError($"Invalid button index: {index}");
+                return;
+            }
+
+            int cellsPerRow = buttonGrid.constraintCount;
+            float cellSize = buttonGrid.cellSize.x;
+            float cellSpacing = buttonGrid.spacing.x;
+
+            int totalCells = buttonGrid.transform.childCount;
+            int totalColumns = Mathf.CeilToInt((float)totalCells / cellsPerRow);
+
+            float viewportWidth = scrollView.viewport.rect.width;
+            float contentWidth = totalColumns * (cellSize + cellSpacing) - cellSpacing;
+            float visibleWidth = visibleColumns * (cellSize + cellSpacing) - cellSpacing;
+
+            int clickedColumn = index / cellsPerRow;
+            int currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * (contentWidth - viewportWidth) / (cellSize + cellSpacing));
+
+            int targetColumn;
+            if (clickedColumn == currentLeftmostColumn) // Clicked leftmost visible column
+            {
+                targetColumn = Mathf.Max(0, currentLeftmostColumn - 2);
+            }
+            else if (clickedColumn == currentLeftmostColumn + visibleColumns - 1) // Clicked rightmost visible column
+            {
+                targetColumn = Mathf.Min(totalColumns - visibleColumns, currentLeftmostColumn + 2);
+            }
+            else // Clicked a middle column or outside visible area
+            {
+                targetColumn = Mathf.Clamp(clickedColumn - 1, 0, totalColumns - visibleColumns);
+            }
+
+            float normalizedPosition = (targetColumn * (cellSize + cellSpacing)) / (contentWidth - visibleWidth);
+            normalizedPosition = Mathf.Clamp01(normalizedPosition);
+
+            StartCoroutine(SmoothScrollTo(normalizedPosition));
+
+            Debug.Log($"Scrolling to column {targetColumn}, normalized position: {normalizedPosition}");
+        }
+
+        private IEnumerator SmoothScrollTo(float targetNormalizedPosition)
+        {
+            float startPosition = scrollView.horizontalNormalizedPosition;
+            float elapsedTime = 0f;
+
+            while (elapsedTime < scrollDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / scrollDuration;
+                
+                // Apply custom easing curve
+                t = scrollEasingCurve.Evaluate(t);
+
+                scrollView.horizontalNormalizedPosition = Mathf.Lerp(startPosition, targetNormalizedPosition, t);
+                yield return null;
+            }
+
+            // Ensure we end exactly at the target position
+            scrollView.horizontalNormalizedPosition = targetNormalizedPosition;
+
+            // Force the scroll view to update and stop any residual velocity
+            Canvas.ForceUpdateCanvases();
+            scrollView.velocity = Vector2.zero;
         }
 
         private void OnDestroy()
@@ -91,21 +216,8 @@ namespace Colorcrush.Game
             if (_selectedLevelIndex < buttonGrid.transform.childCount)
             {
                 var buttonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
-                ScaleButton(buttonTransform, Vector3.one * 0.8f);
-            }
-        }
-
-        private void ResetScrollViewToBeginning()
-        {
-            if (scrollViewToReset != null)
-            {
-                scrollViewToReset.horizontalNormalizedPosition = 0f;
-                Canvas.ForceUpdateCanvases();
-                scrollViewToReset.velocity = Vector2.zero;
-            }
-            else
-            {
-                Debug.LogError("ScrollRect to reset is not assigned in the inspector.");
+                ScaleButton(buttonTransform, Vector3.one * selectedButtonScale);
+                ScrollToButtonIndex(_selectedLevelIndex);
             }
         }
 
@@ -229,7 +341,7 @@ namespace Colorcrush.Game
                     buttons[i].interactable = false;
                     ShaderManager.SetColor(buttonImage.material, "_TargetColor", Color.black);
                     ShaderManager.SetFloat(buttonImage.material, "_Alpha", 0.2f);
-                    buttons[i].transform.localScale = Vector3.one * 0.8f;
+                    buttons[i].transform.localScale = Vector3.one * selectedButtonScale;
                 }
             }
 
@@ -260,7 +372,8 @@ namespace Colorcrush.Game
                 {
                     // Remove existing animations before applying new ones
                     AnimationManager.RemoveExistingAnimations(animator);
-                    ScaleButton(buttonTransform, Vector3.one * 0.8f);
+                    ScaleButton(buttonTransform, Vector3.one * selectedButtonScale);
+                    ScrollToButtonIndex(index);
                 }
                 else
                 {
@@ -270,6 +383,21 @@ namespace Colorcrush.Game
 
             UpdateSubmitButton();
             UpdateColorAnalysis();
+
+            // Animate the submit button with a bump animation
+            if (submitButton != null)
+            {
+                var submitButtonAnimator = submitButton.GetComponent<Animator>();
+                if (submitButtonAnimator != null)
+                {
+                    var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
+                    AnimationManager.PlayAnimation(submitButtonAnimator, bumpAnimation);
+                }
+                else
+                {
+                    Debug.LogError("Submit button is missing Animator component.");
+                }
+            }
         }
 
         private void ScaleButton(Transform buttonTransform, Vector3 targetScale)
@@ -277,7 +405,7 @@ namespace Colorcrush.Game
             var animator = buttonTransform.GetComponent<Animator>();
             if (animator != null)
             {
-                var scaleAnimation = new ScaleAnimation(targetScale, 0.25f);
+                var scaleAnimation = new ScaleAnimation(targetScale, buttonBumpDuration);
                 AnimationManager.PlayAnimation(animator, scaleAnimation);
             }
             else
@@ -325,8 +453,28 @@ namespace Colorcrush.Game
                 var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
                 PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
                 PlayerPrefs.Save();
-                SceneManager.LoadSceneAsync("GameScene");
+
+                // Play bump animation
+                var animator = submitButton.GetComponent<Animator>();
+                if (animator != null)
+                {
+                    var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
+                    AnimationManager.PlayAnimation(animator, bumpAnimation);
+                }
+                else
+                {
+                    Debug.LogError("Submit button is missing Animator component.");
+                }
+
+                // Wait for 1 second before loading the scene
+                StartCoroutine(LoadSceneAfterDelay(1f));
             }
+        }
+
+        private IEnumerator LoadSceneAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            SceneManager.LoadSceneAsync("GameScene");
         }
 
         private void InitializeColorAnalysis()
@@ -382,8 +530,6 @@ namespace Colorcrush.Game
 
         private IEnumerator AnimateAxisValuesAndColor(float[] targetValues, Color targetColor)
         {
-            var animationDuration = 0.25f;
-            var staggerDelay = 0.02f;
             var elapsedTime = 0f;
 
             var startValues = new float[8];
@@ -394,23 +540,23 @@ namespace Colorcrush.Game
 
             var startColor = _currentFillColor;
 
-            while (elapsedTime < animationDuration + 7 * staggerDelay)
+            while (elapsedTime < colorAnalysisAnimationDuration + 7 * colorAnalysisStaggerDelay)
             {
                 elapsedTime += Time.deltaTime;
 
                 for (var i = 0; i < 8; i++)
                 {
-                    var axisElapsedTime = elapsedTime - i * staggerDelay;
+                    var axisElapsedTime = elapsedTime - i * colorAnalysisStaggerDelay;
                     if (axisElapsedTime > 0)
                     {
-                        var t = Mathf.Clamp01(axisElapsedTime / animationDuration);
+                        var t = Mathf.Clamp01(axisElapsedTime / colorAnalysisAnimationDuration);
                         var easedT = EaseInOutCubic(t);
                         _currentAxisValues[i] = Mathf.Lerp(startValues[i], targetValues[i], easedT);
                         ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
                     }
                 }
 
-                var colorT = Mathf.Clamp01(elapsedTime / animationDuration);
+                var colorT = Mathf.Clamp01(elapsedTime / colorAnalysisAnimationDuration);
                 var easedColorT = EaseInOutCubic(colorT);
                 _currentFillColor = Color.Lerp(startColor, new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f), easedColorT);
                 ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
@@ -438,14 +584,14 @@ namespace Colorcrush.Game
         {
             while (true)
             {
-                yield return new WaitForSeconds(5f);
+                yield return new WaitForSeconds(buttonShakeInterval);
                 if (button != null && buttonIndex != _selectedLevelIndex)
                 {
                     var animator = button.GetComponent<Animator>();
                     if (animator != null)
                     {
-                        var shakeAnimation = new ShakeAnimation(0.75f, 10f);
-                        var bumpAnimation = new BumpAnimation(0.1f, 1.05f);
+                        var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
+                        var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
                         AnimationManager.PlayAnimation(animator, shakeAnimation);
                         AnimationManager.PlayAnimation(animator, bumpAnimation);
                     }

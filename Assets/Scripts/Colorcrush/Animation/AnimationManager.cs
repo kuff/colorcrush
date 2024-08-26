@@ -14,7 +14,7 @@ namespace Colorcrush.Animation
         private static AnimationManager _instance;
 
         private readonly Dictionary<Animation, List<AnimationState>> _activeAnimations = new();
-        private readonly Dictionary<Animator, HashSet<Animation>> _animatorAnimations = new();
+        private readonly Dictionary<Animator, List<Animation>> _animatorAnimations = new();
 
         public static AnimationManager Instance
         {
@@ -112,6 +112,8 @@ namespace Colorcrush.Animation
             {
                 if (animator != null)
                 {
+                    // Remove any existing animations for this animator
+                    RemoveExistingAnimations(animator);
                     // Add a new state for this animator
                     states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
                     Instance.AddAnimatorAnimation(animator, animation);
@@ -153,7 +155,7 @@ namespace Colorcrush.Animation
         {
             if (!_animatorAnimations.TryGetValue(animator, out var animations))
             {
-                animations = new HashSet<Animation>();
+                animations = new List<Animation>();
                 _animatorAnimations[animator] = animations;
             }
 
