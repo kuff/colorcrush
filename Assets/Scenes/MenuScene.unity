@@ -1356,6 +1356,32 @@ MonoBehaviour:
   scrollbarImage: {fileID: 1437737379}
   scrollView: {fileID: 694629470}
   scrollbarSizeRatio: 0.5
+  visibleColumns: 4
+  scrollDuration: 0.5
+  scrollEasingCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   buttonGrid: {fileID: 1039757014}
   submitButton: {fileID: 1450659821}
   newLevelColor: {r: 0.17517261, g: 0.6679245, b: 0.17517261, a: 1}
@@ -1370,6 +1396,10 @@ MonoBehaviour:
   buttonBumpDuration: 0.1
   buttonBumpScaleFactor: 1.05
   buttonShakeInterval: 5
+  submitButtonBumpDuration: 0.05
+  submitButtonBumpScaleFactor: 1.05
+  submitButtonClickBumpDuration: 0.1
+  submitButtonClickBumpScaleFactor: 0.9
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,7 +6,6 @@ using System;
 using System.IO;
 using System.Linq;
 using Colorcrush;
-using Colorcrush.Util;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;

@@ -81,7 +81,7 @@ namespace Colorcrush.Util
                 }
             }
 
-            Debug.Log($"Preloaded {_audioClips.Count} audio clips.");
+            Debug.Log($"AudioManager: Preloaded {_audioClips.Count} audio clips.");
         }
 
         private void CalculateVolumeAdjustments()
@@ -91,13 +91,13 @@ namespace Colorcrush.Util
                 var volumeAdjustment = CalculateVolumeAdjustment(clip.Value);
                 if (volumeAdjustment > 1f)
                 {
-                    Debug.LogWarning($"Volume adjustment for {clip.Key} is {volumeAdjustment}. Clamping to 1.");
+                    Debug.LogWarning($"AudioManager: Volume adjustment for {clip.Key} is {volumeAdjustment}. Clamping to 1.");
                     volumeAdjustment = 1f;
                 }
 
                 _volumeAdjustments[clip.Key] = volumeAdjustment;
 
-                Debug.Log($"Clip: {clip.Key}, Volume Adjustment: {volumeAdjustment}");
+                Debug.Log($"AudioManager: Clip: {clip.Key}, Volume Adjustment: {volumeAdjustment}");
             }
         }
 
@@ -144,7 +144,7 @@ namespace Colorcrush.Util
 
                     if (finalVolume > 1f)
                     {
-                        Debug.LogWarning($"Resulting volume for {soundName} is {finalVolume}, which is larger than the maximum playable volume. Clamping to 1.");
+                        Debug.LogWarning($"AudioManager: Resulting volume for {soundName} is {finalVolume}, which is larger than the maximum playable volume. Clamping to 1.");
                         finalVolume = 1f;
                     }
 
@@ -160,16 +160,16 @@ namespace Colorcrush.Util
                     }
 
                     audioSource.Play();
-                    Debug.Log($"Playing sound: {soundName} with volume: {finalVolume} and pitch: {audioSource.pitch}");
+                    Debug.Log($"AudioManager: Playing sound: {soundName} with volume: {finalVolume} and pitch: {audioSource.pitch}");
                 }
                 else
                 {
-                    Debug.LogWarning($"No available audio source to play sound: {soundName}");
+                    Debug.LogWarning($"AudioManager: No available audio source to play sound: {soundName}");
                 }
             }
             else
             {
-                Debug.LogError($"Audio clip not found: {soundName}");
+                Debug.LogError($"AudioManager: Audio clip not found: {soundName}");
             }
         }
 

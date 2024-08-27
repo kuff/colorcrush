@@ -114,7 +114,7 @@ namespace Colorcrush.Util
 
             if (Instance._defaultEmojiSprite == null)
             {
-                Debug.LogError($"Default emoji '{ProjectConfig.InstanceConfig.defaultEmojiName}' not found in either Happy or Sad folder.");
+                Debug.LogError("EmojiManager: Default emoji '{ProjectConfig.InstanceConfig.defaultEmojiName}' not found in either Happy or Sad folder.");
             }
 
             return Instance._defaultEmojiSprite;
@@ -131,7 +131,7 @@ namespace Colorcrush.Util
 
             if (Instance._defaultHappyEmojiSprite == null)
             {
-                Debug.LogError($"Default happy emoji '{ProjectConfig.InstanceConfig.defaultHappyEmojiName}' not found in Happy folder.");
+                Debug.LogError("EmojiManager: Default happy emoji '{ProjectConfig.InstanceConfig.defaultHappyEmojiName}' not found in Happy folder.");
             }
 
             return Instance._defaultHappyEmojiSprite;
@@ -141,7 +141,7 @@ namespace Colorcrush.Util
         {
             if (queue.Count == 0)
             {
-                Debug.LogWarning("Emoji queue is empty. Reinitializing...");
+                Debug.LogWarning("EmojiManager: Emoji queue is empty. Reinitializing...");
                 InitializeEmojiQueues();
             }
 
@@ -157,7 +157,7 @@ namespace Colorcrush.Util
                 return emoji;
             }
 
-            Debug.LogWarning($"Emoji with name '{emojiName}' not found. Returning default emoji.");
+            Debug.LogWarning($"EmojiManager: Emoji with name '{emojiName}' not found. Returning default emoji.");
             return GetDefaultEmoji();
         }
 
@@ -187,7 +187,7 @@ namespace Colorcrush.Util
             }
 
             // If we've exhausted all happy emojis, return the default happy emoji
-            Debug.LogWarning("All happy emojis have been used. Returning default happy emoji.");
+            Debug.LogWarning("EmojiManager: All happy emojis have been used. Returning default happy emoji.");
             return GetDefaultHappyEmoji();
         }
     }

@@ -100,11 +100,11 @@ namespace Colorcrush.Animation
             {
                 states = new List<AnimationState>();
                 Instance._activeAnimations[animation] = states;
-                Debug.Log($"Created new animation state for {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Created new animation state for {animation.GetType().Name}");
             }
             else
             {
-                Debug.Log($"Using existing animation state for {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Using existing animation state for {animation.GetType().Name}");
             }
 
             var count = 0;
@@ -121,17 +121,17 @@ namespace Colorcrush.Animation
                 }
                 else
                 {
-                    Debug.LogWarning("Attempted to add a null animator to the animation state");
+                    Debug.LogWarning("AnimationManager: Attempted to add a null animator to the animation state");
                 }
             }
 
             if (count > 0)
             {
-                Debug.Log($"Added {count} animator(s) to {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Added {count} animator(s) to {animation.GetType().Name}");
             }
             else
             {
-                Debug.LogWarning($"No valid animators were added to {animation.GetType().Name}");
+                Debug.LogWarning($"AnimationManager: No valid animators were added to {animation.GetType().Name}");
             }
         }
 

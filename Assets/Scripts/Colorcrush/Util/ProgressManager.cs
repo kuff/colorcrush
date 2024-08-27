@@ -135,7 +135,7 @@ namespace Colorcrush.Util
             ProcessLogLines(allLogLines);
 
             // Log a summary of the refreshed progression state
-            Debug.Log("Progression State Refreshed: " +
+            Debug.Log("ProgressManager: Progression State Refreshed: " +
                       $"{_completedTargetColors.Count} completed target colors, " +
                       $"{_rewardedEmojis.Count} rewarded emojis, " +
                       $"{_selectedColors.Count} selected color sets. " +

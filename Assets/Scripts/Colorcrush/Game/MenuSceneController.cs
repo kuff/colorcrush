@@ -88,7 +88,6 @@ namespace Colorcrush.Game
         private float submitButtonBumpDuration = 0.05f;
 
         [SerializeField] [Tooltip("The scale factor applied during the bump animation of the submit button when a menu button is clicked.")]
-
         private float submitButtonBumpScaleFactor = 1.05f;
 
         [SerializeField] [Tooltip("The duration of the bump animation applied to the submit button when clicked.")]
@@ -97,15 +96,17 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The scale factor applied during the bump animation of the submit button when clicked.")]
         private float submitButtonClickBumpScaleFactor = 0.9f;
 
+        private readonly float[] _currentAxisValues = new float[8];
+
         private float _adjustedWidth;
         private Material _colorAnalysisMaterial;
-        private readonly float[] _currentAxisValues = new float[8];
         private Color _currentFillColor = Color.clear;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
         private int _selectedLevelIndex = -1;
         private Coroutine _shakeCoroutine;
+        private Coroutine _smoothScrollCoroutine;
 
         private void Awake()
         {
@@ -115,6 +116,24 @@ namespace Colorcrush.Game
             SetupButtons();
             UpdateSubmitButton();
             InitializeColorAnalysis();
+        }
+
+        private void OnDestroy()
+        {
+            if (scrollView != null)
+            {
+                scrollView.onValueChanged.RemoveListener(OnScrollValueChanged);
+            }
+
+            if (_shakeCoroutine != null)
+            {
+                StopCoroutine(_shakeCoroutine);
+            }
+
+            if (_smoothScrollCoroutine != null)
+            {
+                StopCoroutine(_smoothScrollCoroutine);
+            }
         }
 
         private void ScrollToButtonIndex(int index)
@@ -131,19 +150,19 @@ namespace Colorcrush.Game
                 return;
             }
 
-            int cellsPerRow = buttonGrid.constraintCount;
-            float cellSize = buttonGrid.cellSize.x;
-            float cellSpacing = buttonGrid.spacing.x;
+            var cellsPerRow = buttonGrid.constraintCount;
+            var cellSize = buttonGrid.cellSize.x;
+            var cellSpacing = buttonGrid.spacing.x;
 
-            int totalCells = buttonGrid.transform.childCount;
-            int totalColumns = Mathf.CeilToInt((float)totalCells / cellsPerRow);
+            var totalCells = buttonGrid.transform.childCount;
+            var totalColumns = Mathf.CeilToInt((float)totalCells / cellsPerRow);
 
-            float viewportWidth = scrollView.viewport.rect.width;
-            float contentWidth = totalColumns * (cellSize + cellSpacing) - cellSpacing;
-            float visibleWidth = visibleColumns * (cellSize + cellSpacing) - cellSpacing;
+            var viewportWidth = scrollView.viewport.rect.width;
+            var contentWidth = totalColumns * (cellSize + cellSpacing) - cellSpacing;
+            var visibleWidth = visibleColumns * (cellSize + cellSpacing) - cellSpacing;
 
-            int clickedColumn = index / cellsPerRow;
-            int currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * (contentWidth - viewportWidth) / (cellSize + cellSpacing));
+            var clickedColumn = index / cellsPerRow;
+            var currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * (contentWidth - viewportWidth) / (cellSize + cellSpacing));
 
             int targetColumn;
             if (clickedColumn == currentLeftmostColumn) // Clicked leftmost visible column
@@ -159,7 +178,7 @@ namespace Colorcrush.Game
                 targetColumn = Mathf.Clamp(clickedColumn - 1, 0, totalColumns - visibleColumns);
             }
 
-            float normalizedPosition = (targetColumn * (cellSize + cellSpacing)) / (contentWidth - visibleWidth);
+            var normalizedPosition = targetColumn * (cellSize + cellSpacing) / (contentWidth - visibleWidth);
             normalizedPosition = Mathf.Clamp01(normalizedPosition);
 
             StartCoroutine(SmoothScrollTo(normalizedPosition));
@@ -169,14 +188,32 @@ namespace Colorcrush.Game
 
         private IEnumerator SmoothScrollTo(float targetNormalizedPosition)
         {
-            float startPosition = scrollView.horizontalNormalizedPosition;
-            float elapsedTime = 0f;
+            var startPosition = scrollView.horizontalNormalizedPosition;
+            var elapsedTime = 0f;
+            var initialInteractionEnded = false;
+
+            // Wait for the initial click/touch to end
+            yield return new WaitUntil(() => !Input.GetMouseButton(0) && Input.touchCount == 0);
 
             while (elapsedTime < scrollDuration)
             {
+                if (!initialInteractionEnded)
+                {
+                    // Check if the initial interaction has truly ended
+                    if (Input.GetMouseButtonDown(0) || Input.touchCount > 0)
+                    {
+                        initialInteractionEnded = true;
+                    }
+                }
+                else if (Input.GetMouseButton(0) || Input.touchCount > 0)
+                {
+                    // Subsequent user interaction detected, stop smooth scrolling
+                    yield break;
+                }
+
                 elapsedTime += Time.deltaTime;
-                float t = elapsedTime / scrollDuration;
-                
+                var t = elapsedTime / scrollDuration;
+
                 // Apply custom easing curve
                 t = scrollEasingCurve.Evaluate(t);
 
@@ -190,19 +227,6 @@ namespace Colorcrush.Game
             // Force the scroll view to update and stop any residual velocity
             Canvas.ForceUpdateCanvases();
             scrollView.velocity = Vector2.zero;
-        }
-
-        private void OnDestroy()
-        {
-            if (scrollView != null)
-            {
-                scrollView.onValueChanged.RemoveListener(OnScrollValueChanged);
-            }
-
-            if (_shakeCoroutine != null)
-            {
-                StopCoroutine(_shakeCoroutine);
-            }
         }
 
         private void SetSelectedLevel()
@@ -253,6 +277,11 @@ namespace Colorcrush.Game
         private void OnScrollValueChanged(Vector2 scrollPosition)
         {
             UpdateScrollbarPosition(scrollPosition);
+            if (_smoothScrollCoroutine != null)
+            {
+                StopCoroutine(_smoothScrollCoroutine);
+                _smoothScrollCoroutine = null;
+            }
         }
 
         private void UpdateScrollbarPosition(Vector2 scrollPosition)
@@ -355,10 +384,19 @@ namespace Colorcrush.Game
         {
             Debug.Log($"Button clicked at index: {index}");
 
+            // Stop the shake coroutine if it's running
+            if (_shakeCoroutine != null)
+            {
+                StopCoroutine(_shakeCoroutine);
+                _shakeCoroutine = null;
+            }
+
             // Scale back the previously selected button, if any
             if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
             {
-                ScaleButton(buttonGrid.transform.GetChild(_selectedLevelIndex), Vector3.one);
+                var previousButtonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
+                ScaleButton(previousButtonTransform, Vector3.one);
+                ResetButtonRotation(previousButtonTransform);
             }
 
             _selectedLevelIndex = index;
@@ -374,6 +412,13 @@ namespace Colorcrush.Game
                     AnimationManager.RemoveExistingAnimations(animator);
                     ScaleButton(buttonTransform, Vector3.one * selectedButtonScale);
                     ScrollToButtonIndex(index);
+
+                    // Start shake animation if this is the next color to be completed
+                    var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
+                    if (index != uniqueCompletedColors.Count)
+                    {
+                        _shakeCoroutine = StartCoroutine(ShakeButtonPeriodically(buttonTransform.GetComponent<Button>(), index));
+                    }
                 }
                 else
                 {
@@ -398,6 +443,11 @@ namespace Colorcrush.Game
                     Debug.LogError("Submit button is missing Animator component.");
                 }
             }
+        }
+
+        private void ResetButtonRotation(Transform buttonTransform)
+        {
+            buttonTransform.localRotation = Quaternion.identity;
         }
 
         private void ScaleButton(Transform buttonTransform, Vector3 targetScale)
@@ -584,18 +634,20 @@ namespace Colorcrush.Game
         {
             while (true)
             {
-                yield return new WaitForSeconds(buttonShakeInterval);
                 if (button != null && buttonIndex != _selectedLevelIndex)
                 {
                     var animator = button.GetComponent<Animator>();
                     if (animator != null)
                     {
+                        //AnimationManager.RemoveExistingAnimations(animator);
                         var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
                         var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
                         AnimationManager.PlayAnimation(animator, shakeAnimation);
                         AnimationManager.PlayAnimation(animator, bumpAnimation);
                     }
                 }
+
+                yield return new WaitForSeconds(buttonShakeInterval);
             }
         }
     }

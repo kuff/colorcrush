@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
-  useInitiatingScene: 0
+  useInitiatingScene: 1
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
@@ -30,7 +30,7 @@ MonoBehaviour:
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4
   happyEmojiFolder: Colorcrush/Emoji/Happy
   sadEmojiFolder: Colorcrush/Emoji/Sad
-  logFilePrefix: game_log_
+  logFilePrefix: colorcrush_log_
   useAdditiveTimestamps: 1
   logFileExtension: .txt
   endOfFileSymbol: EOF

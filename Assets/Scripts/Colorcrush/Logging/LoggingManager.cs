@@ -130,12 +130,12 @@ namespace Colorcrush.Logging
                 }
 
                 LogEvent(new StartTimeEvent(_startTime));
-                Debug.Log($"Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
+                Debug.Log($"LoggingManager: Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
             }
             else
             {
                 InitializeNewLogFile();
-                Debug.LogWarning($"No existing log files found. Initialized new log file: {_currentLogFilePath}");
+                Debug.LogWarning($"LoggingManager: No existing log files found. Initialized new log file: {_currentLogFilePath}");
             }
         }
 
@@ -158,7 +158,7 @@ namespace Colorcrush.Logging
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error reading last timestamp from file: {e.Message}");
+                Debug.LogError($"LoggingManager: Error reading last timestamp from file: {e.Message}");
             }
 
             return 0;
@@ -219,7 +219,7 @@ namespace Colorcrush.Logging
                 // Check if the file appears corrupted
                 if (existingLines.Length > 0 && existingLines[^1] != ProjectConfig.InstanceConfig.endOfFileSymbol)
                 {
-                    Debug.LogWarning($"Log file appears corrupted: {_currentLogFilePath}. Last line is not EOF symbol.");
+                    Debug.LogWarning($"LoggingManager: Log file appears corrupted: {_currentLogFilePath}. Last line is not EOF symbol.");
                 }
 
                 // Remove the EOF symbol if it exists
@@ -252,7 +252,7 @@ namespace Colorcrush.Logging
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error saving log: {e.Message}");
+                Debug.LogError($"LoggingManager: Error saving log: {e.Message}");
             }
         }
 
@@ -263,16 +263,16 @@ namespace Colorcrush.Logging
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
-                    Debug.Log($"Log file deleted: {filePath}");
+                    Debug.Log($"LoggingManager: Log file deleted: {filePath}");
                 }
                 else
                 {
-                    Debug.LogWarning($"Log file not found: {filePath}");
+                    Debug.LogWarning($"LoggingManager: Log file not found: {filePath}");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error deleting log file: {e.Message}");
+                Debug.LogError($"LoggingManager: Error deleting log file: {e.Message}");
             }
         }
 
@@ -286,11 +286,11 @@ namespace Colorcrush.Logging
                     File.Delete(file);
                 }
 
-                Debug.Log($"Deleted {logFiles.Length} log file(s).");
+                Debug.Log($"LoggingManager: Deleted {logFiles.Length} log file(s).");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error deleting all log files: {e.Message}");
+                Debug.LogError($"LoggingManager: Error deleting all log files: {e.Message}");
             }
         }
 
@@ -317,7 +317,7 @@ namespace Colorcrush.Logging
                     }
                     else
                     {
-                        Debug.LogWarning($"End of file symbol '{ProjectConfig.InstanceConfig.endOfFileSymbol}' not found at the end of the log file '{Instance._currentLogFilePath}'. This may indicate an incomplete or corrupted log file.");
+                        Debug.LogWarning($"LoggingManager: End of file symbol '{ProjectConfig.InstanceConfig.endOfFileSymbol}' not found at the end of the log file '{Instance._currentLogFilePath}'. This may indicate an incomplete or corrupted log file.");
                     }
 
                     logLines.AddRange(Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}"));
@@ -325,12 +325,12 @@ namespace Colorcrush.Logging
                 else
                 {
                     logLines = Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}").ToList();
-                    Debug.Log($"Yielding {logLines.Count} log entries from the queue since data is yet to be written to the file.");
+                    Debug.Log($"LoggingManager: Yielding {logLines.Count} log entries from the queue since data is yet to be written to the file.");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error reading log file: {e.Message}");
+                Debug.LogError($"LoggingManager: Error reading log file: {e.Message}");
             }
 
             return logLines;
