@@ -34,9 +34,9 @@ namespace Colorcrush.Animation
             return textComponent.rectTransform.anchoredPosition3D;
         }
 
-        public override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position, AnimationManager.Animation self)
         {
-            textComponent.rectTransform.anchoredPosition3D = position;
+            SetIfOwned("Position", self, () => textComponent.rectTransform.anchoredPosition3D = position);
         }
 
         public override Quaternion GetRotation()
@@ -50,9 +50,9 @@ namespace Colorcrush.Animation
             return textComponent.rectTransform.localRotation;
         }
 
-        public override void SetRotation(Quaternion rotation)
+        public override void SetRotation(Quaternion rotation, AnimationManager.Animation self)
         {
-            textComponent.rectTransform.localRotation = rotation;
+            SetIfOwned("Rotation", self, () => textComponent.rectTransform.localRotation = rotation);
         }
 
         public override Vector3 GetScale()
@@ -66,9 +66,9 @@ namespace Colorcrush.Animation
             return textComponent.rectTransform.localScale;
         }
 
-        public override void SetScale(Vector3 scale)
+        public override void SetScale(Vector3 scale, AnimationManager.Animation self)
         {
-            textComponent.rectTransform.localScale = scale;
+            SetIfOwned("Scale", self, () => textComponent.rectTransform.localScale = scale);
         }
 
         public override float GetOpacity()
@@ -82,14 +82,14 @@ namespace Colorcrush.Animation
             return textComponent.alpha;
         }
 
-        public override void SetOpacity(float opacity)
+        public override void SetOpacity(float opacity, AnimationManager.Animation self)
         {
-            textComponent.alpha = opacity;
+            SetIfOwned("Opacity", self, () => textComponent.alpha = opacity);
         }
 
-        public void SetText(string text)
+        public void SetText(string text, AnimationManager.Animation self)
         {
-            textComponent.text = text;
+            SetIfOwned("Text", self, () => textComponent.text = text);
         }
 
         public string GetText()
@@ -103,9 +103,9 @@ namespace Colorcrush.Animation
             return textComponent.text;
         }
 
-        public void SetFontSize(float fontSize)
+        public void SetFontSize(float fontSize, AnimationManager.Animation self)
         {
-            textComponent.fontSize = fontSize;
+            SetIfOwned("FontSize", self, () => textComponent.fontSize = fontSize);
         }
 
         public float GetFontSize()
@@ -119,9 +119,9 @@ namespace Colorcrush.Animation
             return textComponent.fontSize;
         }
 
-        public void SetColor(Color color)
+        public void SetColor(Color color, AnimationManager.Animation self)
         {
-            textComponent.color = color;
+            SetIfOwned("Color", self, () => textComponent.color = color);
         }
 
         public Color GetColor()

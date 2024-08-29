@@ -2,6 +2,7 @@
 
 #region
 
+using System.Text;
 using Colorcrush.Game;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -80,9 +81,6 @@ namespace Colorcrush
         [Tooltip("The file extension for log files.")]
         public string logFileExtension = ".txt";
 
-        [Tooltip("The symbol used to mark the end of a log file. Make sure this symbol cannot be mistaken for logging data, as file lines are periodically deleted using it.")]
-        public string endOfFileSymbol = "EOF";
-
         [Tooltip("The interval (in seconds) between automatic log saves.")]
         public float logSaveInterval = 5f;
 
@@ -91,6 +89,12 @@ namespace Colorcrush
 
         [Tooltip("If true, a new log file will always be created on startup, regardless of existing log files.")]
         public bool alwaysCreateNewLogFileOnStartup;
+
+        [Tooltip("The buffer size for the StreamWriter in LoggingManager.")]
+        public int logFileBufferSize = 65536;
+
+        [Tooltip("If true, Console output will not be logged when running in the Unity Editor, regardless of the minimum log severity setting.")]
+        public bool suppressConsoleLoggingInEditor;
 
         [Header("Audio Configuration")]
         [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]
@@ -113,5 +117,8 @@ namespace Colorcrush
 
         [Tooltip("The maximum volume adjustment factor for audio clips.")]
         public float maxVolumeAdjustment = 2f;
+
+        [Tooltip("The encoding to use for the StreamWriter in LoggingManager.")]
+        public Encoding logFileEncoding = Encoding.UTF8;
     }
 }

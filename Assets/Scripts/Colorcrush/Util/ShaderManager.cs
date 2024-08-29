@@ -70,7 +70,7 @@ namespace Colorcrush.Util
             if (!_originalValues[material].ContainsKey(propertyName))
             {
                 _originalValues[material][propertyName] = value;
-                Debug.Log($"ShaderManager: Saved original value for {propertyName} on {material.name}");
+                Debug.Log($"ShaderManager: Saved original value of {value} for {propertyName} on {material.name}");
             }
         }
 

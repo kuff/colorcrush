@@ -181,7 +181,7 @@ namespace Colorcrush.Game
 
             // Hide submit button
             var submitButtonAnimator = submitButton.GetComponent<Animator>();
-            submitButtonAnimator.SetOpacity(0f);
+            submitButtonAnimator.SetOpacity(0f, null);
             submitButton.interactable = false;
 
             // Scale down target

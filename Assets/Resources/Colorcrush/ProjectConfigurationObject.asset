@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
-  useInitiatingScene: 1
+  useInitiatingScene: 0
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
@@ -33,10 +33,11 @@ MonoBehaviour:
   logFilePrefix: colorcrush_log_
   useAdditiveTimestamps: 1
   logFileExtension: .txt
-  endOfFileSymbol: EOF
   logSaveInterval: 5
   minimumLogSeverity: 2
   alwaysCreateNewLogFileOnStartup: 0
+  logFileBufferSize: 65536
+  suppressConsoleLoggingInEditor: 1
   globalGain: 1
   maxAudioSources: 32
   targetRMS: 0.01

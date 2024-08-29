@@ -48,9 +48,9 @@ namespace Colorcrush.Animation
             return rectTransform.anchoredPosition3D;
         }
 
-        public override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position, AnimationManager.Animation self)
         {
-            rectTransform.anchoredPosition3D = position;
+            SetIfOwned("Position", self, () => rectTransform.anchoredPosition3D = position);
         }
 
         public override Quaternion GetRotation()
@@ -64,9 +64,9 @@ namespace Colorcrush.Animation
             return rectTransform.localRotation;
         }
 
-        public override void SetRotation(Quaternion rotation)
+        public override void SetRotation(Quaternion rotation, AnimationManager.Animation self)
         {
-            rectTransform.localRotation = rotation;
+            SetIfOwned("Rotation", self, () => rectTransform.localRotation = rotation);
         }
 
         public override Vector3 GetScale()
@@ -80,9 +80,9 @@ namespace Colorcrush.Animation
             return rectTransform.localScale;
         }
 
-        public override void SetScale(Vector3 scale)
+        public override void SetScale(Vector3 scale, AnimationManager.Animation self)
         {
-            rectTransform.localScale = scale;
+            SetIfOwned("Scale", self, () => rectTransform.localScale = scale);
         }
 
         public override float GetOpacity()
@@ -96,41 +96,44 @@ namespace Colorcrush.Animation
             return image.color.a;
         }
 
-        public override void SetOpacity(float opacity)
+        public override void SetOpacity(float opacity, AnimationManager.Animation self)
         {
-            if (image != null)
+            SetIfOwned("Opacity", self, () =>
             {
-                var color = image.color;
-                color.a = opacity;
-                image.color = color;
-            }
-
-            // Set opacity for all nested Image components
-            foreach (var nestedImage in GetComponentsInChildren<Image>())
-            {
-                if (nestedImage != image)
+                if (image != null)
                 {
-                    var nestedColor = nestedImage.color;
-                    nestedColor.a = opacity;
-                    nestedImage.color = nestedColor;
+                    var color = image.color;
+                    color.a = opacity;
+                    image.color = color;
                 }
-            }
 
-            // Set opacity for all nested Text components
-            foreach (var text in GetComponentsInChildren<Text>())
-            {
-                var textColor = text.color;
-                textColor.a = opacity;
-                text.color = textColor;
-            }
+                // Set opacity for all nested Image components
+                foreach (var nestedImage in GetComponentsInChildren<Image>())
+                {
+                    if (nestedImage != image)
+                    {
+                        var nestedColor = nestedImage.color;
+                        nestedColor.a = opacity;
+                        nestedImage.color = nestedColor;
+                    }
+                }
 
-            // Set opacity for all nested TextMeshProUGUI components
-            foreach (var tmpText in GetComponentsInChildren<TextMeshProUGUI>())
-            {
-                var tmpTextColor = tmpText.color;
-                tmpTextColor.a = opacity;
-                tmpText.color = tmpTextColor;
-            }
+                // Set opacity for all nested Text components
+                foreach (var text in GetComponentsInChildren<Text>())
+                {
+                    var textColor = text.color;
+                    textColor.a = opacity;
+                    text.color = textColor;
+                }
+
+                // Set opacity for all nested TextMeshProUGUI components
+                foreach (var tmpText in GetComponentsInChildren<TextMeshProUGUI>())
+                {
+                    var tmpTextColor = tmpText.color;
+                    tmpTextColor.a = opacity;
+                    tmpText.color = tmpTextColor;
+                }
+            });
         }
 
         public string GetButtonText()
@@ -144,15 +147,18 @@ namespace Colorcrush.Animation
             return button.GetComponentInChildren<Text>().text;
         }
 
-        public void SetButtonText(string text)
+        public void SetButtonText(string text, AnimationManager.Animation self)
         {
-            if (button == null || button.GetComponentInChildren<Text>() == null)
+            SetIfOwned("ButtonText", self, () =>
             {
-                Debug.LogError($"Button or Text component is null for {gameObject.name}. Cannot set button text.");
-                return;
-            }
+                if (button == null || button.GetComponentInChildren<Text>() == null)
+                {
+                    Debug.LogError($"Button or Text component is null for {gameObject.name}. Cannot set button text.");
+                    return;
+                }
 
-            button.GetComponentInChildren<Text>().text = text;
+                button.GetComponentInChildren<Text>().text = text;
+            });
         }
 
         public bool IsInteractable()
@@ -166,15 +172,18 @@ namespace Colorcrush.Animation
             return button.interactable;
         }
 
-        public void SetInteractable(bool interactable)
+        public void SetInteractable(bool interactable, AnimationManager.Animation self)
         {
-            if (button == null)
+            SetIfOwned("Interactable", self, () =>
             {
-                Debug.LogError($"Button component is null for {gameObject.name}. Cannot set interactability.");
-                return;
-            }
+                if (button == null)
+                {
+                    Debug.LogError($"Button component is null for {gameObject.name}. Cannot set interactability.");
+                    return;
+                }
 
-            button.interactable = interactable;
+                button.interactable = interactable;
+            });
         }
     }
 }

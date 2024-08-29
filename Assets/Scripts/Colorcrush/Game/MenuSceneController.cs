@@ -107,9 +107,11 @@ namespace Colorcrush.Game
         private int _selectedLevelIndex = -1;
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
+        private HashSet<string> _uniqueCompletedColors;
 
         private void Awake()
         {
+            _uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
             ScrollToButtonIndex(0);
             InitializeScrollBarEffect();
             SetSelectedLevel();
@@ -232,8 +234,7 @@ namespace Colorcrush.Game
         private void SetSelectedLevel()
         {
             var completedColors = ProgressManager.CompletedTargetColors;
-            var uniqueCompletedColors = new HashSet<string>(completedColors);
-            _selectedLevelIndex = uniqueCompletedColors.Count;
+            _selectedLevelIndex = _uniqueCompletedColors.Count;
             UpdateColorAnalysis();
 
             // Scale the initially selected button
@@ -313,8 +314,8 @@ namespace Colorcrush.Game
             var buttons = buttonGrid.GetComponentsInChildren<Button>();
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
-            var uniqueCompletedColors = new HashSet<string>(completedColors);
-            var nextColorIndex = uniqueCompletedColors.Count;
+            var mostRecentCompletedColor = ProgressManager.MostRecentCompletedTargetColor;
+            var nextColorIndex = _uniqueCompletedColors.Count;
 
             for (var i = 0; i < buttons.Length; i++)
             {
@@ -338,7 +339,7 @@ namespace Colorcrush.Game
                     buttons[i].onClick.AddListener(() => OnButtonClicked(index));
 
                     // Set the rewarded emoji if available
-                    if (uniqueCompletedColors.Contains(targetColorHex))
+                    if (_uniqueCompletedColors.Contains(targetColorHex))
                     {
                         var colorIndex = completedColors.IndexOf(targetColorHex);
                         if (colorIndex < rewardedEmojis.Count)
@@ -358,10 +359,10 @@ namespace Colorcrush.Game
 
                     buttons[i].transform.localScale = Vector3.one;
 
-                    // Start shake animation for the button representing the color level that is yet to be completed
-                    if (i == nextColorIndex && _shakeCoroutine == null)
+                    // Set up animation for the next level button
+                    if (i == nextColorIndex)
                     {
-                        _shakeCoroutine = StartCoroutine(ShakeButtonPeriodically(buttons[i], i));
+                        StartCoroutine(AnimateNextLevelButton(buttons[i]));
                     }
                 }
                 else
@@ -377,6 +378,49 @@ namespace Colorcrush.Game
             if (submitButton != null)
             {
                 submitButton.onClick.AddListener(OnSubmitButtonClicked);
+            }
+
+            // Select the most recently played level at startup
+            if (!string.IsNullOrEmpty(mostRecentCompletedColor))
+            {
+                var mostRecentIndex = System.Array.FindIndex(ColorArray.SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
+                if (mostRecentIndex != -1 && mostRecentIndex < buttons.Length)
+                {
+                    OnButtonClicked(mostRecentIndex);
+                }
+            }
+            // else if (buttons.Length > 0)
+            // {
+            //     // If no level was completed yet, select the first level
+            //     OnButtonClicked(0);
+            // }
+        }
+
+        private IEnumerator AnimateNextLevelButton(Button button)
+        {
+            var animator = button.GetComponent<Animator>();
+            if (animator == null)
+            {
+                Debug.LogError("Next level button is missing Animator component.");
+                yield break;
+            }
+
+            while (true)
+            {
+                yield return new WaitForSeconds(buttonShakeInterval);
+
+                if (_selectedLevelIndex != _uniqueCompletedColors.Count)
+                {
+                    var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
+                    AnimationManager.PlayAnimation(animator, bumpAnimation);
+
+                    yield return new WaitForSeconds(buttonBumpDuration);
+
+                    var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
+                    AnimationManager.PlayAnimation(animator, shakeAnimation);
+
+                    yield return new WaitForSeconds(buttonShakeDuration);
+                }
             }
         }
 
@@ -396,7 +440,6 @@ namespace Colorcrush.Game
             {
                 var previousButtonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
                 ScaleButton(previousButtonTransform, Vector3.one);
-                ResetButtonRotation(previousButtonTransform);
             }
 
             _selectedLevelIndex = index;
@@ -408,17 +451,8 @@ namespace Colorcrush.Game
                 var animator = buttonTransform.GetComponent<Animator>();
                 if (animator != null)
                 {
-                    // Remove existing animations before applying new ones
-                    AnimationManager.RemoveExistingAnimations(animator);
                     ScaleButton(buttonTransform, Vector3.one * selectedButtonScale);
                     ScrollToButtonIndex(index);
-
-                    // Start shake animation if this is the next color to be completed
-                    var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
-                    if (index != uniqueCompletedColors.Count)
-                    {
-                        _shakeCoroutine = StartCoroutine(ShakeButtonPeriodically(buttonTransform.GetComponent<Button>(), index));
-                    }
                 }
                 else
                 {
@@ -445,11 +479,6 @@ namespace Colorcrush.Game
             }
         }
 
-        private void ResetButtonRotation(Transform buttonTransform)
-        {
-            buttonTransform.localRotation = Quaternion.identity;
-        }
-
         private void ScaleButton(Transform buttonTransform, Vector3 targetScale)
         {
             var animator = buttonTransform.GetComponent<Animator>();
@@ -468,8 +497,7 @@ namespace Colorcrush.Game
         {
             if (submitButton != null)
             {
-                var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
-                var isNewLevel = _selectedLevelIndex == uniqueCompletedColors.Count;
+                var isNewLevel = _selectedLevelIndex == _uniqueCompletedColors.Count;
 
                 var buttonImage = submitButton.GetComponent<Image>();
                 if (buttonImage != null && buttonImage.material != null)
@@ -491,14 +519,13 @@ namespace Colorcrush.Game
                     Debug.LogError("Submit button is missing Image component or material.");
                 }
 
-                submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= uniqueCompletedColors.Count;
+                submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count;
             }
         }
 
         private void OnSubmitButtonClicked()
         {
-            var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
-            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= uniqueCompletedColors.Count && _selectedLevelIndex < ColorArray.SRGBTargetColors.Length)
+            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count && _selectedLevelIndex < ColorArray.SRGBTargetColors.Length)
             {
                 var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
                 PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
@@ -553,9 +580,8 @@ namespace Colorcrush.Game
             }
 
             var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
-            var uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
 
-            if (_selectedLevelIndex == uniqueCompletedColors.Count)
+            if (_selectedLevelIndex == _uniqueCompletedColors.Count)
             {
                 // This is a new, uncompleted level
                 var zeroValues = new float[8];
@@ -628,27 +654,6 @@ namespace Colorcrush.Game
         private float EaseInOutCubic(float t)
         {
             return t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
-        }
-
-        private IEnumerator ShakeButtonPeriodically(Button button, int buttonIndex)
-        {
-            while (true)
-            {
-                if (button != null && buttonIndex != _selectedLevelIndex)
-                {
-                    var animator = button.GetComponent<Animator>();
-                    if (animator != null)
-                    {
-                        //AnimationManager.RemoveExistingAnimations(animator);
-                        var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
-                        var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
-                        AnimationManager.PlayAnimation(animator, shakeAnimation);
-                        AnimationManager.PlayAnimation(animator, bumpAnimation);
-                    }
-                }
-
-                yield return new WaitForSeconds(buttonShakeInterval);
-            }
         }
     }
 }

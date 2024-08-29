@@ -34,6 +34,7 @@ namespace Colorcrush.Logging
         private readonly Queue<(long timestamp, ILogEvent logEvent)> _eventQueue = new();
         private string _currentLogFilePath;
         private long _lastTimestamp;
+        private StreamWriter _logWriter;
         private DateTime _startTime;
 
         public static LoggingManager Instance
@@ -62,7 +63,7 @@ namespace Colorcrush.Logging
             _instance = this;
             DontDestroyOnLoad(gameObject);
 
-#if DEBUG
+#if UNITY_EDITOR
             if (ProjectConfig.InstanceConfig.deleteAllLogFilesOnEditorStartup)
             {
                 DeleteAllLogFiles();
@@ -86,6 +87,7 @@ namespace Colorcrush.Logging
         private void OnDestroy()
         {
             Application.logMessageReceived -= HandleLog;
+            _logWriter?.Dispose();
         }
 
         private void OnApplicationPause(bool pauseStatus)
@@ -104,12 +106,20 @@ namespace Colorcrush.Logging
         {
             LogEvent(new AppClosedEvent());
             SaveLog(); // Ensure all remaining logs are saved before quitting
+            _logWriter?.Dispose();
         }
 
         public static event LogEventQueuedHandler OnLogEventQueued;
 
         private void HandleLog(string logString, string stackTrace, LogType type)
         {
+#if UNITY_EDITOR
+            if (ProjectConfig.InstanceConfig.suppressConsoleLoggingInEditor)
+            {
+                return;
+            }
+#endif
+
             if (LogSeverity[type] >= LogSeverity[ProjectConfig.InstanceConfig.minimumLogSeverity])
             {
                 var sanitizedStackTrace = stackTrace?.Replace("\n", " ").Replace("\r", "");
@@ -129,6 +139,7 @@ namespace Colorcrush.Logging
                     _lastTimestamp = GetLastTimestampFromFile(_currentLogFilePath);
                 }
 
+                _logWriter = new StreamWriter(_currentLogFilePath, true, ProjectConfig.InstanceConfig.logFileEncoding, ProjectConfig.InstanceConfig.logFileBufferSize);
                 LogEvent(new StartTimeEvent(_startTime));
                 Debug.Log($"LoggingManager: Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
             }
@@ -143,16 +154,19 @@ namespace Colorcrush.Logging
         {
             try
             {
-                var lines = File.ReadAllLines(filePath);
-                for (var i = lines.Length - 1; i >= 0; i--)
+                using var reader = new StreamReader(filePath, ProjectConfig.InstanceConfig.logFileEncoding, false, ProjectConfig.InstanceConfig.logFileBufferSize);
+                string lastLine = null;
+                while (reader.ReadLine() is { } currentLine)
                 {
-                    if (lines[i] != ProjectConfig.InstanceConfig.endOfFileSymbol)
+                    lastLine = currentLine;
+                }
+
+                if (lastLine != null)
+                {
+                    var parts = lastLine.Split(',');
+                    if (parts.Length > 0 && long.TryParse(parts[0], out var timestamp))
                     {
-                        var parts = lines[i].Split(',');
-                        if (parts.Length > 0 && long.TryParse(parts[0], out var timestamp))
-                        {
-                            return timestamp;
-                        }
+                        return timestamp;
                     }
                 }
             }
@@ -170,6 +184,7 @@ namespace Colorcrush.Logging
             var timestamp = _startTime.ToString("yyyyMMdd_HHmmss");
             _currentLogFilePath = Path.Combine(Application.persistentDataPath, $"{ProjectConfig.InstanceConfig.logFilePrefix}{timestamp}{ProjectConfig.InstanceConfig.logFileExtension}");
             _lastTimestamp = 0;
+            _logWriter = new StreamWriter(_currentLogFilePath, false, ProjectConfig.InstanceConfig.logFileEncoding, ProjectConfig.InstanceConfig.logFileBufferSize);
             LogEvent(new StartTimeEvent(_startTime));
         }
 
@@ -213,29 +228,6 @@ namespace Colorcrush.Logging
 
             try
             {
-                var existingLines = File.Exists(_currentLogFilePath) ? File.ReadAllLines(_currentLogFilePath) : Array.Empty<string>();
-                var updatedLines = new List<string>(existingLines);
-
-                // Check if the file appears corrupted
-                if (existingLines.Length > 0 && existingLines[^1] != ProjectConfig.InstanceConfig.endOfFileSymbol)
-                {
-                    Debug.LogWarning($"LoggingManager: Log file appears corrupted: {_currentLogFilePath}. Last line is not EOF symbol.");
-                }
-
-                // Remove the EOF symbol if it exists
-                if (updatedLines.Count > 0 && updatedLines[^1] == ProjectConfig.InstanceConfig.endOfFileSymbol)
-                {
-                    updatedLines.RemoveAt(updatedLines.Count - 1);
-                }
-
-                using var writer = new StreamWriter(_currentLogFilePath, false);
-                // Write existing lines (without EOF)
-                foreach (var line in updatedLines)
-                {
-                    writer.WriteLine(line);
-                }
-
-                // Write new log entries
                 while (_eventQueue.Count > 0)
                 {
                     var (timestamp, logEvent) = _eventQueue.Dequeue();
@@ -244,11 +236,10 @@ namespace Colorcrush.Logging
                         ? $"{timestamp},{logEvent.EventName}"
                         : $"{timestamp},{logEvent.EventName},{stringifiedData}";
 
-                    writer.WriteLine(logEntry);
+                    _logWriter.WriteLine(logEntry);
                 }
 
-                // Write the EOF symbol at the end
-                writer.WriteLine(ProjectConfig.InstanceConfig.endOfFileSymbol);
+                _logWriter.Flush();
             }
             catch (Exception e)
             {
@@ -298,6 +289,7 @@ namespace Colorcrush.Logging
         {
             LogEvent(new ResetEvent());
             Instance.SaveLog(); // Save any remaining logs in the current file
+            Instance._logWriter?.Dispose();
             Instance.InitializeNewLogFile();
         }
 
@@ -307,26 +299,19 @@ namespace Colorcrush.Logging
 
             try
             {
-                var currentLogFilePath = Instance._currentLogFilePath;
-                if (File.Exists(currentLogFilePath))
+                if (File.Exists(Instance._currentLogFilePath))
                 {
-                    logLines = File.ReadAllLines(currentLogFilePath).ToList();
-                    if (logLines.Count > 0 && logLines[logLines.Count - 1] == ProjectConfig.InstanceConfig.endOfFileSymbol)
+                    using (var fileStream = new FileStream(Instance._currentLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var reader = new StreamReader(fileStream, ProjectConfig.InstanceConfig.logFileEncoding, false, ProjectConfig.InstanceConfig.logFileBufferSize))
                     {
-                        logLines.RemoveAt(logLines.Count - 1);
+                        while (reader.ReadLine() is { } line)
+                        {
+                            logLines.Add(line);
+                        }
                     }
-                    else
-                    {
-                        Debug.LogWarning($"LoggingManager: End of file symbol '{ProjectConfig.InstanceConfig.endOfFileSymbol}' not found at the end of the log file '{Instance._currentLogFilePath}'. This may indicate an incomplete or corrupted log file.");
-                    }
+                }
 
-                    logLines.AddRange(Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}"));
-                }
-                else
-                {
-                    logLines = Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}").ToList();
-                    Debug.Log($"LoggingManager: Yielding {logLines.Count} log entries from the queue since data is yet to be written to the file.");
-                }
+                logLines.AddRange(Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}"));
             }
             catch (Exception e)
             {
