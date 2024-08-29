@@ -27,13 +27,13 @@ namespace Colorcrush.Animation
 
             // Handle position animation
             var startPosition = animator.GetOriginalPosition();
-            animator.SetPosition(Vector3.Lerp(startPosition, _targetPosition, easedProgress));
+            animator.SetPosition(Vector3.Lerp(startPosition, _targetPosition, easedProgress), this);
 
             // Handle scale animation if endScale is provided
             if (_endScale.HasValue)
             {
                 var startScale = animator.GetOriginalScale();
-                animator.SetScale(Vector3.Lerp(startScale, _endScale.Value, easedProgress));
+                animator.SetScale(Vector3.Lerp(startScale, _endScale.Value, easedProgress), this);
             }
         }
 

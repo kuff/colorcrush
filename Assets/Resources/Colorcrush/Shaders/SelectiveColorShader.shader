@@ -1,4 +1,6 @@
-Shader "Custom/SelectiveColorShader"
+// Copyright (C) 2024 Peter Guld Leth
+
+Shader "Colorcrush/SelectiveColorShader"
 {
     Properties
     {

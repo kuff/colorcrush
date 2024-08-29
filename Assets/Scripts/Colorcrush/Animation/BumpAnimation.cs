@@ -33,12 +33,12 @@ namespace Colorcrush.Animation
             if (progress < _duration / 2)
             {
                 // Shrink phase
-                animator.SetScale(Vector3.Lerp(originalScale, targetScale, easedProgress * 2));
+                animator.SetScale(Vector3.Lerp(originalScale, targetScale, easedProgress * 2), this);
             }
             else
             {
                 // Expand phase
-                animator.SetScale(Vector3.Lerp(targetScale, originalScale, (easedProgress - 0.5f) * 2));
+                animator.SetScale(Vector3.Lerp(targetScale, originalScale, (easedProgress - 0.5f) * 2), this);
             }
         }
 

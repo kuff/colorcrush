@@ -2,6 +2,7 @@
 
 #region
 
+using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,28 +40,29 @@ namespace Colorcrush.Animation
 
         public override float GetOpacity()
         {
-            if (material != null)
-            {
-                return material.GetFloat("_Alpha");
-            }
-
-            return 1f; // Default opacity if material is not available
+            return material != null ? material.GetFloat("_Alpha") : 1f; // Default opacity if material is not available
         }
 
-        public override void SetOpacity(float opacity)
+        public override void SetOpacity(float opacity, AnimationManager.Animation self)
         {
-            if (material != null)
+            SetIfOwned("Opacity", self, () =>
             {
-                material.SetFloat("_Alpha", opacity);
-            }
+                if (material != null)
+                {
+                    ShaderManager.SetFloat(material, "_Alpha", opacity);
+                }
+            });
         }
 
-        public void SetSprite(Sprite sprite)
+        public void SetSprite(Sprite sprite, AnimationManager.Animation self)
         {
-            if (image != null)
+            SetIfOwned("Sprite", self, () =>
             {
-                image.sprite = sprite;
-            }
+                if (image != null)
+                {
+                    image.sprite = sprite;
+                }
+            });
         }
 
         public override Vector3 GetScale()
@@ -68,14 +70,14 @@ namespace Colorcrush.Animation
             return transform.localScale;
         }
 
-        public override void SetScale(Vector3 scale)
+        public override void SetScale(Vector3 scale, AnimationManager.Animation self)
         {
-            transform.localScale = scale;
+            SetIfOwned("Scale", self, () => transform.localScale = scale);
         }
 
-        public override void SetPosition(Vector3 position)
+        public override void SetPosition(Vector3 position, AnimationManager.Animation self)
         {
-            transform.position = position;
+            SetIfOwned("Position", self, () => transform.position = position);
         }
 
         public override Quaternion GetRotation()
@@ -83,9 +85,25 @@ namespace Colorcrush.Animation
             return transform.rotation;
         }
 
-        public override void SetRotation(Quaternion rotation)
+        public override void SetRotation(Quaternion rotation, AnimationManager.Animation self)
         {
-            transform.rotation = rotation;
+            SetIfOwned("Rotation", self, () => transform.rotation = rotation);
+        }
+
+        public float GetFillScale()
+        {
+            return material != null ? material.GetFloat("_FillScale") : 1f; // Default fill scale if material is not available
+        }
+
+        public void SetFillScale(float fillScale, AnimationManager.Animation self)
+        {
+            SetIfOwned("FillScale", self, () =>
+            {
+                if (material != null)
+                {
+                    ShaderManager.SetFloat(material, "_FillScale", fillScale);
+                }
+            });
         }
     }
 }

@@ -21,9 +21,9 @@ namespace Colorcrush.Animation
 
         public override void Play(Animator animator, float progress)
         {
-            var startScale = animator.transform.localScale;
+            var startScale = animator.GetScale();
             var easedProgress = EaseInOutQuad(progress);
-            animator.transform.localScale = Vector3.Lerp(startScale, _targetScale, easedProgress);
+            animator.SetScale(Vector3.Lerp(startScale, _targetScale, easedProgress), this);
         }
 
         private float EaseInOutQuad(float t)

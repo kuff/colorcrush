@@ -2,6 +2,7 @@
 
 #region
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace Colorcrush.Animation
         private static AnimationManager _instance;
 
         private readonly Dictionary<Animation, List<AnimationState>> _activeAnimations = new();
-        private readonly Dictionary<Animator, List<Animation>> _animatorAnimations = new();
+        private readonly Dictionary<Animator, HashSet<Animation>> _animatorAnimations = new();
 
         public static AnimationManager Instance
         {
@@ -41,25 +42,34 @@ namespace Colorcrush.Animation
         {
             var completedAnimations = new List<Animation>();
 
-            foreach (var (animation, states) in _activeAnimations)
+            foreach (var (anim, states) in _activeAnimations)
             {
                 var completedStates = new List<AnimationState>();
 
                 foreach (var state in states)
                 {
                     state.ElapsedTime += Time.deltaTime;
-                    var progress = Mathf.Clamp01(state.ElapsedTime / animation.Duration);
+                    var progress = Mathf.Clamp01(state.ElapsedTime / anim.Duration);
 
                     if (state.IsReversing)
                     {
                         progress = 1 - progress;
                     }
 
-                    animation.Play(state.Animator, progress);
+                    try
+                    {
+                        anim.Play(state.Animator, progress);
+                    }
+                    catch (InvalidOperationException e)
+                    {
+                        Debug.Log($"AnimationManager: Animation.Play threw an InvalidOperationException for {state.Animator.name}: {e.Message} - Treating animation as finished.");
+                        completedStates.Add(state);
+                        continue;
+                    }
 
                     if (progress >= 1)
                     {
-                        if (animation.IsTemporary && !state.IsReversing)
+                        if (anim.IsTemporary && !state.IsReversing)
                         {
                             state.IsReversing = true;
                             state.ElapsedTime = 0;
@@ -74,18 +84,18 @@ namespace Colorcrush.Animation
                 foreach (var state in completedStates)
                 {
                     states.Remove(state);
-                    RemoveAnimatorAnimation(state.Animator, animation);
+                    RemoveAnimatorAnimation(state.Animator, anim);
                 }
 
                 if (states.Count == 0)
                 {
-                    completedAnimations.Add(animation);
+                    completedAnimations.Add(anim);
                 }
             }
 
-            foreach (var animation in completedAnimations)
+            foreach (var anim in completedAnimations)
             {
-                _activeAnimations.Remove(animation);
+                _activeAnimations.Remove(anim);
             }
         }
 
@@ -100,11 +110,11 @@ namespace Colorcrush.Animation
             {
                 states = new List<AnimationState>();
                 Instance._activeAnimations[animation] = states;
-                Debug.Log($"Created new animation state for {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Created new animation state for {animation.GetType().Name}");
             }
             else
             {
-                Debug.Log($"Using existing animation state for {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Using existing animation state for {animation.GetType().Name}");
             }
 
             var count = 0;
@@ -112,42 +122,51 @@ namespace Colorcrush.Animation
             {
                 if (animator != null)
                 {
-                    // Remove any existing animations for this animator
-                    Instance.RemoveExistingAnimations(animator);
-                    // Add a new state for this animator
-                    states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
-                    Instance.AddAnimatorAnimation(animator, animation);
-                    count++;
+                    // Check if the animation is already playing for this animator
+                    var existingState = states.Find(s => s.Animator == animator);
+                    if (existingState != null)
+                    {
+                        // Reset the existing state instead of adding a new one
+                        existingState.ElapsedTime = 0;
+                        existingState.IsReversing = false;
+                    }
+                    else
+                    {
+                        // Add a new state for this animator
+                        states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
+                        Instance.AddAnimatorAnimation(animator, animation);
+                        count++;
+                    }
                 }
                 else
                 {
-                    Debug.LogWarning("Attempted to add a null animator to the animation state");
+                    Debug.LogWarning("AnimationManager: Attempted to add a null animator to the animation state");
                 }
             }
 
             if (count > 0)
             {
-                Debug.Log($"Added {count} animator(s) to {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Added {count} animator(s) to {animation.GetType().Name}");
             }
             else
             {
-                Debug.LogWarning($"No valid animators were added to {animation.GetType().Name}");
+                Debug.LogWarning($"AnimationManager: No valid animators were added to {animation.GetType().Name}");
             }
         }
 
-        private void RemoveExistingAnimations(Animator animator)
+        public static void RemoveExistingAnimations(Animator animator)
         {
-            if (_animatorAnimations.TryGetValue(animator, out var animations))
+            if (Instance._animatorAnimations.TryGetValue(animator, out var animations))
             {
                 foreach (var anim in animations)
                 {
-                    if (_activeAnimations.TryGetValue(anim, out var states))
+                    if (Instance._activeAnimations.TryGetValue(anim, out var states))
                     {
                         states.RemoveAll(s => s.Animator == animator);
                     }
                 }
 
-                _animatorAnimations.Remove(animator);
+                Instance._animatorAnimations.Remove(animator);
             }
         }
 
@@ -155,7 +174,7 @@ namespace Colorcrush.Animation
         {
             if (!_animatorAnimations.TryGetValue(animator, out var animations))
             {
-                animations = new List<Animation>();
+                animations = new HashSet<Animation>();
                 _animatorAnimations[animator] = animations;
             }
 

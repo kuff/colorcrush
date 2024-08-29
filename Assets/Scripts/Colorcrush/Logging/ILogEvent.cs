@@ -2,6 +2,7 @@
 
 #region
 
+using System;
 using UnityEngine;
 
 #endregion
@@ -56,19 +57,29 @@ namespace Colorcrush.Logging
         }
     }
 
-    public class NewTargetColorEvent : ILogEvent
+    public class GameLevelBeginEvent : ILogEvent
     {
-        public NewTargetColorEvent(Color targetValue)
+        public GameLevelBeginEvent(Color targetColor)
         {
-            TargetValue = targetValue;
+            TargetValue = targetColor;
         }
 
         public Color TargetValue { get; }
-        public string EventName => "newtargetvalue";
+        public string EventName => "gamelevelbegun";
 
         public string GetStringifiedData()
         {
-            return ColorUtility.ToHtmlStringRGBA(TargetValue);
+            return ColorUtility.ToHtmlStringRGB(TargetValue);
+        }
+    }
+
+    public class GameLevelEndEvent : ILogEvent
+    {
+        public string EventName => "gamelevelend";
+
+        public string GetStringifiedData()
+        {
+            return "";
         }
     }
 
@@ -77,7 +88,7 @@ namespace Colorcrush.Logging
         public ColorGeneratedEvent(int buttonIndex, Color colorValue)
         {
             ButtonIndex = buttonIndex;
-            ColorValue = ColorUtility.ToHtmlStringRGBA(colorValue);
+            ColorValue = ColorUtility.ToHtmlStringRGB(colorValue);
         }
 
         public int ButtonIndex { get; }
@@ -92,19 +103,17 @@ namespace Colorcrush.Logging
 
     public class ColorSelectedEvent : ILogEvent
     {
-        public ColorSelectedEvent(int buttonIndex, string sadSpriteName)
+        public ColorSelectedEvent(int buttonIndex)
         {
             ButtonIndex = buttonIndex;
-            SadSpriteName = sadSpriteName;
         }
 
         public int ButtonIndex { get; }
-        public string SadSpriteName { get; }
         public string EventName => "colorselected";
 
         public string GetStringifiedData()
         {
-            return $"{ButtonIndex} {SadSpriteName}";
+            return ButtonIndex.ToString();
         }
     }
 
@@ -126,11 +135,17 @@ namespace Colorcrush.Logging
 
     public class ColorsSubmittedEvent : ILogEvent
     {
+        public ColorsSubmittedEvent(string targetColorHappySpriteName)
+        {
+            TargetColorHappySpriteName = targetColorHappySpriteName;
+        }
+
+        public string TargetColorHappySpriteName { get; }
         public string EventName => "colorssubmitted";
 
         public string GetStringifiedData()
         {
-            return "";
+            return TargetColorHappySpriteName;
         }
     }
 
@@ -149,6 +164,38 @@ namespace Colorcrush.Logging
         public string GetStringifiedData()
         {
             return $"{Type} {Message}";
+        }
+    }
+
+    public class EmojiRewardedEvent : ILogEvent
+    {
+        public EmojiRewardedEvent(string emojiName)
+        {
+            EmojiName = emojiName;
+        }
+
+        public string EmojiName { get; }
+        public string EventName => "emojirewarded";
+
+        public string GetStringifiedData()
+        {
+            return EmojiName;
+        }
+    }
+
+    public class StartTimeEvent : ILogEvent
+    {
+        public StartTimeEvent(DateTime startTime)
+        {
+            StartTime = startTime;
+        }
+
+        public DateTime StartTime { get; }
+        public string EventName => "starttime";
+
+        public string GetStringifiedData()
+        {
+            return StartTime.ToString("o"); // ISO 8601 format
         }
     }
 }

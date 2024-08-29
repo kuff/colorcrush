@@ -33,11 +33,11 @@ namespace Colorcrush.Animation
 
             // Apply the rotation offset
             var newRotation = originalRotation * Quaternion.Euler(0, 0, rotationOffset);
-            animator.SetRotation(newRotation);
+            animator.SetRotation(newRotation, this);
 
             // Gradually reduce the twitching intensity as the animation progresses
             var fadeOutFactor = 1 - progress * progress; // Quadratic ease-out
-            animator.SetRotation(Quaternion.Slerp(originalRotation, newRotation, fadeOutFactor));
+            animator.SetRotation(Quaternion.Slerp(originalRotation, newRotation, fadeOutFactor), this);
         }
     }
 }

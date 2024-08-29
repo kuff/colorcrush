@@ -6,7 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using Colorcrush.Util;
+using System.Linq;
 using UnityEngine;
 
 // ReSharper disable StringLiteralTypo
@@ -17,6 +17,8 @@ namespace Colorcrush.Logging
 {
     public class LoggingManager : MonoBehaviour
     {
+        public delegate void LogEventQueuedHandler(ILogEvent logEvent);
+
         private static LoggingManager _instance;
 
         // Define the severity scale
@@ -31,7 +33,8 @@ namespace Colorcrush.Logging
 
         private readonly Queue<(long timestamp, ILogEvent logEvent)> _eventQueue = new();
         private string _currentLogFilePath;
-        private bool _isFirstLog = true;
+        private long _lastTimestamp;
+        private StreamWriter _logWriter;
         private DateTime _startTime;
 
         public static LoggingManager Instance
@@ -60,7 +63,22 @@ namespace Colorcrush.Logging
             _instance = this;
             DontDestroyOnLoad(gameObject);
 
-            InitializeNewLogFile();
+#if UNITY_EDITOR
+            if (ProjectConfig.InstanceConfig.deleteAllLogFilesOnEditorStartup)
+            {
+                DeleteAllLogFiles();
+            }
+#endif
+
+            if (ProjectConfig.InstanceConfig.alwaysCreateNewLogFileOnStartup)
+            {
+                InitializeNewLogFile();
+            }
+            else
+            {
+                InitializeMostRecentLogFile();
+            }
+
             StartCoroutine(SaveLogRoutine());
 
             Application.logMessageReceived += HandleLog;
@@ -69,6 +87,7 @@ namespace Colorcrush.Logging
         private void OnDestroy()
         {
             Application.logMessageReceived -= HandleLog;
+            _logWriter?.Dispose();
         }
 
         private void OnApplicationPause(bool pauseStatus)
@@ -87,10 +106,20 @@ namespace Colorcrush.Logging
         {
             LogEvent(new AppClosedEvent());
             SaveLog(); // Ensure all remaining logs are saved before quitting
+            _logWriter?.Dispose();
         }
+
+        public static event LogEventQueuedHandler OnLogEventQueued;
 
         private void HandleLog(string logString, string stackTrace, LogType type)
         {
+#if UNITY_EDITOR
+            if (ProjectConfig.InstanceConfig.suppressConsoleLoggingInEditor)
+            {
+                return;
+            }
+#endif
+
             if (LogSeverity[type] >= LogSeverity[ProjectConfig.InstanceConfig.minimumLogSeverity])
             {
                 var sanitizedStackTrace = stackTrace?.Replace("\n", " ").Replace("\r", "");
@@ -98,12 +127,65 @@ namespace Colorcrush.Logging
             }
         }
 
+        private void InitializeMostRecentLogFile()
+        {
+            var logFiles = Directory.GetFiles(Application.persistentDataPath, $"{ProjectConfig.InstanceConfig.logFilePrefix}*{ProjectConfig.InstanceConfig.logFileExtension}");
+            if (logFiles.Length > 0)
+            {
+                _currentLogFilePath = logFiles.OrderByDescending(f => new FileInfo(f).CreationTime).First();
+                _startTime = DateTime.Now;
+                if (ProjectConfig.InstanceConfig.useAdditiveTimestamps)
+                {
+                    _lastTimestamp = GetLastTimestampFromFile(_currentLogFilePath);
+                }
+
+                _logWriter = new StreamWriter(_currentLogFilePath, true, ProjectConfig.InstanceConfig.logFileEncoding, ProjectConfig.InstanceConfig.logFileBufferSize);
+                LogEvent(new StartTimeEvent(_startTime));
+                Debug.Log($"LoggingManager: Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
+            }
+            else
+            {
+                InitializeNewLogFile();
+                Debug.LogWarning($"LoggingManager: No existing log files found. Initialized new log file: {_currentLogFilePath}");
+            }
+        }
+
+        private long GetLastTimestampFromFile(string filePath)
+        {
+            try
+            {
+                using var reader = new StreamReader(filePath, ProjectConfig.InstanceConfig.logFileEncoding, false, ProjectConfig.InstanceConfig.logFileBufferSize);
+                string lastLine = null;
+                while (reader.ReadLine() is { } currentLine)
+                {
+                    lastLine = currentLine;
+                }
+
+                if (lastLine != null)
+                {
+                    var parts = lastLine.Split(',');
+                    if (parts.Length > 0 && long.TryParse(parts[0], out var timestamp))
+                    {
+                        return timestamp;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"LoggingManager: Error reading last timestamp from file: {e.Message}");
+            }
+
+            return 0;
+        }
+
         private void InitializeNewLogFile()
         {
             _startTime = DateTime.Now;
             var timestamp = _startTime.ToString("yyyyMMdd_HHmmss");
             _currentLogFilePath = Path.Combine(Application.persistentDataPath, $"{ProjectConfig.InstanceConfig.logFilePrefix}{timestamp}{ProjectConfig.InstanceConfig.logFileExtension}");
-            _isFirstLog = true;
+            _lastTimestamp = 0;
+            _logWriter = new StreamWriter(_currentLogFilePath, false, ProjectConfig.InstanceConfig.logFileEncoding, ProjectConfig.InstanceConfig.logFileBufferSize);
+            LogEvent(new StartTimeEvent(_startTime));
         }
 
         public static void LogEvent(ILogEvent logEvent)
@@ -113,8 +195,19 @@ namespace Colorcrush.Logging
 
         private void LogEventInternal(ILogEvent logEvent)
         {
-            var timestamp = (long)(DateTime.Now - _startTime).TotalMilliseconds;
+            long timestamp;
+            if (ProjectConfig.InstanceConfig.useAdditiveTimestamps)
+            {
+                timestamp = _lastTimestamp + (long)(DateTime.Now - _startTime).TotalMilliseconds;
+                _lastTimestamp = timestamp;
+            }
+            else
+            {
+                timestamp = (long)(DateTime.Now - _startTime).TotalMilliseconds;
+            }
+
             _eventQueue.Enqueue((timestamp, logEvent));
+            OnLogEventQueued?.Invoke(logEvent);
         }
 
         private IEnumerator SaveLogRoutine()
@@ -135,29 +228,6 @@ namespace Colorcrush.Logging
 
             try
             {
-                var existingLines = File.Exists(_currentLogFilePath) ? File.ReadAllLines(_currentLogFilePath) : Array.Empty<string>();
-                var updatedLines = new List<string>(existingLines);
-
-                // Check if the file appears corrupted
-                if (existingLines.Length > 0 && existingLines[^1] != ProjectConfig.InstanceConfig.endOfFileSymbol)
-                {
-                    Debug.LogWarning($"Log file appears corrupted: {_currentLogFilePath}. Last line is not EOF symbol.");
-                }
-
-                // Remove the EOF symbol if it exists
-                if (updatedLines.Count > 0 && updatedLines[^1] == ProjectConfig.InstanceConfig.endOfFileSymbol)
-                {
-                    updatedLines.RemoveAt(updatedLines.Count - 1);
-                }
-
-                using var writer = new StreamWriter(_currentLogFilePath, false);
-                // Write existing lines (without EOF)
-                foreach (var line in updatedLines)
-                {
-                    writer.WriteLine(line);
-                }
-
-                // Write new log entries
                 while (_eventQueue.Count > 0)
                 {
                     var (timestamp, logEvent) = _eventQueue.Dequeue();
@@ -166,21 +236,14 @@ namespace Colorcrush.Logging
                         ? $"{timestamp},{logEvent.EventName}"
                         : $"{timestamp},{logEvent.EventName},{stringifiedData}";
 
-                    if (_isFirstLog && updatedLines.Count == 0)
-                    {
-                        writer.WriteLine($"0,starttime,{_startTime:yyyy-MM-dd HH:mm:ss}");
-                        _isFirstLog = false;
-                    }
-
-                    writer.WriteLine(logEntry);
+                    _logWriter.WriteLine(logEntry);
                 }
 
-                // Write the EOF symbol at the end
-                writer.WriteLine(ProjectConfig.InstanceConfig.endOfFileSymbol);
+                _logWriter.Flush();
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error saving log: {e.Message}");
+                Debug.LogError($"LoggingManager: Error saving log: {e.Message}");
             }
         }
 
@@ -191,16 +254,16 @@ namespace Colorcrush.Logging
                 if (File.Exists(filePath))
                 {
                     File.Delete(filePath);
-                    Debug.Log($"Log file deleted: {filePath}");
+                    Debug.Log($"LoggingManager: Log file deleted: {filePath}");
                 }
                 else
                 {
-                    Debug.LogWarning($"Log file not found: {filePath}");
+                    Debug.LogWarning($"LoggingManager: Log file not found: {filePath}");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error deleting log file: {e.Message}");
+                Debug.LogError($"LoggingManager: Error deleting log file: {e.Message}");
             }
         }
 
@@ -214,18 +277,48 @@ namespace Colorcrush.Logging
                     File.Delete(file);
                 }
 
-                Debug.Log($"Deleted {logFiles.Length} log file(s).");
+                Debug.Log($"LoggingManager: Deleted {logFiles.Length} log file(s).");
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error deleting all log files: {e.Message}");
+                Debug.LogError($"LoggingManager: Error deleting all log files: {e.Message}");
             }
         }
 
-        public void StartNewLogFile()
+        public static void StartNewLogFile()
         {
-            SaveLog(); // Save any remaining logs in the current file
-            InitializeNewLogFile();
+            LogEvent(new ResetEvent());
+            Instance.SaveLog(); // Save any remaining logs in the current file
+            Instance._logWriter?.Dispose();
+            Instance.InitializeNewLogFile();
+        }
+
+        public static List<string> GetLogDataLines()
+        {
+            var logLines = new List<string>();
+
+            try
+            {
+                if (File.Exists(Instance._currentLogFilePath))
+                {
+                    using (var fileStream = new FileStream(Instance._currentLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var reader = new StreamReader(fileStream, ProjectConfig.InstanceConfig.logFileEncoding, false, ProjectConfig.InstanceConfig.logFileBufferSize))
+                    {
+                        while (reader.ReadLine() is { } line)
+                        {
+                            logLines.Add(line);
+                        }
+                    }
+                }
+
+                logLines.AddRange(Instance._eventQueue.Select(q => $"{q.timestamp},{q.logEvent.EventName},{q.logEvent.GetStringifiedData()}"));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"LoggingManager: Error reading log file: {e.Message}");
+            }
+
+            return logLines;
         }
     }
 }

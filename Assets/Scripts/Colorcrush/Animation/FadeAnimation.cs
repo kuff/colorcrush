@@ -31,7 +31,7 @@ namespace Colorcrush.Animation
         {
             var easedProgress = EaseInOutCubic(progress);
             var currentOpacity = Mathf.Lerp(_startOpacity, _endOpacity, easedProgress);
-            animator.SetOpacity(currentOpacity);
+            animator.SetOpacity(currentOpacity, this);
         }
 
         private float EaseInOutCubic(float t)
