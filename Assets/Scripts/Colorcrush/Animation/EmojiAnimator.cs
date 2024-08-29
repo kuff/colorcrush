@@ -2,6 +2,7 @@
 
 #region
 
+using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,12 +40,7 @@ namespace Colorcrush.Animation
 
         public override float GetOpacity()
         {
-            if (material != null)
-            {
-                return material.GetFloat("_Alpha");
-            }
-
-            return 1f; // Default opacity if material is not available
+            return material != null ? material.GetFloat("_Alpha") : 1f; // Default opacity if material is not available
         }
 
         public override void SetOpacity(float opacity, AnimationManager.Animation self)
@@ -53,7 +49,7 @@ namespace Colorcrush.Animation
             {
                 if (material != null)
                 {
-                    material.SetFloat("_Alpha", opacity);
+                    ShaderManager.SetFloat(material, "_Alpha", opacity);
                 }
             });
         }
@@ -92,6 +88,22 @@ namespace Colorcrush.Animation
         public override void SetRotation(Quaternion rotation, AnimationManager.Animation self)
         {
             SetIfOwned("Rotation", self, () => transform.rotation = rotation);
+        }
+
+        public float GetFillScale()
+        {
+            return material != null ? material.GetFloat("_FillScale") : 1f; // Default fill scale if material is not available
+        }
+
+        public void SetFillScale(float fillScale, AnimationManager.Animation self)
+        {
+            SetIfOwned("FillScale", self, () =>
+            {
+                if (material != null)
+                {
+                    ShaderManager.SetFloat(material, "_FillScale", fillScale);
+                }
+            });
         }
     }
 }

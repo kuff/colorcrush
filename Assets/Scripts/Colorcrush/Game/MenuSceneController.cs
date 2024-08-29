@@ -2,6 +2,7 @@
 
 #region
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -114,7 +115,6 @@ namespace Colorcrush.Game
             _uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
             ScrollToButtonIndex(0);
             InitializeScrollBarEffect();
-            SetSelectedLevel();
             SetupButtons();
             UpdateSubmitButton();
             InitializeColorAnalysis();
@@ -229,21 +229,6 @@ namespace Colorcrush.Game
             // Force the scroll view to update and stop any residual velocity
             Canvas.ForceUpdateCanvases();
             scrollView.velocity = Vector2.zero;
-        }
-
-        private void SetSelectedLevel()
-        {
-            var completedColors = ProgressManager.CompletedTargetColors;
-            _selectedLevelIndex = _uniqueCompletedColors.Count;
-            UpdateColorAnalysis();
-
-            // Scale the initially selected button
-            if (_selectedLevelIndex < buttonGrid.transform.childCount)
-            {
-                var buttonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
-                ScaleButton(buttonTransform, Vector3.one * selectedButtonScale);
-                ScrollToButtonIndex(_selectedLevelIndex);
-            }
         }
 
         private void InitializeScrollBarEffect()
@@ -383,17 +368,12 @@ namespace Colorcrush.Game
             // Select the most recently played level at startup
             if (!string.IsNullOrEmpty(mostRecentCompletedColor))
             {
-                var mostRecentIndex = System.Array.FindIndex(ColorArray.SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
+                var mostRecentIndex = Array.FindIndex(ColorArray.SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
                 if (mostRecentIndex != -1 && mostRecentIndex < buttons.Length)
                 {
                     OnButtonClicked(mostRecentIndex);
                 }
             }
-            // else if (buttons.Length > 0)
-            // {
-            //     // If no level was completed yet, select the first level
-            //     OnButtonClicked(0);
-            // }
         }
 
         private IEnumerator AnimateNextLevelButton(Button button)
@@ -439,7 +419,7 @@ namespace Colorcrush.Game
             if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
             {
                 var previousButtonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
-                ScaleButton(previousButtonTransform, Vector3.one);
+                ScaleButton(previousButtonTransform, 1f);
             }
 
             _selectedLevelIndex = index;
@@ -451,7 +431,7 @@ namespace Colorcrush.Game
                 var animator = buttonTransform.GetComponent<Animator>();
                 if (animator != null)
                 {
-                    ScaleButton(buttonTransform, Vector3.one * selectedButtonScale);
+                    ScaleButton(buttonTransform, selectedButtonScale);
                     ScrollToButtonIndex(index);
                 }
                 else
@@ -479,12 +459,12 @@ namespace Colorcrush.Game
             }
         }
 
-        private void ScaleButton(Transform buttonTransform, Vector3 targetScale)
+        private void ScaleButton(Transform buttonTransform, float targetScale)
         {
             var animator = buttonTransform.GetComponent<Animator>();
             if (animator != null)
             {
-                var scaleAnimation = new ScaleAnimation(targetScale, buttonBumpDuration);
+                var scaleAnimation = new FillScaleAnimation(targetScale, buttonBumpDuration);
                 AnimationManager.PlayAnimation(animator, scaleAnimation);
             }
             else
@@ -544,7 +524,7 @@ namespace Colorcrush.Game
                 }
 
                 // Wait for 1 second before loading the scene
-                StartCoroutine(LoadSceneAfterDelay(1f));
+                StartCoroutine(LoadSceneAfterDelay(0.1f));
             }
         }
 

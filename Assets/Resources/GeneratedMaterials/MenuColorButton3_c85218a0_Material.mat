@@ -30,9 +30,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 1
+    - _FillScale: 1
+    - _Scale: 1
     - _Tolerance: 0.1
     - _WhiteTolerance: 0.1
     m_Colors:
+    - _FillColor: {r: 1, g: 1, b: 1, a: 1}
     - _SkinColor: {r: 0.96999997, g: 0.87, b: 0.24999997, a: 1}
     - _TargetColor: {r: 1, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

@@ -250,6 +250,32 @@ namespace Colorcrush.Game
             }
 
             _isLoading = true;
+
+            Color targetColor;
+            if (!string.IsNullOrEmpty(ProgressManager.MostRecentCompletedTargetColor))
+            {
+                // Use the most recently completed color
+                if (ColorUtility.TryParseHtmlString("#" + ProgressManager.MostRecentCompletedTargetColor, out targetColor))
+                {
+                    Debug.Log($"Using most recently completed color: {ProgressManager.MostRecentCompletedTargetColor}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Failed to parse most recent color: {ProgressManager.MostRecentCompletedTargetColor}. Using first color from ColorArray.");
+                    targetColor = ColorArray.SRGBTargetColors[0];
+                }
+            }
+            else
+            {
+                // Use the first color from ColorArray
+                targetColor = ColorArray.SRGBTargetColors[0];
+                Debug.Log("No completed colors found. Using first color from ColorArray.");
+            }
+
+            // Set the PlayerPrefs variable expected by GameSceneController
+            PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
+            PlayerPrefs.Save();
+
             if (ProgressManager.CompletedTargetColors.Count > 0)
             {
                 SceneManager.LoadSceneAsync(recurringStartupScene, OnSceneReady);

@@ -10,6 +10,8 @@ Shader "Colorcrush/ColorTransposeShader"
         _Tolerance ("Tolerance", Range(0, 1)) = 0.1 // Tolerance for color matching
         _WhiteTolerance ("White Tolerance", Range(0, 1)) = 0.1 // Tolerance for detecting white color
         _Alpha ("Alpha", Range(0, 1)) = 1.0 // Alpha value for the entire image
+        _FillScale ("Fill Scale", Range(0, 1)) = 1.0 // Scale factor for the texture
+        _FillColor ("Fill Color", Color) = (1, 1, 1, 1) // Fill color for scaled texture
     }
     SubShader
     {
@@ -48,6 +50,8 @@ Shader "Colorcrush/ColorTransposeShader"
             float _Tolerance;
             float _WhiteTolerance;
             float _Alpha;
+            float _FillScale;
+            fixed4 _FillColor;
 
             v2f vert(appdata_t v)
             {
@@ -59,34 +63,53 @@ Shader "Colorcrush/ColorTransposeShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                fixed4 texColor = tex2D(_MainTex, i.texcoord);
+                float2 centeredUV = i.texcoord - 0.5;
+                float2 scaledUV = centeredUV / _FillScale + 0.5;
+                
+                fixed4 originalColor = tex2D(_MainTex, i.texcoord);
+                fixed4 scaledColor = tex2D(_MainTex, scaledUV);
 
-                // If the pixel is fully transparent, return it unchanged
-                if (texColor.a == 0.0)
+                // Check if the pixel is within the original non-transparent area
+                bool isWithinOriginalArea = originalColor.a > 0;
+
+                // If the pixel is outside the scaled area and within the original area, use the fill color
+                if ((scaledUV.x < 0 || scaledUV.x > 1 || scaledUV.y < 0 || scaledUV.y > 1) && isWithinOriginalArea)
                 {
-                    return texColor;
+                    return _FillColor;
+                }
+
+                // If the scaled pixel is transparent and within the original area, use the fill color
+                if (scaledColor.a == 0 && isWithinOriginalArea)
+                {
+                    return _FillColor;
+                }
+
+                // If the original pixel is transparent and not within the filled area, keep it transparent
+                if (originalColor.a == 0 && !isWithinOriginalArea)
+                {
+                    return fixed4(0, 0, 0, 0);
                 }
 
                 // Check if the pixel is white
-                float whiteDistance = distance(texColor.rgb, float3(1.0, 1.0, 1.0));
+                float whiteDistance = distance(scaledColor.rgb, float3(1.0, 1.0, 1.0));
                 if (whiteDistance < _WhiteTolerance)
                 {
-                    return fixed4(texColor.rgb, texColor.a * _Alpha); // Return original color if it's white
+                    return fixed4(scaledColor.rgb, scaledColor.a * _Alpha); // Return original color if it's white
                 }
 
                 // Calculate the distance between the texture color and the skin color
-                float skinDistance = distance(texColor.rgb, _SkinColor.rgb);
+                float skinDistance = distance(scaledColor.rgb, _SkinColor.rgb);
 
                 if (skinDistance < _Tolerance)
                 {
                     // If the pixel color is close to the skin color, change it to the target color
-                    return fixed4(_TargetColor.rgb, texColor.a * _Alpha);
+                    return fixed4(_TargetColor.rgb, scaledColor.a * _Alpha);
                 }
                 else
                 {
                     // Otherwise, adjust the color relative to the new skin color
-                    float3 colorDiff = texColor.rgb - _SkinColor.rgb;
-                    fixed4 adjustedColor = fixed4(_TargetColor.rgb + colorDiff, texColor.a * _Alpha);
+                    float3 colorDiff = scaledColor.rgb - _SkinColor.rgb;
+                    fixed4 adjustedColor = fixed4(_TargetColor.rgb + colorDiff, scaledColor.a * _Alpha);
                     return adjustedColor;
                 }
             }

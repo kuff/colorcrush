@@ -108,8 +108,8 @@ namespace Colorcrush.Game
             if (string.IsNullOrEmpty(targetColorHex))
             {
 #if DEBUG
-                _targetColor = new Color(0.82f, 0.47f, 0.46f); // D27975 in RGB
-                Debug.LogWarning($"Target color not found in PlayerPrefs. Using preset target color for debugging: {ColorUtility.ToHtmlStringRGBA(_targetColor)}");
+                _targetColor = ColorArray.SRGBTargetColors[0];
+                Debug.LogWarning($"Target color not found in PlayerPrefs. Using first color from ColorArray for debugging: {ColorUtility.ToHtmlStringRGBA(_targetColor)}");
 #else
                 throw new Exception("Target color not found in PlayerPrefs.");
 #endif

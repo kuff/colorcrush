@@ -133,7 +133,7 @@ namespace Colorcrush.Animation
                     else
                     {
                         // Add a new state for this animator
-                        states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false });
+                        states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
                         Instance.AddAnimatorAnimation(animator, animation);
                         count++;
                     }
