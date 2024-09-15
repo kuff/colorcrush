@@ -67,10 +67,9 @@ Shader "Colorcrush/ColorTransposeShader"
                 float2 scaledUV = centeredUV / _FillScale + 0.5;
                 
                 fixed4 originalColor = tex2D(_MainTex, i.texcoord);
-                fixed4 scaledColor = tex2D(_MainTex, scaledUV);
 
                 // Check if the pixel is within the original non-transparent area
-                bool isWithinOriginalArea = originalColor.a > 0;
+                bool isWithinOriginalArea = originalColor.a > 0.1;
 
                 // If the pixel is outside the scaled area and within the original area, use the fill color
                 if ((scaledUV.x < 0 || scaledUV.x > 1 || scaledUV.y < 0 || scaledUV.y > 1) && isWithinOriginalArea)
@@ -78,16 +77,21 @@ Shader "Colorcrush/ColorTransposeShader"
                     return _FillColor;
                 }
 
-                // If the scaled pixel is transparent and within the original area, use the fill color
-                if (scaledColor.a == 0 && isWithinOriginalArea)
-                {
-                    return _FillColor;
-                }
-
-                // If the original pixel is transparent and not within the filled area, keep it transparent
-                if (originalColor.a == 0 && !isWithinOriginalArea)
+                // If the original pixel is transparent (including very low alpha), keep it fully transparent
+                if (!isWithinOriginalArea)
                 {
                     return fixed4(0, 0, 0, 0);
+                }
+
+                // Sample the scaled color only if it's within the texture bounds
+                fixed4 scaledColor = (scaledUV.x >= 0 && scaledUV.x <= 1 && scaledUV.y >= 0 && scaledUV.y <= 1) 
+                    ? tex2D(_MainTex, scaledUV) 
+                    : _FillColor;
+
+                // If the scaled pixel is transparent (including very low alpha) and within the original area, use the fill color
+                if (scaledColor.a <= 0.1)
+                {
+                    return _FillColor;
                 }
 
                 // Check if the pixel is white
