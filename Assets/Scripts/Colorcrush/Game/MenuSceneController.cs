@@ -97,6 +97,12 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The scale factor applied during the bump animation of the submit button when clicked.")]
         private float submitButtonClickBumpScaleFactor = 0.9f;
 
+        [SerializeField] [Tooltip("The ColorView prefab to be instantiated when the color analysis image is pressed and held.")]
+        private GameObject colorViewPrefab;
+
+        [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
+        private Canvas uiCanvas;
+
         private readonly float[] _currentAxisValues = new float[8];
 
         private float _adjustedWidth;
@@ -109,6 +115,9 @@ namespace Colorcrush.Game
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
         private HashSet<string> _uniqueCompletedColors;
+        private GameObject _colorViewInstance;
+        private bool _isDraggingColorAnalysisImage;
+        private Vector2 _colorAnalysisOriginalPosition;
 
         private void Awake()
         {
@@ -118,6 +127,11 @@ namespace Colorcrush.Game
             SetupButtons();
             UpdateSubmitButton();
             InitializeColorAnalysis();
+            
+            if (colorAnalysisImage != null)
+            {
+                _colorAnalysisOriginalPosition = colorAnalysisImage.rectTransform.anchoredPosition;
+            }
         }
 
         private void OnDestroy()
@@ -135,6 +149,53 @@ namespace Colorcrush.Game
             if (_smoothScrollCoroutine != null)
             {
                 StopCoroutine(_smoothScrollCoroutine);
+            }
+        }
+
+        private void Update()
+        {
+            HandleColorAnalysisImageDrag();
+        }
+
+        private void HandleColorAnalysisImageDrag()
+        {
+            if (colorAnalysisImage == null || colorViewPrefab == null || uiCanvas == null)
+            {
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
+                {
+                    _isDraggingColorAnalysisImage = true;
+                    colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
+
+                    if (_colorViewInstance == null)
+                    {
+                        _colorViewInstance = Instantiate(colorViewPrefab, uiCanvas.transform);
+                    }
+                }
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                _isDraggingColorAnalysisImage = false;
+                if (_colorViewInstance != null)
+                {
+                    Destroy(_colorViewInstance);
+                    _colorViewInstance = null;
+                }
+                colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition;
+            }
+
+            if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
+            {
+                Vector2 localPoint;
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
+                {
+                    _colorViewInstance.transform.localPosition = localPoint + new Vector2(0, 0);
+                }
             }
         }
 
