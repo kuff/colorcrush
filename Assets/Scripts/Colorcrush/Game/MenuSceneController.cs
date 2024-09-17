@@ -66,6 +66,12 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The delay between staggered animations of different color analysis axes.")]
         private float colorAnalysisStaggerDelay = 0.02f;
 
+        [SerializeField] [Tooltip("The ColorView prefab to be instantiated when the color analysis image is pressed and held.")]
+        private GameObject colorViewPrefab;
+
+        [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
+        private Canvas uiCanvas;
+
         [Header("Button Animation Settings")]
         [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
@@ -97,12 +103,6 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The scale factor applied during the bump animation of the submit button when clicked.")]
         private float submitButtonClickBumpScaleFactor = 0.9f;
 
-        [SerializeField] [Tooltip("The ColorView prefab to be instantiated when the color analysis image is pressed and held.")]
-        private GameObject colorViewPrefab;
-
-        [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
-        private Canvas uiCanvas;
-
         private readonly float[] _currentAxisValues = new float[8];
 
         private float _adjustedWidth;
@@ -118,6 +118,7 @@ namespace Colorcrush.Game
         private GameObject _colorViewInstance;
         private bool _isDraggingColorAnalysisImage;
         private Vector2 _colorAnalysisOriginalPosition;
+        private float _colorAnalysisRadius;
 
         private void Awake()
         {
@@ -131,6 +132,8 @@ namespace Colorcrush.Game
             if (colorAnalysisImage != null)
             {
                 _colorAnalysisOriginalPosition = colorAnalysisImage.rectTransform.anchoredPosition;
+                // Assuming the image is circular, the radius is half the width or height
+                _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
             }
         }
 
@@ -175,6 +178,9 @@ namespace Colorcrush.Game
                     {
                         _colorViewInstance = Instantiate(colorViewPrefab, uiCanvas.transform);
                     }
+
+                    // Hide other UI elements
+                    SetUIElementsActive(false);
                 }
             }
 
@@ -187,6 +193,9 @@ namespace Colorcrush.Game
                     _colorViewInstance = null;
                 }
                 colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition;
+
+                // Show other UI elements
+                SetUIElementsActive(true);
             }
 
             if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
@@ -194,7 +203,29 @@ namespace Colorcrush.Game
                 Vector2 localPoint;
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
                 {
-                    _colorViewInstance.transform.localPosition = localPoint + new Vector2(0, 0);
+                    // Calculate the vector from the original center of the analysis image to the mouse position
+                    Vector2 dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, Screen.height / 2);
+                    Vector2 dragVector = localPoint - dragCenter;
+                    
+                    // Clamp the magnitude of the drag vector to the radius of the analysis image
+                    if (dragVector.magnitude > _colorAnalysisRadius)
+                    {
+                        dragVector = dragVector.normalized * _colorAnalysisRadius;
+                    }
+                    
+                    // Set the position of the ColorView instance relative to the drag center
+                    _colorViewInstance.transform.localPosition = dragCenter + dragVector;
+                }
+            }
+        }
+
+        private void SetUIElementsActive(bool isActive)
+        {
+            foreach (Transform child in uiCanvas.transform)
+            {
+                if (child.gameObject != colorAnalysisImage.gameObject && child.gameObject != _colorViewInstance)
+                {
+                    child.gameObject.SetActive(isActive);
                 }
             }
         }

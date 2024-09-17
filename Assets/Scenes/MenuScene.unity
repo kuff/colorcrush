@@ -1402,6 +1402,7 @@ MonoBehaviour:
   submitButtonClickBumpScaleFactor: 0.9
   colorViewPrefab: {fileID: 2525035248402315831, guid: da3de87ca05236a46945a710284f42a8, type: 3}
   uiCanvas: {fileID: 1299182424}
+  colorViewDragCenterYOffset: 1200
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0
