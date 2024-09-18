@@ -18,8 +18,7 @@ namespace Colorcrush.Game
 {
     public class MenuSceneController : MonoBehaviour
     {
-        [Header("Scroll View Settings")]
-        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -40,8 +39,7 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")]
-        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
@@ -56,10 +54,9 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")]
-        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
         private bool enableColorViewInspector = true;
-        
+
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
         private Image colorAnalysisImage;
 
@@ -75,8 +72,7 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
         private Canvas uiCanvas;
 
-        [Header("Button Animation Settings")]
-        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -110,7 +106,13 @@ namespace Colorcrush.Game
 
         private float _adjustedWidth;
         private Material _colorAnalysisMaterial;
+        private Vector2 _colorAnalysisOriginalPosition;
+        private float _colorAnalysisRadius;
+        private GameObject _colorViewInstance;
+        private float[] _currentAnalysisValues;
         private Color _currentFillColor = Color.clear;
+        private Color _currentTargetColor;
+        private bool _isDraggingColorAnalysisImage;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
@@ -118,12 +120,6 @@ namespace Colorcrush.Game
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
         private HashSet<string> _uniqueCompletedColors;
-        private GameObject _colorViewInstance;
-        private bool _isDraggingColorAnalysisImage;
-        private Vector2 _colorAnalysisOriginalPosition;
-        private float _colorAnalysisRadius;
-        private Color _currentTargetColor;
-        private float[] _currentAnalysisValues;
 
         private void Awake()
         {
@@ -133,12 +129,20 @@ namespace Colorcrush.Game
             SetupButtons();
             UpdateSubmitButton();
             InitializeColorAnalysis();
-            
+
             if (colorAnalysisImage != null)
             {
                 _colorAnalysisOriginalPosition = colorAnalysisImage.rectTransform.anchoredPosition;
                 // Assuming the image is circular, the radius is half the width or height
                 _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
+            }
+        }
+
+        private void Update()
+        {
+            if (enableColorViewInspector)
+            {
+                HandleColorViewInspector();
             }
         }
 
@@ -157,14 +161,6 @@ namespace Colorcrush.Game
             if (_smoothScrollCoroutine != null)
             {
                 StopCoroutine(_smoothScrollCoroutine);
-            }
-        }
-
-        private void Update()
-        {
-            if (enableColorViewInspector)
-            {
-                HandleColorViewInspector();
             }
         }
 
@@ -200,6 +196,7 @@ namespace Colorcrush.Game
                     Destroy(_colorViewInstance);
                     _colorViewInstance = null;
                 }
+
                 colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition;
 
                 // Show other UI elements
@@ -212,15 +209,15 @@ namespace Colorcrush.Game
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
                 {
                     // Calculate the vector from the original center of the analysis image to the mouse position
-                    Vector2 dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, Screen.height / 2);
-                    Vector2 dragVector = localPoint - dragCenter;
-                    
+                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, Screen.height / 2);
+                    var dragVector = localPoint - dragCenter;
+
                     // Clamp the magnitude of the drag vector to the radius of the analysis image
                     if (dragVector.magnitude > _colorAnalysisRadius)
                     {
                         dragVector = dragVector.normalized * _colorAnalysisRadius;
                     }
-                    
+
                     // Set the position of the ColorView instance relative to the drag center
                     _colorViewInstance.transform.localPosition = dragCenter + dragVector;
 
@@ -235,20 +232,24 @@ namespace Colorcrush.Game
         private void UpdateCircle1Color(Vector2 dragVector)
         {
             var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
-            float angle = Mathf.Atan2(dragVector.y, dragVector.x);
-            if (angle < 0) angle += 2 * Mathf.PI;
-            float normalizedAngle = angle / (2 * Mathf.PI);
-            int lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
-            int upperIndex = (lowerIndex + 1) % 8;
+            var angle = Mathf.Atan2(dragVector.y, dragVector.x);
+            if (angle < 0)
+            {
+                angle += 2 * Mathf.PI;
+            }
 
-            float lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
-            float upperWeight = 1 - lowerWeight;
+            var normalizedAngle = angle / (2 * Mathf.PI);
+            var lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
+            var upperIndex = (lowerIndex + 1) % 8;
 
-            Color lowerColor = edges[lowerIndex];
-            Color upperColor = edges[upperIndex];
+            var lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
+            var upperWeight = 1 - lowerWeight;
 
-            Color interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
-            Color finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, dragVector.magnitude / _colorAnalysisRadius);
+            var lowerColor = edges[lowerIndex];
+            var upperColor = edges[upperIndex];
+
+            var interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
+            var finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, dragVector.magnitude / _colorAnalysisRadius);
 
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
@@ -261,22 +262,26 @@ namespace Colorcrush.Game
         private void UpdateCircle2Color(Vector2 dragVector)
         {
             var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
-            float angle = Mathf.Atan2(dragVector.y, dragVector.x);
-            if (angle < 0) angle += 2 * Mathf.PI;
-            float normalizedAngle = angle / (2 * Mathf.PI);
-            int lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
-            int upperIndex = (lowerIndex + 1) % 8;
+            var angle = Mathf.Atan2(dragVector.y, dragVector.x);
+            if (angle < 0)
+            {
+                angle += 2 * Mathf.PI;
+            }
 
-            float lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
-            float upperWeight = 1 - lowerWeight;
+            var normalizedAngle = angle / (2 * Mathf.PI);
+            var lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
+            var upperIndex = (lowerIndex + 1) % 8;
 
-            Color lowerColor = edges[lowerIndex];
-            Color upperColor = edges[upperIndex];
+            var lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
+            var upperWeight = 1 - lowerWeight;
 
-            Color interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
-            float magnitudeRatio = dragVector.magnitude / _colorAnalysisRadius;
-            float clampedMagnitudeRatio = Mathf.Clamp(magnitudeRatio, 0, _currentAnalysisValues[lowerIndex] * lowerWeight + _currentAnalysisValues[upperIndex] * upperWeight);
-            Color finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, clampedMagnitudeRatio);
+            var lowerColor = edges[lowerIndex];
+            var upperColor = edges[upperIndex];
+
+            var interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
+            var magnitudeRatio = dragVector.magnitude / _colorAnalysisRadius;
+            var clampedMagnitudeRatio = Mathf.Clamp(magnitudeRatio, 0, _currentAnalysisValues[lowerIndex] * lowerWeight + _currentAnalysisValues[upperIndex] * upperWeight);
+            var finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, clampedMagnitudeRatio);
 
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
