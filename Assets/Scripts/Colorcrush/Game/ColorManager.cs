@@ -60,5 +60,29 @@ namespace Colorcrush.Game
             ColorAnalysisCache[targetColor] = analysis;
             return analysis;
         }
+
+        public static List<Color> GetColorMatrixEdges(Color targetColor)
+        {
+            var edges = new List<Color>();
+
+            for (var r = -1; r <= 1; r += 2)
+            {
+                for (var g = -1; g <= 1; g += 2)
+                {
+                    for (var b = -1; b <= 1; b += 2)
+                    {
+                        var edgeColor = new Color(
+                            Mathf.Clamp01(targetColor.r + r * VariationRange),
+                            Mathf.Clamp01(targetColor.g + g * VariationRange),
+                            Mathf.Clamp01(targetColor.b + b * VariationRange),
+                            targetColor.a
+                        );
+                        edges.Add(edgeColor);
+                    }
+                }
+            }
+
+            return edges;
+        }
     }
 }

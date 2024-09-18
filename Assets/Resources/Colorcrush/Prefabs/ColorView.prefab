@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 7550427954719878475}
   m_Layer: 5
   m_Name: CompareView
-  m_TagString: Untagged
+  m_TagString: CompareView
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

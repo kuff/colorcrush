@@ -57,6 +57,9 @@ namespace Colorcrush.Game
         private Color completedLevelColor = Color.red;
 
         [Header("Color Analysis Settings")]
+        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        private bool enableColorViewInspector = true;
+        
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
         private Image colorAnalysisImage;
 
@@ -119,6 +122,8 @@ namespace Colorcrush.Game
         private bool _isDraggingColorAnalysisImage;
         private Vector2 _colorAnalysisOriginalPosition;
         private float _colorAnalysisRadius;
+        private Color _currentTargetColor;
+        private float[] _currentAnalysisValues;
 
         private void Awake()
         {
@@ -157,10 +162,13 @@ namespace Colorcrush.Game
 
         private void Update()
         {
-            HandleColorAnalysisImageDrag();
+            if (enableColorViewInspector)
+            {
+                HandleColorViewInspector();
+            }
         }
 
-        private void HandleColorAnalysisImageDrag()
+        private void HandleColorViewInspector()
         {
             if (colorAnalysisImage == null || colorViewPrefab == null || uiCanvas == null)
             {
@@ -215,7 +223,66 @@ namespace Colorcrush.Game
                     
                     // Set the position of the ColorView instance relative to the drag center
                     _colorViewInstance.transform.localPosition = dragCenter + dragVector;
+
+                    // Calculate the color for Circle 1 based on the drag position
+                    UpdateCircle1Color(dragVector);
+                    // Calculate the color for Circle 2 based on the drag position
+                    UpdateCircle2Color(dragVector);
                 }
+            }
+        }
+
+        private void UpdateCircle1Color(Vector2 dragVector)
+        {
+            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
+            float angle = Mathf.Atan2(dragVector.y, dragVector.x);
+            if (angle < 0) angle += 2 * Mathf.PI;
+            float normalizedAngle = angle / (2 * Mathf.PI);
+            int lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
+            int upperIndex = (lowerIndex + 1) % 8;
+
+            float lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
+            float upperWeight = 1 - lowerWeight;
+
+            Color lowerColor = edges[lowerIndex];
+            Color upperColor = edges[upperIndex];
+
+            Color interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
+            Color finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, dragVector.magnitude / _colorAnalysisRadius);
+
+            var compareView = _colorViewInstance.transform.Find("CompareView");
+            if (compareView != null)
+            {
+                var material = compareView.GetComponent<Image>().material;
+                ShaderManager.SetColor(material, "_Circle1Color", finalColor);
+            }
+        }
+
+        private void UpdateCircle2Color(Vector2 dragVector)
+        {
+            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
+            float angle = Mathf.Atan2(dragVector.y, dragVector.x);
+            if (angle < 0) angle += 2 * Mathf.PI;
+            float normalizedAngle = angle / (2 * Mathf.PI);
+            int lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
+            int upperIndex = (lowerIndex + 1) % 8;
+
+            float lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
+            float upperWeight = 1 - lowerWeight;
+
+            Color lowerColor = edges[lowerIndex];
+            Color upperColor = edges[upperIndex];
+
+            Color interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
+            float magnitudeRatio = dragVector.magnitude / _colorAnalysisRadius;
+            float clampedMagnitudeRatio = Mathf.Clamp(magnitudeRatio, 0, _currentAnalysisValues[lowerIndex] * lowerWeight + _currentAnalysisValues[upperIndex] * upperWeight);
+            Color finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, clampedMagnitudeRatio);
+
+            var compareView = _colorViewInstance.transform.Find("CompareView");
+            if (compareView != null)
+            {
+                var material = compareView.GetComponent<Image>().material;
+                ShaderManager.SetColor(material, "_Circle2Color", finalColor);
             }
         }
 
@@ -651,13 +718,13 @@ namespace Colorcrush.Game
                 return;
             }
 
-            var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
 
             if (_selectedLevelIndex == _uniqueCompletedColors.Count)
             {
                 // This is a new, uncompleted level
-                var zeroValues = new float[8];
-                StartCoroutine(AnimateAxisValuesAndColor(zeroValues, targetColor));
+                _currentAnalysisValues = new float[8];
+                StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
             }
             else
             {
@@ -670,9 +737,9 @@ namespace Colorcrush.Game
                         .ToList();
                 }
 
-                var analysisValues = ColorManager.GenerateColorAnalysis(targetColor, selectedColors);
+                _currentAnalysisValues = ColorManager.GenerateColorAnalysis(_currentTargetColor, selectedColors);
 
-                StartCoroutine(AnimateAxisValuesAndColor(analysisValues, targetColor));
+                StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
             }
         }
 

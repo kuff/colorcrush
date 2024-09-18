@@ -7,6 +7,7 @@ TagManager:
   - SelectionGrid
   - SelectionButton
   - SelectionTarget
+  - CompareView
   layers:
   - Default
   - TransparentFX
