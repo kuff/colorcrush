@@ -14,8 +14,7 @@ namespace Colorcrush
     [CreateAssetMenu(fileName = "ProjectConfigurationObject", menuName = "Colorcrush/Project Configuration")]
     public class ProjectConfigurationObject : ScriptableObject
     {
-        [Header("Editor Configuration")]
-        [FormerlySerializedAs("startScenePath")] [Tooltip("The path to the initiating scene. This is used when 'Use Initiating Scene' is enabled.")]
+        [Header("Editor Configuration")] [FormerlySerializedAs("startScenePath")] [Tooltip("The path to the initiating scene. This is used when 'Use Initiating Scene' is enabled.")]
         public string initiatingScenePath;
 
         [Tooltip("If true, the game will start from the initiating scene specified above. If false, it will use the default Unity scene loading behavior.")]
@@ -42,8 +41,7 @@ namespace Colorcrush
         [Tooltip("If true, masking will be disabled for images when generating materials.")]
         public bool disableMaskingOnGenerate = true;
 
-        [Header("Game Configuration")]
-        [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
+        [Header("Game Configuration")] [Tooltip("The seed used for random number generation. Using the same seed will produce the same sequence of random numbers.")]
         public int randomSeed = 42;
 
         [Tooltip("If true, all shaders will be reset to their initial state when the game is shut down.")]
@@ -58,8 +56,7 @@ namespace Colorcrush
         [Tooltip("The format of the color data in the file.")]
         public ColorDataLoader.ColorFormat colorDataFormat = ColorDataLoader.ColorFormat.SRGBZeroToOne;
 
-        [Header("Emoji Configuration")]
-        [Tooltip("The name of the default emoji sprite (without the file extension).")]
+        [Header("Emoji Configuration")] [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
 
         [Tooltip("The name of the default happy emoji sprite (without the file extension).")]
@@ -71,8 +68,7 @@ namespace Colorcrush
         [Tooltip("The path to the folder containing sad emoji sprites.")]
         public string sadEmojiFolder = "Colorcrush/Emoji/Sad";
 
-        [Header("Logging Configuration")]
-        [Tooltip("The prefix used for log file names.")]
+        [Header("Logging Configuration")] [Tooltip("The prefix used for log file names.")]
         public string logFilePrefix = "game_log_";
 
         [Tooltip("If true, timestamps in log files will be relative to the creation of the log file, and not reset between restarts.")]
@@ -96,8 +92,7 @@ namespace Colorcrush
         [Tooltip("If true, Console output will not be logged when running in the Unity Editor, regardless of the minimum log severity setting.")]
         public bool suppressConsoleLoggingInEditor;
 
-        [Header("Audio Configuration")]
-        [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]
+        [Header("Audio Configuration")] [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]
         public float globalGain = 1f;
 
         [Tooltip("The maximum number of simultaneous audio sources that can play at once.")]

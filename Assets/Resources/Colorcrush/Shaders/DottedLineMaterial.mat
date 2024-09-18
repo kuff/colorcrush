@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BoilingButtonMaterial
-  m_Shader: {fileID: 4800000, guid: 54d69f9e5d9a3764ea4aadffe740aba1, type: 3}
+  m_Name: DottedLineMaterial
+  m_Shader: {fileID: 4800000, guid: 5f21fa214c1b76f45a775943b4113f2c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,42 +41,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 1
-    - _Axis1: 0.5
-    - _Axis2: 0.5
-    - _Axis3: 0.5
-    - _Axis4: 0.5
-    - _Axis5: 0.5
-    - _Axis6: 0.5
-    - _Axis7: 0.5
-    - _Axis8: 0.5
-    - _CircleSize: 0.1
-    - _CurveStrength: 1
-    - _DropSize: 0.1
-    - _EffectStrength: 1
-    - _EffectToggle: 1
+    - _DotSize: 0.1
+    - _DotSpacing: 0.0445
     - _EnableExternalAlpha: 0
-    - _LevelCount: 5
-    - _LineThickness: 0.01
-    - _LineWidth: 0.02
-    - _MembraneThickness: 0.01
-    - _NoiseScale: -1.89
-    - _NoiseStrength: 0
-    - _ParticleCount: 500
-    - _ParticleSize: 0.1
-    - _Scale: 10
-    - _SeparationPoint: 0.5
-    - _Smoothness: 0.01
-    - _Speed: 1
-    - _ThresholdHigh: 0.804
-    - _ThresholdLow: 0
-    - _TimeMultiplier: 5
+    - _LineEndOffset: 0.0632
+    - _LineThickness: 0.006
+    - _LineWidth: 5.42
+    - _XOffset: 0
+    - _XSize: 0.0317
     m_Colors:
-    - _AccentColor: {r: 0.16026092, g: 0.690566, b: 0.16026092, a: 1}
-    - _BackgroundColor: {r: 0.17646572, g: 0.6666667, b: 0.17646572, a: 1}
+    - _BackgroundColor: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _FillColor: {r: 1, g: 0, b: 0, a: 0.5}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
-    - _LineColor: {r: 0.29999998, g: 0.29999998, b: 0.29999998, a: 1}
+    - _LineColor: {r: 0.4433962, g: 0.4433962, b: 0.4433962, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

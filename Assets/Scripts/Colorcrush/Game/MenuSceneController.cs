@@ -18,8 +18,7 @@ namespace Colorcrush.Game
 {
     public class MenuSceneController : MonoBehaviour
     {
-        [Header("Scroll View Settings")]
-        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -40,8 +39,7 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")]
-        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
@@ -56,7 +54,9 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")]
+        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        private bool enableColorViewInspector = true;
+
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
         private Image colorAnalysisImage;
 
@@ -66,8 +66,13 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The delay between staggered animations of different color analysis axes.")]
         private float colorAnalysisStaggerDelay = 0.02f;
 
-        [Header("Button Animation Settings")]
-        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [SerializeField] [Tooltip("The ColorView prefab to be instantiated when the color analysis image is pressed and held.")]
+        private GameObject colorViewPrefab;
+
+        [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
+        private Canvas uiCanvas;
+
+        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -101,7 +106,13 @@ namespace Colorcrush.Game
 
         private float _adjustedWidth;
         private Material _colorAnalysisMaterial;
+        private Vector2 _colorAnalysisOriginalPosition;
+        private float _colorAnalysisRadius;
+        private GameObject _colorViewInstance;
+        private float[] _currentAnalysisValues;
         private Color _currentFillColor = Color.clear;
+        private Color _currentTargetColor;
+        private bool _isDraggingColorAnalysisImage;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
@@ -118,6 +129,21 @@ namespace Colorcrush.Game
             SetupButtons();
             UpdateSubmitButton();
             InitializeColorAnalysis();
+
+            if (colorAnalysisImage != null)
+            {
+                _colorAnalysisOriginalPosition = colorAnalysisImage.rectTransform.anchoredPosition;
+                // Assuming the image is circular, the radius is half the width or height
+                _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
+            }
+        }
+
+        private void Update()
+        {
+            if (enableColorViewInspector)
+            {
+                HandleColorViewInspector();
+            }
         }
 
         private void OnDestroy()
@@ -135,6 +161,144 @@ namespace Colorcrush.Game
             if (_smoothScrollCoroutine != null)
             {
                 StopCoroutine(_smoothScrollCoroutine);
+            }
+        }
+
+        private void HandleColorViewInspector()
+        {
+            if (colorAnalysisImage == null || colorViewPrefab == null || uiCanvas == null)
+            {
+                return;
+            }
+
+            if (Input.GetMouseButtonDown(0))
+            {
+                if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
+                {
+                    _isDraggingColorAnalysisImage = true;
+                    colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
+
+                    if (_colorViewInstance == null)
+                    {
+                        _colorViewInstance = Instantiate(colorViewPrefab, uiCanvas.transform);
+                    }
+
+                    // Hide other UI elements
+                    SetUIElementsActive(false);
+                }
+            }
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                _isDraggingColorAnalysisImage = false;
+                if (_colorViewInstance != null)
+                {
+                    Destroy(_colorViewInstance);
+                    _colorViewInstance = null;
+                }
+
+                colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition;
+
+                // Show other UI elements
+                SetUIElementsActive(true);
+            }
+
+            if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
+            {
+                Vector2 localPoint;
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
+                {
+                    // Calculate the vector from the original center of the analysis image to the mouse position
+                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, Screen.height / 2);
+                    var dragVector = localPoint - dragCenter;
+
+                    // Clamp the magnitude of the drag vector to the radius of the analysis image
+                    if (dragVector.magnitude > _colorAnalysisRadius)
+                    {
+                        dragVector = dragVector.normalized * _colorAnalysisRadius;
+                    }
+
+                    // Set the position of the ColorView instance relative to the drag center
+                    _colorViewInstance.transform.localPosition = dragCenter + dragVector;
+
+                    // Calculate the color for Circle 1 based on the drag position
+                    UpdateCircle1Color(dragVector);
+                    // Calculate the color for Circle 2 based on the drag position
+                    UpdateCircle2Color(dragVector);
+                }
+            }
+        }
+
+        private void UpdateCircle1Color(Vector2 dragVector)
+        {
+            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
+            var angle = Mathf.Atan2(dragVector.y, dragVector.x);
+            if (angle < 0)
+            {
+                angle += 2 * Mathf.PI;
+            }
+
+            var normalizedAngle = angle / (2 * Mathf.PI);
+            var lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
+            var upperIndex = (lowerIndex + 1) % 8;
+
+            var lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
+            var upperWeight = 1 - lowerWeight;
+
+            var lowerColor = edges[lowerIndex];
+            var upperColor = edges[upperIndex];
+
+            var interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
+            var finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, dragVector.magnitude / _colorAnalysisRadius);
+
+            var compareView = _colorViewInstance.transform.Find("CompareView");
+            if (compareView != null)
+            {
+                var material = compareView.GetComponent<Image>().material;
+                ShaderManager.SetColor(material, "_Circle1Color", finalColor);
+            }
+        }
+
+        private void UpdateCircle2Color(Vector2 dragVector)
+        {
+            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
+            var angle = Mathf.Atan2(dragVector.y, dragVector.x);
+            if (angle < 0)
+            {
+                angle += 2 * Mathf.PI;
+            }
+
+            var normalizedAngle = angle / (2 * Mathf.PI);
+            var lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
+            var upperIndex = (lowerIndex + 1) % 8;
+
+            var lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
+            var upperWeight = 1 - lowerWeight;
+
+            var lowerColor = edges[lowerIndex];
+            var upperColor = edges[upperIndex];
+
+            var interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
+            var magnitudeRatio = dragVector.magnitude / _colorAnalysisRadius;
+            var clampedMagnitudeRatio = Mathf.Clamp(magnitudeRatio, 0, _currentAnalysisValues[lowerIndex] * lowerWeight + _currentAnalysisValues[upperIndex] * upperWeight);
+            var finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, clampedMagnitudeRatio);
+
+            var compareView = _colorViewInstance.transform.Find("CompareView");
+            if (compareView != null)
+            {
+                var material = compareView.GetComponent<Image>().material;
+                ShaderManager.SetColor(material, "_Circle2Color", finalColor);
+            }
+        }
+
+        private void SetUIElementsActive(bool isActive)
+        {
+            foreach (Transform child in uiCanvas.transform)
+            {
+                if (child.gameObject != colorAnalysisImage.gameObject && child.gameObject != _colorViewInstance)
+                {
+                    child.gameObject.SetActive(isActive);
+                }
             }
         }
 
@@ -559,13 +723,13 @@ namespace Colorcrush.Game
                 return;
             }
 
-            var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
 
             if (_selectedLevelIndex == _uniqueCompletedColors.Count)
             {
                 // This is a new, uncompleted level
-                var zeroValues = new float[8];
-                StartCoroutine(AnimateAxisValuesAndColor(zeroValues, targetColor));
+                _currentAnalysisValues = new float[8];
+                StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
             }
             else
             {
@@ -578,9 +742,9 @@ namespace Colorcrush.Game
                         .ToList();
                 }
 
-                var analysisValues = ColorManager.GenerateColorAnalysis(targetColor, selectedColors);
+                _currentAnalysisValues = ColorManager.GenerateColorAnalysis(_currentTargetColor, selectedColors);
 
-                StartCoroutine(AnimateAxisValuesAndColor(analysisValues, targetColor));
+                StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
             }
         }
 
