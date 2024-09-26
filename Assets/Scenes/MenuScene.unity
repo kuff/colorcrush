@@ -1387,9 +1387,12 @@ MonoBehaviour:
   newLevelColor: {r: 0.17517261, g: 0.6679245, b: 0.17517261, a: 1}
   newLevelAccentColor: {r: 0.16078432, g: 0.6901961, b: 0.16078432, a: 1}
   completedLevelColor: {r: 0.87169814, g: 0.15624769, b: 0.15624769, a: 1}
+  enableColorViewInspector: 1
   colorAnalysisImage: {fileID: 1422549168}
   colorAnalysisAnimationDuration: 0.25
   colorAnalysisStaggerDelay: 0.02
+  colorViewPrefab: {fileID: 2525035248402315831, guid: da3de87ca05236a46945a710284f42a8, type: 3}
+  uiCanvas: {fileID: 1299182424}
   selectedButtonScale: 0.8
   buttonShakeDuration: 0.75
   buttonShakeStrength: 10
@@ -1400,9 +1403,6 @@ MonoBehaviour:
   submitButtonBumpScaleFactor: 1.05
   submitButtonClickBumpDuration: 0.1
   submitButtonClickBumpScaleFactor: 0.9
-  colorViewPrefab: {fileID: 2525035248402315831, guid: da3de87ca05236a46945a710284f42a8, type: 3}
-  uiCanvas: {fileID: 1299182424}
-  colorViewDragCenterYOffset: 1200
 --- !u!1 &489262142
 GameObject:
   m_ObjectHideFlags: 0
@@ -4188,7 +4188,7 @@ MonoBehaviour:
   m_Color: {r: 0.78039217, g: 0.78039217, b: 0.78039217, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []

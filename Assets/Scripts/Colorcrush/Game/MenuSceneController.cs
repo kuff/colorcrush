@@ -72,6 +72,15 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The Canvas that contains the UI elements.")]
         private Canvas uiCanvas;
 
+        [SerializeField] [Tooltip("Preset amount of units for tick sound. The distance the ColorView inspector must be dragged before a tick sound is played.")]
+        private float TickDistanceThreshold = 50f;
+
+        [SerializeField] [Tooltip("Minimum interval between tick sounds in seconds. Set this to prevent spamming of the tick sound.")]
+        private float MinTickInterval = 0.065f;
+
+        [SerializeField] [Tooltip("Maximum pitch shift value. How much the pitch of the tick sound is shifted up when dragging quickly.")]
+        private float MaxPitchShift = 1.5f;
+
         [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
@@ -120,6 +129,9 @@ namespace Colorcrush.Game
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
         private HashSet<string> _uniqueCompletedColors;
+        private Vector2 _lastDragPosition;
+        private float _distanceSinceLastTick;
+        private float _lastTickTime;
 
         private void Awake()
         {
@@ -185,10 +197,15 @@ namespace Colorcrush.Game
 
                     // Hide other UI elements
                     SetUIElementsActive(false);
+
+                    AudioManager.PlaySound("MENU B_Select");
+                    _lastDragPosition = Input.mousePosition;
+                    _distanceSinceLastTick = 0f;
+                    _lastTickTime = Time.time;
                 }
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (_isDraggingColorAnalysisImage && Input.GetMouseButtonUp(0))
             {
                 _isDraggingColorAnalysisImage = false;
                 if (_colorViewInstance != null)
@@ -201,6 +218,8 @@ namespace Colorcrush.Game
 
                 // Show other UI elements
                 SetUIElementsActive(true);
+
+                AudioManager.PlaySound("MENU B_Back");
             }
 
             if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
@@ -225,6 +244,29 @@ namespace Colorcrush.Game
                     UpdateCircle1Color(dragVector);
                     // Calculate the color for Circle 2 based on the drag position
                     UpdateCircle2Color(dragVector);
+
+                    // Calculate the distance moved since the last tick
+                    var currentDragPosition = Input.mousePosition;
+                    var distanceMoved = Vector2.Distance(currentDragPosition, _lastDragPosition);
+                    _distanceSinceLastTick += distanceMoved;
+
+                    // Check if the distance threshold is met and the minimum interval has passed
+                    if (_distanceSinceLastTick >= TickDistanceThreshold && (Time.time - _lastTickTime) >= MinTickInterval)
+                    {
+                        // Calculate pitch shift based on speed (logarithmic scaling)
+                        var speed = distanceMoved / Time.deltaTime;
+                        var pitchShift = Mathf.Lerp(1.0f, MaxPitchShift, Mathf.Log10(speed + 1) / Mathf.Log10(1000 + 1));
+
+                        // Play tick sound with pitch shift
+                        AudioManager.PlaySound("click_2", gain: 0.5f, pitchShift: pitchShift);
+
+                        // Reset distance and update last tick time
+                        _distanceSinceLastTick = 0f;
+                        _lastTickTime = Time.time;
+                    }
+
+                    // Update last drag position
+                    _lastDragPosition = currentDragPosition;
                 }
             }
         }
@@ -261,27 +303,7 @@ namespace Colorcrush.Game
 
         private void UpdateCircle2Color(Vector2 dragVector)
         {
-            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
-            var angle = Mathf.Atan2(dragVector.y, dragVector.x);
-            if (angle < 0)
-            {
-                angle += 2 * Mathf.PI;
-            }
-
-            var normalizedAngle = angle / (2 * Mathf.PI);
-            var lowerIndex = Mathf.FloorToInt(normalizedAngle * 8) % 8;
-            var upperIndex = (lowerIndex + 1) % 8;
-
-            var lowerWeight = 1 - (normalizedAngle * 8 - lowerIndex);
-            var upperWeight = 1 - lowerWeight;
-
-            var lowerColor = edges[lowerIndex];
-            var upperColor = edges[upperIndex];
-
-            var interpolatedColor = Color.Lerp(lowerColor, upperColor, upperWeight);
-            var magnitudeRatio = dragVector.magnitude / _colorAnalysisRadius;
-            var clampedMagnitudeRatio = Mathf.Clamp(magnitudeRatio, 0, _currentAnalysisValues[lowerIndex] * lowerWeight + _currentAnalysisValues[upperIndex] * upperWeight);
-            var finalColor = Color.Lerp(_currentTargetColor, interpolatedColor, clampedMagnitudeRatio);
+            var finalColor = _currentTargetColor;
 
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
@@ -621,6 +643,8 @@ namespace Colorcrush.Game
                     Debug.LogError("Submit button is missing Animator component.");
                 }
             }
+
+            AudioManager.PlaySound("MENU_Pick");
         }
 
         private void ScaleButton(Transform buttonTransform, float targetScale)
@@ -689,6 +713,8 @@ namespace Colorcrush.Game
 
                 // Wait for 1 second before loading the scene
                 StartCoroutine(LoadSceneAfterDelay(0.1f));
+
+                AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
             }
         }
 
