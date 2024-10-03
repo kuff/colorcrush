@@ -8,6 +8,7 @@ TagManager:
   - SelectionButton
   - SelectionTarget
   - CompareView
+  - SubmitIcon
   layers:
   - Default
   - TransparentFX

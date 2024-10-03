@@ -675,11 +675,49 @@ namespace Colorcrush.Game
                         ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", newLevelColor);
                         ShaderManager.SetColor(buttonImage.material, "_AccentColor", newLevelAccentColor);
                         ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 1f);
+                        // Find the GameObject with the "SubmitIcon" tag
+                        GameObject submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
+                        if (submitIconObject != null)
+                        {
+                            Image submitIconImage = submitIconObject.GetComponent<Image>();
+                            if (submitIconImage != null)
+                            {
+                                // Change the sprite to icons8-advance-90
+                                submitIconImage.sprite = Resources.Load<Sprite>("Colorcrush/Icons/icons8-advance-90");
+                            }
+                            else
+                            {
+                                Debug.LogWarning("SubmitIcon object does not have an Image component.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
+                        }
                     }
                     else
                     {
                         ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", completedLevelColor);
                         ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 0f);
+                        // Find the GameObject with the "SubmitIcon" tag
+                        GameObject submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
+                        if (submitIconObject != null)
+                        {
+                            Image submitIconImage = submitIconObject.GetComponent<Image>();
+                            if (submitIconImage != null)
+                            {
+                                // Change the sprite to icons8-advance-90
+                                submitIconImage.sprite = Resources.Load<Sprite>("Colorcrush/Icons/icons8-undo-90");
+                            }
+                            else
+                            {
+                                Debug.LogWarning("SubmitIcon object does not have an Image component.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
+                        }
                     }
                 }
                 else
