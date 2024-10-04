@@ -185,7 +185,22 @@ namespace Colorcrush.Game
 
             if (Input.GetMouseButtonDown(0))
             {
-                if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
+                // Check if the selected button is the most recent one (yet to be completed)
+                if (_selectedLevelIndex == _uniqueCompletedColors.Count)
+                {
+                    var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
+                    var submitButtonAnimator = submitButton.GetComponent<Animator>();
+                    if (submitButtonAnimator != null)
+                    {
+                        AnimationManager.PlayAnimation(submitButtonAnimator, bumpAnimation);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Submit button is missing Animator component.");
+                    }
+                    return;
+                }
+                else if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
                 {
                     _isDraggingColorAnalysisImage = true;
                     colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
@@ -593,6 +608,12 @@ namespace Colorcrush.Game
         private void OnButtonClicked(int index)
         {
             Debug.Log($"Button clicked at index: {index}");
+
+            // Don't do anything if the button clicked is the same button that is already selected
+            if (index == _selectedLevelIndex)
+            {
+                return;
+            }
 
             // Stop the shake coroutine if it's running
             if (_shakeCoroutine != null)
