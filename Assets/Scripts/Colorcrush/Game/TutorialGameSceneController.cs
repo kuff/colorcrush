@@ -18,7 +18,7 @@ using Animator = Colorcrush.Animation.Animator;
 
 namespace Colorcrush.Game
 {
-    public class GameSceneController : MonoBehaviour
+    public class TutorialGameSceneController : MonoBehaviour
     {
         [Header("General")] [Tooltip("Factor to shrink buttons when toggled. A value of 0.9 means the button will shrink to 90% of its original size.")] [SerializeField]
         private float shrinkFactor = 0.9f;
