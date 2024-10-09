@@ -19,6 +19,8 @@ Shader "Colorcrush/RadarChartShader"
         _Axis6 ("Axis 6", Range(0, 1)) = 0.5
         _Axis7 ("Axis 7", Range(0, 1)) = 0.5
         _Axis8 ("Axis 8", Range(0, 1)) = 0.5
+        _PulseEffect ("Pulse Effect", Range(0, 1)) = 0 // Toggle for pulse effect
+        _PulseSpeed ("Pulse Speed", Range(0.1, 5.0)) = 1.0 // Speed of the pulse effect
     }
     SubShader
     {
@@ -46,6 +48,8 @@ Shader "Colorcrush/RadarChartShader"
             float4 _LineColor;
             float4 _FillColor;
             float _Axis1, _Axis2, _Axis3, _Axis4, _Axis5, _Axis6, _Axis7, _Axis8;
+            float _PulseEffect;
+            float _PulseSpeed;
 
             struct appdata
             {
@@ -176,6 +180,21 @@ Shader "Colorcrush/RadarChartShader"
 
                 // Apply the alpha value
                 finalColor.a *= texColor.a * _Alpha;
+
+                // Apply pulse effect if enabled
+                if (_PulseEffect > 0.0)
+                {
+                    float pulse = frac(_Time.y * _PulseSpeed); // Pulse value between 0 and 1
+                    float pulseRadius = pulse; // Adjust the pulse radius as needed
+                    float pulseDist = length(uv);
+                    float pulseWidth = 0.05; // Width of the pulse ring
+                    float fadeOut = smoothstep(0.8, 1.0, pulseDist); // Fade out as it approaches the edge
+
+                    if (abs(pulseDist - pulseRadius) < pulseWidth)
+                    {
+                        finalColor.rgb = lerp(finalColor.rgb, _LineColor.rgb, 1.0 - fadeOut);
+                    }
+                }
 
                 return finalColor;
             }

@@ -132,6 +132,7 @@ namespace Colorcrush.Game
         private Vector2 _lastDragPosition;
         private float _distanceSinceLastTick;
         private float _lastTickTime;
+        private bool _hasColorAnalysisBeenClicked;
 
         private void Awake()
         {
@@ -148,6 +149,8 @@ namespace Colorcrush.Game
                 // Assuming the image is circular, the radius is half the width or height
                 _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
             }
+
+            ShaderManager.SetFloat(colorAnalysisImage.material, "_PulseEffect", 1);
         }
 
         private void Update()
@@ -217,6 +220,12 @@ namespace Colorcrush.Game
                     _lastDragPosition = Input.mousePosition;
                     _distanceSinceLastTick = 0f;
                     _lastTickTime = Time.time;
+
+                    if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) == ProgressManager.MostRecentCompletedTargetColor)
+                    {
+                        _hasColorAnalysisBeenClicked = true;
+                        ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 0);
+                    }
                 }
             }
 
@@ -243,7 +252,7 @@ namespace Colorcrush.Game
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
                 {
                     // Calculate the vector from the original center of the analysis image to the mouse position
-                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, Screen.height / 2);
+                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, 1389);
                     var dragVector = localPoint - dragCenter;
 
                     // Clamp the magnitude of the drag vector to the radius of the analysis image
@@ -600,7 +609,20 @@ namespace Colorcrush.Game
                     var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
                     AnimationManager.PlayAnimation(animator, shakeAnimation);
 
-                    yield return new WaitForSeconds(buttonShakeDuration);
+                    //yield return new WaitForSeconds(buttonShakeDuration);
+                }
+
+                if (!_hasColorAnalysisBeenClicked && ColorUtility.ToHtmlStringRGB(_currentTargetColor) == ProgressManager.MostRecentCompletedTargetColor)
+                {
+                    var radarChartAnimator = colorAnalysisImage.GetComponent<Animator>();
+                    
+                    var pulseAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
+                    AnimationManager.PlayAnimation(radarChartAnimator, pulseAnimation);
+                    
+                    yield return new WaitForSeconds(buttonBumpDuration);
+                    
+                    var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
+                    AnimationManager.PlayAnimation(radarChartAnimator, shakeAnimation);
                 }
             }
         }
@@ -815,6 +837,7 @@ namespace Colorcrush.Game
                 // This is a new, uncompleted level
                 _currentAnalysisValues = new float[8];
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
+                ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 0);
             }
             else
             {
@@ -830,6 +853,15 @@ namespace Colorcrush.Game
                 _currentAnalysisValues = ColorManager.GenerateColorAnalysis(_currentTargetColor, selectedColors);
 
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
+
+                if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) != ProgressManager.MostRecentCompletedTargetColor)
+                {
+                    ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 0);
+                }
+                else if (!_hasColorAnalysisBeenClicked)
+                {
+                    ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 1);
+                }
             }
         }
 
