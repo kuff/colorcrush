@@ -10,6 +10,7 @@ Colorcrush is a Unity mobile game where players must match colors to collect emo
   - [Undo](https://icons8.com/icon/78572/undo) from [Icons8](https://icons8.com)
   - [Advance](https://icons8.com/icon/102272/advance) from [Icons8](https://icons8.com)
   - [Check](https://icons8.com/icon/98955/done) from [Icons8](https://icons8.com)
+  - [Click](https://icons8.com/icons/set/click) from [Icons8](https://icons8.com)
 - **Fonts:** 
   - [Luckiest Guy](https://fonts.google.com/specimen/Luckiest+Guy?query=luckiest+guy) from [Google Fonts](https://fonts.google.com/)
   - [Lato](https://fonts.google.com/specimen/Lato?query=lato) from [Google Fonts](https://fonts.google.com/)
