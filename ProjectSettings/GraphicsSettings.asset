@@ -28,7 +28,7 @@ GraphicsSettings:
   m_VideoShadersIncludeMode: 2
   m_AlwaysIncludedShaders: []
   m_PreloadedShaders: []
-  m_PreloadShadersBatchTimeLimit: -1
+  m_PreloadShadersBatchTimeLimit: 0
   m_SpritesDefaultMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   m_CustomRenderPipeline: {fileID: 11400000, guid: 194ebc3c78ccd61459708bf8447798b7, type: 2}
   m_TransparencySortMode: 0

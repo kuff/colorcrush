@@ -81,6 +81,9 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("Maximum pitch shift value. How much the pitch of the tick sound is shifted up when dragging quickly.")]
         private float MaxPitchShift = 1.5f;
 
+        [SerializeField] [Tooltip("The drag signifier object.")]
+        private GameObject dragSignifier;
+
         [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
@@ -150,7 +153,7 @@ namespace Colorcrush.Game
                 _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
             }
 
-            ShaderManager.SetFloat(colorAnalysisImage.material, "_PulseEffect", 1);
+            SetDragSignifierActive(true);
         }
 
         private void Update()
@@ -224,7 +227,7 @@ namespace Colorcrush.Game
                     if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) == ProgressManager.MostRecentCompletedTargetColor)
                     {
                         _hasColorAnalysisBeenClicked = true;
-                        ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 0);
+                        SetDragSignifierActive(false);
                     }
                 }
             }
@@ -611,19 +614,6 @@ namespace Colorcrush.Game
 
                     //yield return new WaitForSeconds(buttonShakeDuration);
                 }
-
-                if (!_hasColorAnalysisBeenClicked && ColorUtility.ToHtmlStringRGB(_currentTargetColor) == ProgressManager.MostRecentCompletedTargetColor)
-                {
-                    var radarChartAnimator = colorAnalysisImage.GetComponent<Animator>();
-                    
-                    var pulseAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
-                    AnimationManager.PlayAnimation(radarChartAnimator, pulseAnimation);
-                    
-                    yield return new WaitForSeconds(buttonBumpDuration);
-                    
-                    var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
-                    AnimationManager.PlayAnimation(radarChartAnimator, shakeAnimation);
-                }
             }
         }
 
@@ -837,7 +827,7 @@ namespace Colorcrush.Game
                 // This is a new, uncompleted level
                 _currentAnalysisValues = new float[8];
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
-                ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 0);
+                SetDragSignifierActive(false);
             }
             else
             {
@@ -856,13 +846,25 @@ namespace Colorcrush.Game
 
                 if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) != ProgressManager.MostRecentCompletedTargetColor)
                 {
-                    ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 0);
+                    SetDragSignifierActive(false);
                 }
                 else if (!_hasColorAnalysisBeenClicked)
                 {
-                    ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", 1);
+                    SetDragSignifierActive(true);
                 }
             }
+        }
+
+        private void SetDragSignifierActive(bool isActive)
+        {
+            ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", isActive ? 1 : 0);
+            var dragSignifierAnimator = dragSignifier.GetComponent<UnityEngine.Animator>();
+            dragSignifierAnimator.enabled = isActive;
+            //dragSignifier.SetActive(isActive);
+            var dragSignifierImage = dragSignifier.GetComponent<Image>();
+            var color = dragSignifierImage.color;
+            color.a = isActive ? 1f : 0f;
+            dragSignifierImage.color = color;
         }
 
         private IEnumerator AnimateAxisValuesAndColor(float[] targetValues, Color targetColor)
