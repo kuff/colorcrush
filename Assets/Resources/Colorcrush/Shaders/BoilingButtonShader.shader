@@ -10,6 +10,7 @@ Shader "Colorcrush/BoilingButtonShader"
         _Speed ("Effect Speed", Float) = 2.0
         _DropSize ("Drop Size", Float) = 0.25
         _Alpha ("Alpha", Range(0, 1)) = 1.0
+        _CustomTime ("Custom Time", Float) = 0.0
     }
     
     SubShader
@@ -33,6 +34,7 @@ Shader "Colorcrush/BoilingButtonShader"
             half _Speed;
             half _DropSize;
             half _Alpha;
+            half _CustomTime;
 
             struct appdata
             {
@@ -63,8 +65,8 @@ Shader "Colorcrush/BoilingButtonShader"
                     return fixed4(_BackgroundColor.rgb, _BackgroundColor.a * _Alpha);
                 }
 
-                // Calculate the time-based factor for the ripple effect
-                half time = _Time.y * _Speed;
+                // Use the custom time variable instead of _Time
+                half time = _CustomTime * _Speed;
 
                 // Calculate the distance from the center
                 half dist = distance(uv, half2(0.5, 0.5));

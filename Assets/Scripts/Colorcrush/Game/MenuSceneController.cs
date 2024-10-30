@@ -158,9 +158,20 @@ namespace Colorcrush.Game
 
         private void Update()
         {
+            // Handle color view inspector
             if (enableColorViewInspector)
             {
                 HandleColorViewInspector();
+            }
+
+            // Update custom time for boiling button shader
+            if (submitButton != null)
+            {
+                var image = submitButton.GetComponent<Image>();
+                if (image != null && image.material != null)
+                {
+                    ShaderManager.SetFloat(image.material, "_CustomTime", Time.time);
+                }
             }
         }
 
@@ -532,6 +543,7 @@ namespace Colorcrush.Game
                     // Enable button and set color
                     buttons[i].interactable = true;
                     ShaderManager.SetColor(buttonImage.material, "_TargetColor", targetColor);
+                    ShaderManager.SetColor(buttonImage.material, "_OriginalColor", targetColor);
                     ShaderManager.SetFloat(buttonImage.material, "_Alpha", 1f);
                     var index = i;
                     buttons[i].onClick.AddListener(() => OnButtonClicked(index));
@@ -568,6 +580,7 @@ namespace Colorcrush.Game
                     // Disable button and set to black with 20% transparency
                     buttons[i].interactable = false;
                     ShaderManager.SetColor(buttonImage.material, "_TargetColor", Color.black);
+                    ShaderManager.SetColor(buttonImage.material, "_OriginalColor", Color.black);
                     ShaderManager.SetFloat(buttonImage.material, "_Alpha", 0.2f);
                     buttons[i].transform.localScale = Vector3.one * selectedButtonScale;
                 }

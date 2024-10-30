@@ -150,7 +150,9 @@ namespace Colorcrush.Game
             if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
                 ShaderManager.SetColor(_targetEmojiImage.material, "_TargetColor", _targetColor);
+                ShaderManager.SetColor(_targetEmojiImage.material, "_OriginalColor", _targetColor);
                 ShaderManager.SetFloat(_targetEmojiImage.material, "_Alpha", 1f);
+                ShaderManager.SetFloat(_targetEmojiImage.material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
             }
             else
             {
@@ -340,6 +342,8 @@ namespace Colorcrush.Game
             _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
             var nextColor = GetNextColor();
             ShaderManager.SetColor(_selectionGridImages[index].material, "_TargetColor", nextColor);
+            ShaderManager.SetColor(_selectionGridImages[index].material, "_OriginalColor", _targetColor);
+            ShaderManager.SetFloat(_selectionGridImages[index].material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
             if (!ignoreAlpha)
             {
                 ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", defaultAlpha);
@@ -458,6 +462,7 @@ namespace Colorcrush.Game
                 instance.transform.localScale = button.transform.localScale;
                 var color = buttonImage.color;
                 instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[index] ? toggledAlpha : defaultAlpha);
+                ShaderManager.SetFloat(instanceImage.material, "_SkinColorMode", 0);
             }
 
             return instance;
@@ -559,9 +564,11 @@ namespace Colorcrush.Game
 
         private IEnumerator ShowHappyEmojiCoroutine()
         {
+            ShaderManager.SetFloat(_targetEmojiImage.material, "_SkinColorMode", 0);
             _targetEmojiImage.sprite = EmojiManager.GetNextHappyEmoji();
             LoggingManager.LogEvent(new ColorsSubmittedEvent(EmojiManager.GetNextHappyEmoji().name));
             yield return new WaitForSeconds(1f);
+            ShaderManager.SetFloat(_targetEmojiImage.material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
             _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
         }
 

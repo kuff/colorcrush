@@ -6,12 +6,14 @@ Shader "Colorcrush/ColorTransposeShader"
     {
         _MainTex ("Texture", 2D) = "white" {}
         _TargetColor ("Target Color", Color) = (1, 0, 0, 1) // Default red target color
+        _OriginalColor ("Original Color", Color) = (1, 0, 0, 1) // Original color for non-skin colors
         _SkinColor ("Skin Color", Color) = (0.97, 0.87, 0.25, 1) // Yellow skin color F8DE40
         _Tolerance ("Tolerance", Range(0, 1)) = 0.1 // Tolerance for color matching
         _WhiteTolerance ("White Tolerance", Range(0, 1)) = 0.1 // Tolerance for detecting white color
         _Alpha ("Alpha", Range(0, 1)) = 1.0 // Alpha value for the entire image
         _FillScale ("Fill Scale", Range(0, 1)) = 1.0 // Scale factor for the texture
         _FillColor ("Fill Color", Color) = (1, 1, 1, 1) // Fill color for scaled texture
+        _SkinColorMode ("Skin Color Mode", Range(0, 1)) = 0 // Toggle between normal (0) and skin color (1) modes
     }
     SubShader
     {
@@ -46,12 +48,14 @@ Shader "Colorcrush/ColorTransposeShader"
             sampler2D _MainTex;
             float4 _MainTex_ST;
             fixed4 _TargetColor;
+            fixed4 _OriginalColor;
             fixed4 _SkinColor;
             float _Tolerance;
             float _WhiteTolerance;
             float _Alpha;
             float _FillScale;
             fixed4 _FillColor;
+            float _SkinColorMode;
 
             v2f vert(appdata_t v)
             {
@@ -104,17 +108,24 @@ Shader "Colorcrush/ColorTransposeShader"
                 // Calculate the distance between the texture color and the skin color
                 float skinDistance = distance(scaledColor.rgb, _SkinColor.rgb);
 
-                if (skinDistance < _Tolerance)
+                if (_SkinColorMode == 1)
                 {
-                    // If the pixel color is close to the skin color, change it to the target color
+                    // In skin color mode, all non-white pixels become skin colored
                     return fixed4(_TargetColor.rgb, scaledColor.a * _Alpha);
                 }
-                else
+                else 
                 {
-                    // Otherwise, adjust the color relative to the new skin color
-                    float3 colorDiff = scaledColor.rgb - _SkinColor.rgb;
-                    fixed4 adjustedColor = fixed4(_TargetColor.rgb + colorDiff, scaledColor.a * _Alpha);
-                    return adjustedColor;
+                    // Original behavior
+                    if (skinDistance < _Tolerance)
+                    {
+                        return fixed4(_TargetColor.rgb, scaledColor.a * _Alpha);
+                    }
+                    else
+                    {
+                        float3 colorDiff = scaledColor.rgb - _SkinColor.rgb;
+                        fixed4 adjustedColor = fixed4(_OriginalColor.rgb + colorDiff, scaledColor.a * _Alpha);
+                        return adjustedColor;
+                    }
                 }
             }
             ENDCG

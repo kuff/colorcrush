@@ -52,6 +52,7 @@ Material:
     - _Axis8: 0.5
     - _CircleSize: 0.1
     - _CurveStrength: 1
+    - _CustomTime: 0
     - _DropSize: 0.1
     - _EffectStrength: 1
     - _EffectToggle: 1
@@ -72,8 +73,8 @@ Material:
     - _ThresholdLow: 0
     - _TimeMultiplier: 5
     m_Colors:
-    - _AccentColor: {r: 0.1602602, g: 0.690566, b: 0.1602602, a: 1}
-    - _BackgroundColor: {r: 0.1764636, g: 0.6666667, b: 0.1764636, a: 1}
+    - _AccentColor: {r: 0.16026014, g: 0.690566, b: 0.16026014, a: 1}
+    - _BackgroundColor: {r: 0.17646354, g: 0.6666667, b: 0.17646354, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _FillColor: {r: 1, g: 0, b: 0, a: 0.5}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}

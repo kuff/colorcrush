@@ -11,7 +11,7 @@ PlayerSettings:
   defaultScreenOrientation: 0
   targetDevice: 2
   useOnDemandResources: 0
-  accelerometerFrequency: 60
+  accelerometerFrequency: 0
   companyName: Aalborg University
   productName: Colorcrush
   defaultCursor: {fileID: 0}
@@ -139,7 +139,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 1.2.0
+  bundleVersion: 1.2.1
   preloadedAssets:
   - {fileID: -1767824676358091940, guid: 4f84b2d7b796171478449bf1be757e9f, type: 2}
   metroInputSource: 0

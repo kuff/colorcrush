@@ -55,6 +55,8 @@ namespace Colorcrush
 
         [Tooltip("The format of the color data in the file.")]
         public ColorDataLoader.ColorFormat colorDataFormat = ColorDataLoader.ColorFormat.SRGBZeroToOne;
+        [Tooltip("The default skin color mode for the ColorTransposeShader. If true, all non-white pixels become skin colored. If false, only pixels matching the skin color within tolerance are changed.")]
+        public bool useSkinColorMode = false;
 
         [Header("Emoji Configuration")] [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
