@@ -18,7 +18,8 @@ namespace Colorcrush.Game
 {
     public class MenuSceneController : MonoBehaviour
     {
-        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        [Header("Scroll View Settings")]
+        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -39,7 +40,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")]
+        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
@@ -54,7 +56,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        [Header("Color Analysis Settings")]
+        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
         private bool enableColorViewInspector = true;
 
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
@@ -84,7 +87,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The drag signifier object.")]
         private GameObject dragSignifier;
 
-        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [Header("Button Animation Settings")]
+        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -124,7 +128,11 @@ namespace Colorcrush.Game
         private float[] _currentAnalysisValues;
         private Color _currentFillColor = Color.clear;
         private Color _currentTargetColor;
+        private float _distanceSinceLastTick;
+        private bool _hasColorAnalysisBeenClicked;
         private bool _isDraggingColorAnalysisImage;
+        private Vector2 _lastDragPosition;
+        private float _lastTickTime;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
@@ -132,10 +140,6 @@ namespace Colorcrush.Game
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
         private HashSet<string> _uniqueCompletedColors;
-        private Vector2 _lastDragPosition;
-        private float _distanceSinceLastTick;
-        private float _lastTickTime;
-        private bool _hasColorAnalysisBeenClicked;
 
         private void Awake()
         {
@@ -215,9 +219,11 @@ namespace Colorcrush.Game
                     {
                         Debug.LogWarning("Submit button is missing Animator component.");
                     }
+
                     return;
                 }
-                else if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
+
+                if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
                 {
                     _isDraggingColorAnalysisImage = true;
                     colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
@@ -289,14 +295,14 @@ namespace Colorcrush.Game
                     _distanceSinceLastTick += distanceMoved;
 
                     // Check if the distance threshold is met and the minimum interval has passed
-                    if (_distanceSinceLastTick >= TickDistanceThreshold && (Time.time - _lastTickTime) >= MinTickInterval)
+                    if (_distanceSinceLastTick >= TickDistanceThreshold && Time.time - _lastTickTime >= MinTickInterval)
                     {
                         // Calculate pitch shift based on speed (logarithmic scaling)
                         var speed = distanceMoved / Time.deltaTime;
                         var pitchShift = Mathf.Lerp(1.0f, MaxPitchShift, Mathf.Log10(speed + 1) / Mathf.Log10(1000 + 1));
 
                         // Play tick sound with pitch shift
-                        AudioManager.PlaySound("click_2", gain: 0.5f, pitchShift: pitchShift);
+                        AudioManager.PlaySound("click_2", 0.5f, pitchShift);
 
                         // Reset distance and update last tick time
                         _distanceSinceLastTick = 0f;
@@ -722,10 +728,10 @@ namespace Colorcrush.Game
                         ShaderManager.SetColor(buttonImage.material, "_AccentColor", newLevelAccentColor);
                         ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 1f);
                         // Find the GameObject with the "SubmitIcon" tag
-                        GameObject submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
+                        var submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
                         if (submitIconObject != null)
                         {
-                            Image submitIconImage = submitIconObject.GetComponent<Image>();
+                            var submitIconImage = submitIconObject.GetComponent<Image>();
                             if (submitIconImage != null)
                             {
                                 // Change the sprite to icons8-advance-90
@@ -746,10 +752,10 @@ namespace Colorcrush.Game
                         ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", completedLevelColor);
                         ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 0f);
                         // Find the GameObject with the "SubmitIcon" tag
-                        GameObject submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
+                        var submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
                         if (submitIconObject != null)
                         {
-                            Image submitIconImage = submitIconObject.GetComponent<Image>();
+                            var submitIconImage = submitIconObject.GetComponent<Image>();
                             if (submitIconImage != null)
                             {
                                 // Change the sprite to icons8-advance-90

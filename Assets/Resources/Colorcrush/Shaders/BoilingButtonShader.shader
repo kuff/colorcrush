@@ -58,33 +58,30 @@ Shader "Colorcrush/BoilingButtonShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                float2 uv = i.uv;
-
+                // Early return if effect is disabled
                 if (_EffectToggle < 0.5)
                 {
                     return fixed4(_BackgroundColor.rgb, _BackgroundColor.a * _Alpha);
                 }
 
-                // Use the custom time variable instead of _Time
-                half time = _CustomTime * _Speed;
+                // Calculate UV distance from center
+                float2 centeredUV = i.uv - 0.5;
+                half dist = length(centeredUV);
 
-                // Calculate the distance from the center
-                half dist = distance(uv, half2(0.5, 0.5));
+                // Create animated ripple pattern
+                half timeOffset = _CustomTime * _Speed * 4.0;
+                half ripplePattern = sin(dist * 12.0 - timeOffset);
+                half rippleIntensity = ripplePattern * 0.1;
 
-                // Create ripple effect
-                half ripple = sin(dist * 12.0 - time * 4.0) * 0.1;
+                // Create drop effect with ripple
+                half dropEdge = _DropSize + rippleIntensity;
+                half dropMask = smoothstep(dropEdge, _DropSize, dist);
 
-                // Modulate the size of the ripple
-                half dropEffect = smoothstep(_DropSize + ripple, _DropSize, dist);
+                // Blend colors based on drop mask
+                fixed4 finalColor = lerp(_AccentColor, _BackgroundColor, dropMask);
+                finalColor.a *= _Alpha;
 
-                // Interpolate between the accent color and the background color
-                fixed4 color = lerp(_AccentColor, _BackgroundColor, dropEffect);
-
-                // Apply the alpha value
-                color.a *= _Alpha;
-
-                // Return the final color based on the effect
-                return color;
+                return finalColor;
             }
             ENDCG
         }
