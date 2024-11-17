@@ -27,6 +27,7 @@ MonoBehaviour:
   colorSplitRegex: '(\d{1,3})\s+\d{1,3}\s+\d{1,3}\s*$  '
   colorDataFormat: 3
   useSkinColorMode: 0
+  unlockAllLevelsFromStart: 1
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4
   happyEmojiFolder: Colorcrush/Emoji/Happy

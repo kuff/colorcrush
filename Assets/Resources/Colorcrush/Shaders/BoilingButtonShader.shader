@@ -10,7 +10,6 @@ Shader "Colorcrush/BoilingButtonShader"
         _Speed ("Effect Speed", Float) = 2.0
         _DropSize ("Drop Size", Float) = 0.25
         _Alpha ("Alpha", Range(0, 1)) = 1.0
-        _CustomTime ("Custom Time", Float) = 0.0
     }
     
     SubShader
@@ -34,7 +33,6 @@ Shader "Colorcrush/BoilingButtonShader"
             half _Speed;
             half _DropSize;
             half _Alpha;
-            half _CustomTime;
 
             struct appdata
             {
@@ -59,7 +57,7 @@ Shader "Colorcrush/BoilingButtonShader"
             fixed4 frag(v2f i) : SV_Target
             {
                 // Early return if effect is disabled
-                if (_EffectToggle < 0.5)
+                if (_EffectToggle < 1)
                 {
                     return fixed4(_BackgroundColor.rgb, _BackgroundColor.a * _Alpha);
                 }
@@ -68,8 +66,8 @@ Shader "Colorcrush/BoilingButtonShader"
                 float2 centeredUV = i.uv - 0.5;
                 half dist = length(centeredUV);
 
-                // Create animated ripple pattern
-                half timeOffset = _CustomTime * _Speed * 4.0;
+                // Create animated ripple pattern using _Time
+                half timeOffset = _Time.y * _Speed * 4.0;
                 half ripplePattern = sin(dist * 12.0 - timeOffset);
                 half rippleIntensity = ripplePattern * 0.1;
 

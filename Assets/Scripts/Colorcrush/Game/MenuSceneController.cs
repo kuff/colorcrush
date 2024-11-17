@@ -169,14 +169,14 @@ namespace Colorcrush.Game
             }
 
             // Update custom time for boiling button shader
-            if (submitButton != null)
-            {
-                var image = submitButton.GetComponent<Image>();
-                if (image != null && image.material != null)
-                {
-                    ShaderManager.SetFloat(image.material, "_CustomTime", Time.time);
-                }
-            }
+            // if (submitButton != null)
+            // {
+            //     var image = submitButton.GetComponent<Image>();
+            //     if (image != null && image.material != null)
+            //     {
+            //         ShaderManager.SetFloat(image.material, "_CustomTime", Time.time);
+            //     }
+            // }
         }
 
         private void OnDestroy()
@@ -207,7 +207,7 @@ namespace Colorcrush.Game
             if (Input.GetMouseButtonDown(0))
             {
                 // Check if the selected button is the most recent one (yet to be completed)
-                if (_selectedLevelIndex == _uniqueCompletedColors.Count)
+                if (_selectedLevelIndex == _uniqueCompletedColors.Count && !ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
                     var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
                     var submitButtonAnimator = submitButton.GetComponent<Animator>();
@@ -544,7 +544,8 @@ namespace Colorcrush.Game
                 var targetColor = ColorArray.SRGBTargetColors[i];
                 var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
 
-                if (i <= nextColorIndex)
+                // Check if all levels should be unlocked
+                if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || i <= nextColorIndex)
                 {
                     // Enable button and set color
                     buttons[i].interactable = true;
@@ -554,8 +555,12 @@ namespace Colorcrush.Game
                     var index = i;
                     buttons[i].onClick.AddListener(() => OnButtonClicked(index));
 
-                    // Set the rewarded emoji if available
-                    if (_uniqueCompletedColors.Contains(targetColorHex))
+                    // Set the emoji based on completion status and unlockAllLevelsFromStart setting
+                    if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
+                    {
+                        buttonImage.sprite = EmojiManager.GetDefaultHappyEmoji();
+                    }
+                    else if (_uniqueCompletedColors.Contains(targetColorHex))
                     {
                         var colorIndex = completedColors.IndexOf(targetColorHex);
                         if (colorIndex < rewardedEmojis.Count)
@@ -575,8 +580,8 @@ namespace Colorcrush.Game
 
                     buttons[i].transform.localScale = Vector3.one;
 
-                    // Set up animation for the next level button
-                    if (i == nextColorIndex)
+                    // Set up animation for the next level button if not unlocking all levels
+                    if (!ProjectConfig.InstanceConfig.unlockAllLevelsFromStart && i == nextColorIndex)
                     {
                         StartCoroutine(AnimateNextLevelButton(buttons[i]));
                     }
@@ -662,6 +667,9 @@ namespace Colorcrush.Game
 
             _selectedLevelIndex = index;
 
+            // Update the current target color immediately
+            _currentTargetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+
             // Scale down the newly selected button
             if (index < buttonGrid.transform.childCount)
             {
@@ -678,6 +686,7 @@ namespace Colorcrush.Game
                 }
             }
 
+            // Update the submit button immediately after updating the target color
             UpdateSubmitButton();
             UpdateColorAnalysis();
 
@@ -717,59 +726,26 @@ namespace Colorcrush.Game
         {
             if (submitButton != null)
             {
-                var isNewLevel = _selectedLevelIndex == _uniqueCompletedColors.Count;
+                // Determine if the selected level is new or completed
+                bool isNewLevel = !ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor));
 
                 var buttonImage = submitButton.GetComponent<Image>();
                 if (buttonImage != null && buttonImage.material != null)
                 {
                     if (isNewLevel)
                     {
+                        // Set colors for a new level
                         ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", newLevelColor);
                         ShaderManager.SetColor(buttonImage.material, "_AccentColor", newLevelAccentColor);
                         ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 1f);
-                        // Find the GameObject with the "SubmitIcon" tag
-                        var submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
-                        if (submitIconObject != null)
-                        {
-                            var submitIconImage = submitIconObject.GetComponent<Image>();
-                            if (submitIconImage != null)
-                            {
-                                // Change the sprite to icons8-advance-90
-                                submitIconImage.sprite = Resources.Load<Sprite>("Colorcrush/Icons/icons8-advance-90");
-                            }
-                            else
-                            {
-                                Debug.LogWarning("SubmitIcon object does not have an Image component.");
-                            }
-                        }
-                        else
-                        {
-                            Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
-                        }
+                        UpdateSubmitIcon("Colorcrush/Icons/icons8-advance-90");
                     }
                     else
                     {
+                        // Set colors for a completed level
                         ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", completedLevelColor);
                         ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 0f);
-                        // Find the GameObject with the "SubmitIcon" tag
-                        var submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
-                        if (submitIconObject != null)
-                        {
-                            var submitIconImage = submitIconObject.GetComponent<Image>();
-                            if (submitIconImage != null)
-                            {
-                                // Change the sprite to icons8-advance-90
-                                submitIconImage.sprite = Resources.Load<Sprite>("Colorcrush/Icons/icons8-undo-90");
-                            }
-                            else
-                            {
-                                Debug.LogWarning("SubmitIcon object does not have an Image component.");
-                            }
-                        }
-                        else
-                        {
-                            Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
-                        }
+                        UpdateSubmitIcon("Colorcrush/Icons/icons8-undo-90");
                     }
                 }
                 else
@@ -777,7 +753,31 @@ namespace Colorcrush.Game
                     Debug.LogError("Submit button is missing Image component or material.");
                 }
 
+                // Enable or disable the submit button based on the selected level index
                 submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count;
+            }
+        }
+
+        private void UpdateSubmitIcon(string iconPath)
+        {
+            // Find the GameObject with the "SubmitIcon" tag
+            var submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
+            if (submitIconObject != null)
+            {
+                var submitIconImage = submitIconObject.GetComponent<Image>();
+                if (submitIconImage != null)
+                {
+                    // Change the sprite to the specified icon
+                    submitIconImage.sprite = Resources.Load<Sprite>(iconPath);
+                }
+                else
+                {
+                    Debug.LogWarning("SubmitIcon object does not have an Image component.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
             }
         }
 

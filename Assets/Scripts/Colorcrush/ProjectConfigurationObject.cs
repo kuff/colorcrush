@@ -61,6 +61,9 @@ namespace Colorcrush
         [Tooltip("The default skin color mode for the ColorTransposeShader. If true, all non-white pixels become skin colored. If false, only pixels matching the skin color within tolerance are changed.")]
         public bool useSkinColorMode;
 
+        [Tooltip("If true, all levels will be unlocked and available from the start. If false, levels must be unlocked through progression.")]
+        public bool unlockAllLevelsFromStart;
+
         [Header("Emoji Configuration")]
         [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
