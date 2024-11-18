@@ -15,8 +15,15 @@ namespace Colorcrush.Game
 {
     public static partial class ColorManager
     {
-        public static bool ApplyGammaCorrection { get; set; } = true;
-        public static ColorExperiment CurrentColorExperiment { get; private set; }
+        public enum ColorFormat
+        {
+            DisplayP3ZeroToOne,
+            DisplayP3ZeroTo255,
+            SRGBZeroToOne,
+            SRGBZeroTo255,
+            XYZ,
+            XYY,
+        }
 
         private const int VariationsPerColor = 30;
         private const float VariationRange = 0.05f;
@@ -26,7 +33,7 @@ namespace Colorcrush.Game
         // Conversion matrices
 
         // CIE XYZ to sRGB matrix
-        private static Matrix4x4 XYZTosRGB = new Matrix4x4(
+        private static Matrix4x4 XYZTosRGB = new(
             new Vector4(3.174569687f, -1.437132245f, -0.533239074f, 0f),
             new Vector4(-0.978559662f, 1.851015357f, 0.0734006f, 0f),
             new Vector4(0.071795226f, -0.224002081f, 1.061208354f, 0f),
@@ -37,7 +44,7 @@ namespace Colorcrush.Game
         private static Matrix4x4 sRGBToXYZ = XYZTosRGB.inverse;
 
         // sRGB to Display P3 matrix
-        private static readonly Matrix4x4 sRGBToDisplayP3 = new Matrix4x4(
+        private static readonly Matrix4x4 sRGBToDisplayP3 = new(
             new Vector4(0.8225f, 0.1774f, 0f, 0f),
             new Vector4(0.0332f, 0.9669f, 0f, 0f),
             new Vector4(0.0171f, 0.0724f, 0.9108f, 0f),
@@ -52,126 +59,8 @@ namespace Colorcrush.Game
 
         // XYZ to Display P3 matrix
         private static Matrix4x4 XYZToDisplayP3 = sRGBToDisplayP3 * XYZTosRGB;
-
-        public enum ColorFormat
-        {
-            DisplayP3ZeroToOne,
-            DisplayP3ZeroTo255,
-            SRGBZeroToOne,
-            SRGBZeroTo255,
-            XYZ,
-            XYY,
-        }
-        
-        public class ColorObject
-        {
-            public Vector3 Vector { get; }
-            public Vector3 Vector255
-            {
-                get
-                {
-                    if (Format == ColorFormat.DisplayP3ZeroToOne || Format == ColorFormat.SRGBZeroToOne)
-                    {
-                        return Vector * 255f;
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Vector255 is only allowed for DisplayP3 and sRGB formats.");
-                    }
-                }
-            }
-            public ColorFormat Format { get; }
-
-            public ColorObject(Vector3 colorVector, ColorFormat format)
-            {
-                Vector = colorVector;
-                Format = format;
-            }
-            
-            public ColorObject(Color unityColor)
-            {
-                Vector = new Vector3(unityColor.r, unityColor.g, unityColor.b);
-                Format = ColorFormat.SRGBZeroToOne;
-            }
-
-            public ColorObject ToColorFormat(ColorFormat targetFormat)
-            {
-                return new ColorObject(ConvertColor(Vector, Format, targetFormat), targetFormat);
-            }
-
-            public Color ToColor()
-            {
-                // Convert to sRGB format if needed
-                var sRGBColor = ToColorFormat(ColorFormat.SRGBZeroToOne).Vector;
-                
-                return new Color(sRGBColor.x, sRGBColor.y, sRGBColor.z, 1f);
-            }
-        }
-
-        /*public static List<Color> GenerateColorVariations(Color baseColor)
-        {
-            var variations = new List<Color>();
-
-            for (var i = 0; i < VariationsPerColor; i++)
-            {
-                // DEBUG: Generate a random color
-                var variation = new Color(
-                    Mathf.Clamp01(baseColor.r + (float)(RandomInstance.NextDouble() * 2 - 1) * VariationRange),
-                    Mathf.Clamp01(baseColor.g + (float)(RandomInstance.NextDouble() * 2 - 1) * VariationRange),
-                    Mathf.Clamp01(baseColor.b + (float)(RandomInstance.NextDouble() * 2 - 1) * VariationRange),
-                    baseColor.a
-                );
-                variations.Add(variation);
-            }
-
-            return variations;
-        }*/
-
-        /*public static float[] GenerateColorAnalysis(Color targetColor, List<Color> selections)
-        {
-            if (ColorAnalysisCache.TryGetValue(targetColor, out var cachedAnalysis))
-            {
-                return cachedAnalysis;
-            }
-
-            var analysis = new float[8];
-
-            for (var i = 0; i < 8; i++)
-            {
-                // DEBUG: Generate a random value between 0 and 1, with a skew towards 0.5
-                var u = RandomInstance.NextDouble();
-                var v = RandomInstance.NextDouble();
-                var skewedValue = (u + v) / 2.0;
-                analysis[i] = (float)skewedValue;
-            }
-
-            ColorAnalysisCache[targetColor] = analysis;
-            return analysis;
-        }
-
-        public static List<Color> GetColorMatrixEdges(Color targetColor)
-        {
-            var edges = new List<Color>();
-
-            for (var r = -1; r <= 1; r += 2)
-            {
-                for (var g = -1; g <= 1; g += 2)
-                {
-                    for (var b = -1; b <= 1; b += 2)
-                    {
-                        var edgeColor = new Color(
-                            Mathf.Clamp01(targetColor.r + r * VariationRange),
-                            Mathf.Clamp01(targetColor.g + g * VariationRange),
-                            Mathf.Clamp01(targetColor.b + b * VariationRange),
-                            targetColor.a
-                        );
-                        edges.Add(edgeColor);
-                    }
-                }
-            }
-
-            return edges;
-        }*/
+        public static bool ApplyGammaCorrection => true;
+        public static ColorExperiment CurrentColorExperiment { get; private set; }
 
         public static ColorExperiment BeginColorExperiment(ColorObject baseColor)
         {
@@ -183,6 +72,7 @@ namespace Colorcrush.Game
                 default:
                     throw new InvalidOperationException($"Unknown color experiment name in ProjectConfig: {ProjectConfig.InstanceConfig.colorExperimentName}");
             }
+
             return CurrentColorExperiment;
         }
 
@@ -216,7 +106,7 @@ namespace Colorcrush.Game
             // Apply gamma correction to linear space if needed
             if (ApplyGammaCorrection && !disableGammaExpansion && IsGammaEncodedFormat(fromFormat))
             {
-                vector = ApplyGammaCorrectionToVector(vector, toLinear: true);
+                vector = ApplyGammaCorrectionToVector(vector, true);
             }
 
             // Convert from source color space to XYZ
@@ -228,7 +118,7 @@ namespace Colorcrush.Game
             // Apply gamma correction from linear space if needed
             if (ApplyGammaCorrection && IsGammaEncodedFormat(toFormat))
             {
-                resultVector = ApplyGammaCorrectionToVector(resultVector, toLinear: false);
+                resultVector = ApplyGammaCorrectionToVector(resultVector, false);
             }
 
             // Denormalize output if needed
@@ -402,6 +292,54 @@ namespace Colorcrush.Game
             var x = xyz.x / sum;
             var y = xyz.y / sum;
             return new Vector3(x, y, xyz.y);
+        }
+
+        public class ColorObject
+        {
+            public ColorObject(Vector3 colorVector, ColorFormat format, int directionIndex = -1)
+            {
+                Vector = colorVector;
+                Format = format;
+                DirectionIndex = directionIndex;
+            }
+
+            public ColorObject(Color unityColor, int directionIndex = -1)
+            {
+                Vector = new Vector3(unityColor.r, unityColor.g, unityColor.b);
+                Format = ColorFormat.SRGBZeroToOne;
+                DirectionIndex = directionIndex;
+            }
+
+            public Vector3 Vector { get; }
+
+            public Vector3 Vector255
+            {
+                get
+                {
+                    if (Format == ColorFormat.DisplayP3ZeroToOne || Format == ColorFormat.SRGBZeroToOne)
+                    {
+                        return Vector * 255f;
+                    }
+
+                    throw new InvalidOperationException("Vector255 is only allowed for DisplayP3 and sRGB formats.");
+                }
+            }
+
+            public ColorFormat Format { get; }
+            public int DirectionIndex { get; }
+
+            public ColorObject ToColorFormat(ColorFormat targetFormat)
+            {
+                return new ColorObject(ConvertColor(Vector, Format, targetFormat), targetFormat);
+            }
+
+            public Color ToColor()
+            {
+                // Convert to sRGB format if needed
+                var sRGBColor = ToColorFormat(ColorFormat.SRGBZeroToOne).Vector;
+
+                return new Color(sRGBColor.x, sRGBColor.y, sRGBColor.z, 1f);
+            }
         }
     }
 }

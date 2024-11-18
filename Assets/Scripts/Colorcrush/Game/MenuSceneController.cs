@@ -19,8 +19,9 @@ namespace Colorcrush.Game
 {
     public class MenuSceneController : MonoBehaviour
     {
-        [Header("Scroll View Settings")]
-        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        private const float DoubleTapTime = 0.3f;
+
+        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -41,8 +42,7 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")]
-        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
@@ -57,8 +57,7 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")]
-        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
         private bool enableColorViewInspector = true;
 
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
@@ -88,8 +87,7 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The drag signifier object.")]
         private GameObject dragSignifier;
 
-        [Header("Button Animation Settings")]
-        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -133,6 +131,7 @@ namespace Colorcrush.Game
         private bool _hasColorAnalysisBeenClicked;
         private bool _isDraggingColorAnalysisImage;
         private Vector2 _lastDragPosition;
+        private float _lastTapTime;
         private float _lastTickTime;
         private float _originalWidth;
         private float _scrollableWidth;
@@ -140,6 +139,8 @@ namespace Colorcrush.Game
         private int _selectedLevelIndex = -1;
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
+
+        private int _tapCount;
         private HashSet<string> _uniqueCompletedColors;
 
         private void Awake()
@@ -167,6 +168,44 @@ namespace Colorcrush.Game
             if (enableColorViewInspector)
             {
                 HandleColorViewInspector();
+            }
+
+            // Handle triple tap to toggle useSkinColorMode
+            if (Input.GetMouseButtonDown(0) && ProjectConfig.InstanceConfig.enableTripleTapToggleSkinColorMode)
+            {
+                if (Time.time - _lastTapTime < DoubleTapTime)
+                {
+                    _tapCount++;
+                }
+                else
+                {
+                    _tapCount = 1;
+                }
+
+                _lastTapTime = Time.time;
+
+                if (_tapCount == 3)
+                {
+                    _tapCount = 0;
+                    ProjectConfig.InstanceConfig.useSkinColorMode = !ProjectConfig.InstanceConfig.useSkinColorMode;
+
+                    AudioManager.PlaySound("MENU B_Select");
+
+                    // Update the shader on all buttons to reflect the change in useSkinColorMode
+                    var buttons = FindObjectsOfType<Button>();
+                    foreach (var button in buttons)
+                    {
+                        var image = button.GetComponent<Image>();
+                        if (image != null)
+                        {
+                            var material = image.material;
+                            if (material != null && material.shader.name == "Colorcrush/ColorTransposeShader")
+                            {
+                                ShaderManager.SetFloat(material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1.0f : 0.0f);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -312,20 +351,20 @@ namespace Colorcrush.Game
             var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
             var completedColorIndex = ProgressManager.CompletedTargetColors.IndexOf(targetColorHex);
             var finalColorsResult = ProgressManager.FinalColors[completedColorIndex];
-            
+
             // Use the knowledge of the center color and the 8 result colors, as well as the magnitude of the vector, to determine the color at the edges of each axis
             var edges = new Color[8];
-            
-            for (int i = 0; i < 8; i++)
+
+            for (var i = 0; i < 8; i++)
             {
                 var axisEncoding = finalColorsResult.AxisEncodings[i];
                 var axisColor = finalColorsResult.FinalColors[i].ToColor();
-                
+
                 var magnitude = axisEncoding.magnitude;
-                
+
                 edges[i] = Color.Lerp(_currentTargetColor, axisColor, 1 / magnitude);
             }
-            
+
             var angle = Mathf.Atan2(dragVector.y, dragVector.x);
             if (angle < 0)
             {
@@ -619,6 +658,11 @@ namespace Colorcrush.Game
                     OnButtonClicked(mostRecentIndex);
                 }
             }
+            else
+            {
+                // Select the first level by default
+                OnButtonClicked(0);
+            }
         }
 
         private IEnumerator AnimateNextLevelButton(Button button)
@@ -735,7 +779,7 @@ namespace Colorcrush.Game
             if (submitButton != null)
             {
                 // Determine if the selected level is new or completed
-                bool isNewLevel = !ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor));
+                var isNewLevel = !ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor));
 
                 var buttonImage = submitButton.GetComponent<Image>();
                 if (buttonImage != null && buttonImage.material != null)
@@ -762,7 +806,7 @@ namespace Colorcrush.Game
                 }
 
                 // Enable or disable the submit button based on the selected level index
-                submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count;
+                submitButton.interactable = (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count) || ProjectConfig.InstanceConfig.unlockAllLevelsFromStart;
             }
         }
 
@@ -791,29 +835,26 @@ namespace Colorcrush.Game
 
         private void OnSubmitButtonClicked()
         {
-            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count && _selectedLevelIndex < SRGBTargetColors.Length)
+            var targetColor = SRGBTargetColors[_selectedLevelIndex];
+            PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
+            PlayerPrefs.Save();
+
+            // Play bump animation
+            var animator = submitButton.GetComponent<Animator>();
+            if (animator != null)
             {
-                var targetColor = SRGBTargetColors[_selectedLevelIndex];
-                PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
-                PlayerPrefs.Save();
-
-                // Play bump animation
-                var animator = submitButton.GetComponent<Animator>();
-                if (animator != null)
-                {
-                    var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
-                    AnimationManager.PlayAnimation(animator, bumpAnimation);
-                }
-                else
-                {
-                    Debug.LogError("Submit button is missing Animator component.");
-                }
-
-                // Wait for 1 second before loading the scene
-                StartCoroutine(LoadSceneAfterDelay(0.1f));
-
-                AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
+                var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
+                AnimationManager.PlayAnimation(animator, bumpAnimation);
             }
+            else
+            {
+                Debug.LogError("Submit button is missing Animator component.");
+            }
+
+            // Wait for 1 second before loading the scene
+            StartCoroutine(LoadSceneAfterDelay(0.1f));
+
+            AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
         }
 
         private IEnumerator LoadSceneAfterDelay(float delay)
@@ -860,7 +901,9 @@ namespace Colorcrush.Game
             {
                 // Get the index from completed colors list that matches current target color
                 var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
-                var completedColorIndex = ProgressManager.CompletedTargetColors.IndexOf(targetColorHex);
+
+                // Search the list of completed colors for the target color in reverse order, so that only the most recent completion is used
+                var completedColorIndex = ProgressManager.CompletedTargetColors.FindLastIndex(c => c == targetColorHex);
 
                 // Use that index to get the corresponding final colors result
                 if (completedColorIndex >= 0 && completedColorIndex < ProgressManager.FinalColors.Count)

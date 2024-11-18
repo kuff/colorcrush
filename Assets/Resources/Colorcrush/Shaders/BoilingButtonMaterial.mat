@@ -74,8 +74,8 @@ Material:
     - _ThresholdLow: 0
     - _TimeMultiplier: 5
     m_Colors:
-    - _AccentColor: {r: 0.16025934, g: 0.690566, b: 0.16025934, a: 1}
-    - _BackgroundColor: {r: 0.87169814, g: 0.15624726, b: 0.15624726, a: 1}
+    - _AccentColor: {r: 0.16078413, g: 0.6901961, b: 0.16078413, a: 1}
+    - _BackgroundColor: {r: 0.87169814, g: 0.15624738, b: 0.15624738, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _FillColor: {r: 1, g: 0, b: 0, a: 0.5}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}

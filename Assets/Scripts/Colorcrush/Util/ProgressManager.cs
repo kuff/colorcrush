@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
+using System.Globalization;
 using Colorcrush.Game;
 using Colorcrush.Logging;
 using UnityEngine;
@@ -263,10 +263,10 @@ namespace Colorcrush.Util
                     if (!_currentLevelCompleted)
                     {
                         var chunks = eventData.Split(' ');
-                        
+
                         // Parse the first 8 chunks as hex colors
                         var colors = new List<ColorManager.ColorObject>();
-                        for (int i = 0; i < 8; i++)
+                        for (var i = 0; i < 8; i++)
                         {
                             ColorUtility.TryParseHtmlString("#" + chunks[i], out var color);
                             colors.Add(new ColorManager.ColorObject(color));
@@ -274,23 +274,24 @@ namespace Colorcrush.Util
 
                         // Parse the remaining chunks as Vector3 encodings
                         var encodings = new List<Vector3>();
-                        for (int i = 0; i < 8; i++) 
+                        for (var i = 0; i < 8; i++)
                         {
                             // Combine the three parts of each Vector3
-                            string vectorStr = chunks[8 + i*3] + chunks[9 + i*3] + chunks[10 + i*3];
+                            var vectorStr = chunks[8 + i * 3] + chunks[9 + i * 3] + chunks[10 + i * 3];
                             // Remove parentheses and split by semicolon
-                            string[] components = vectorStr.Trim('(', ')').Split(';');
-                            
-                            float x = float.Parse(components[0], System.Globalization.CultureInfo.InvariantCulture);
-                            float y = float.Parse(components[1], System.Globalization.CultureInfo.InvariantCulture);
-                            float z = float.Parse(components[2], System.Globalization.CultureInfo.InvariantCulture);
-                            
+                            var components = vectorStr.Trim('(', ')').Split(';');
+
+                            var x = float.Parse(components[0], CultureInfo.InvariantCulture);
+                            var y = float.Parse(components[1], CultureInfo.InvariantCulture);
+                            var z = float.Parse(components[2], CultureInfo.InvariantCulture);
+
                             encodings.Add(new Vector3(x, y, z));
                         }
 
                         var result = new ColorManager.ColorMatrixResult(encodings, colors);
                         _finalColors.Add(result);
                     }
+
                     break;
             }
         }

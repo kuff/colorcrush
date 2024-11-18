@@ -14,6 +14,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using static Colorcrush.Game.ColorManager;
 using Animator = Colorcrush.Animation.Animator;
+using Random = System.Random;
 
 #endregion
 
@@ -21,8 +22,7 @@ namespace Colorcrush.Game
 {
     public class GameSceneController : MonoBehaviour
     {
-        [Header("General")]
-        [Tooltip("Factor to shrink buttons when toggled. A value of 0.9 means the button will shrink to 90% of its original size.")] [SerializeField]
+        [Header("General")] [Tooltip("Factor to shrink buttons when toggled. A value of 0.9 means the button will shrink to 90% of its original size.")] [SerializeField]
         private float shrinkFactor = 0.9f;
 
         [Tooltip("Alpha (transparency) value for toggled buttons. 0 is fully transparent, 1 is fully opaque.")] [SerializeField]
@@ -40,8 +40,7 @@ namespace Colorcrush.Game
         [Tooltip("Delay in seconds between each button's fade-in animation during the initial setup.")] [SerializeField]
         private float buttonFadeInDelay = 0.025f;
 
-        [Header("Emoji Animation Settings")]
-        [Tooltip("Duration in seconds of the fade-out animation for emojis that were selected.")] [SerializeField]
+        [Header("Emoji Animation Settings")] [Tooltip("Duration in seconds of the fade-out animation for emojis that were selected.")] [SerializeField]
         private float selectedEmojiFadeDuration = 0.5f;
 
         [Tooltip("Duration in seconds of the movement animation for emojis that were not selected.")] [SerializeField]
@@ -50,8 +49,7 @@ namespace Colorcrush.Game
         [Tooltip("Vector3 offset for the movement of non-selected emojis. Determines direction and distance of movement.")] [SerializeField]
         private Vector3 nonSelectedEmojiMoveOffset = Vector3.zero;
 
-        [Header("Sound Settings")]
-        [Tooltip("Name of the sound effect to play for non-selected emojis.")] [SerializeField]
+        [Header("Sound Settings")] [Tooltip("Name of the sound effect to play for non-selected emojis.")] [SerializeField]
         private string nonSelectedEmojiSound = "misc_menu";
 
         [Tooltip("Base pitch for the first non-selected emoji sound. Values above 1 increase pitch, below 1 decrease pitch.")] [SerializeField]
@@ -63,8 +61,7 @@ namespace Colorcrush.Game
         [Tooltip("Volume adjustment for the non-selected emoji sounds. Higher values increase volume.")] [SerializeField]
         private float nonSelectedEmojiGain = 1f;
 
-        [Header("UI Elements")]
-        [Tooltip("TextMeshProUGUI component for displaying text on the submit button.")] [SerializeField]
+        [Header("UI Elements")] [Tooltip("TextMeshProUGUI component for displaying text on the submit button.")] [SerializeField]
         private TextMeshProUGUI submitButtonText;
 
         [Tooltip("Image component representing the progress bar fill.")] [SerializeField]
@@ -79,12 +76,15 @@ namespace Colorcrush.Game
         [Tooltip("Image component for displaying the target emoji that players need to match.")] [SerializeField]
         private Image targetEmojiImage;
 
-        [Header("Scene Management")]
-        [Tooltip("Name of the scene to load after successfully completing all color submissions.")] [SerializeField]
+        [Header("Scene Management")] [Tooltip("Name of the scene to load after successfully completing all color submissions.")] [SerializeField]
         private string nextSceneName = "MuralScene";
+
+        private readonly List<ColorObject> _nonSelectedColors = new();
+        private readonly List<ColorObject> _selectedColors = new();
 
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
+        private ColorExperiment _colorExperiment;
         private List<ColorObject> _colorQueue;
         private GameState _currentState = GameState.Setup;
         private float _initialProgressBarWidth;
@@ -99,9 +99,6 @@ namespace Colorcrush.Game
         private Image _targetEmojiImage;
         private bool _targetReached;
         private int _targetSubmitCount;
-        private ColorExperiment _colorExperiment;
-        private List<ColorObject> _selectedColors = new ();
-        private List<ColorObject> _nonSelectedColors = new ();
 
         private void Awake()
         {
@@ -148,12 +145,13 @@ namespace Colorcrush.Game
                 {
                     _colorQueue.Add(colorObject);
                 }
+
                 hasMore = moreColors;
             } while (hasMore);
-            
+
             // Randomize the color queue using the configured random seed
             var randomizedColors = _colorQueue.ToList();
-            var rng = new System.Random(ProjectConfig.InstanceConfig.randomSeed);
+            var rng = new Random(ProjectConfig.InstanceConfig.randomSeed);
             var n = randomizedColors.Count;
             while (n > 1)
             {
@@ -161,6 +159,7 @@ namespace Colorcrush.Game
                 var k = rng.Next(n + 1);
                 (randomizedColors[k], randomizedColors[n]) = (randomizedColors[n], randomizedColors[k]);
             }
+
             _colorQueue = new List<ColorObject>(randomizedColors);
         }
 
@@ -250,7 +249,7 @@ namespace Colorcrush.Game
             // Save the results
             var results = _colorExperiment.GetFinalColors(_selectedColors, _nonSelectedColors);
             LoggingManager.LogEvent(new FinalColorsEvent(results));
-            
+
             LoggingManager.LogEvent(new GameLevelEndEvent());
 
             _currentState = GameState.Teardown;
@@ -430,12 +429,12 @@ namespace Colorcrush.Game
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 // Use the color from the queue instead of the material
-                var color = _colorQueue[(_submitCount * _selectionGridButtons.Length + i) % _colorQueue.Count];
+                var color = _colorQueue[_submitCount * _selectionGridButtons.Length + i];
                 if (_buttonToggledStates[i])
                 {
                     _selectedColors.Add(color);
                 }
-                else 
+                else
                 {
                     _nonSelectedColors.Add(color);
                 }
@@ -571,6 +570,11 @@ namespace Colorcrush.Game
 
         private void ResetButtons()
         {
+            if (_submitCount == _colorExperiment.GetTotalBatches())
+            {
+                return;
+            }
+
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 UpdateButton(i, true);
@@ -636,13 +640,8 @@ namespace Colorcrush.Game
 
         private Color GetNextColor(int buttonIndex)
         {
-            if (_colorQueue.Count == 0)
-            {
-                InitializeColorQueue();
-            }
-
             // Use submit count and button index to determine which color to return
-            var colorIndex = (_submitCount * _selectionGridButtons.Length + buttonIndex) % _colorQueue.Count;
+            var colorIndex = _submitCount * _selectionGridButtons.Length + buttonIndex;
             return _colorQueue[colorIndex].ToColor();
         }
 

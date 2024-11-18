@@ -19,8 +19,7 @@ namespace Colorcrush.Game
 {
     public class StartSceneController : MonoBehaviour
     {
-        [Header("General")]
-        [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
+        [Header("General")] [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
         private TextMeshProUGUI titleText;
 
         [Tooltip("TextMeshProUGUI component for displaying the current version of the game.")] [SerializeField]
@@ -44,8 +43,7 @@ namespace Colorcrush.Game
         [Tooltip("Time in seconds between each shake animation of the title.")] [SerializeField]
         private float shakeInterval = 10f;
 
-        [Header("Emoji Shuffle Effect")]
-        [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
+        [Header("Emoji Shuffle Effect")] [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
         private bool enableEmojiShuffle = true;
 
         [Tooltip("Total duration in seconds of the emoji shuffling animation.")] [SerializeField]
@@ -69,24 +67,16 @@ namespace Colorcrush.Game
         [Tooltip("Final scale of the emoji after the shuffling animation completes.")] [SerializeField]
         private float targetScale = 0.5f;
 
-        [Tooltip("Color to apply to the shuffled emojis.")] [SerializeField]
-        private Color emojiColor = new(0.82f, 0.47f, 0.46f); // D27975 in RGB
-
-        [Tooltip("Color of the background behind the shuffling emojis.")] [SerializeField]
-        private Color backgroundColor = Color.white;
-
         [Tooltip("Image component for the background of the start screen.")] [SerializeField]
         private Image backgroundImage;
 
-        [Header("Reveal Behind Effect")]
-        [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
+        [Header("Reveal Behind Effect")] [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
         private Material circleMaterial;
 
         [Tooltip("Speed at which the reveal circle expands behind the emoji.")] [SerializeField]
         private float expandSpeed = 1.0f;
 
-        [Header("Sound Effects")]
-        [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
+        [Header("Sound Effects")] [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
         private string smileySound = "MENU_Pick";
 
         [Tooltip("Pitch adjustment for the colon sound in the smiley face (higher values = higher pitch).")] [SerializeField]
@@ -113,8 +103,7 @@ namespace Colorcrush.Game
         [Tooltip("Volume adjustment for the emoji bump sound.")] [SerializeField]
         private float emojiBumpGain = 1f;
 
-        [Header("Shake Animation")]
-        [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
+        [Header("Shake Animation")] [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
         private float shakeDuration = 0.75f;
 
         [Tooltip("Intensity of the shake animation (higher values = more intense shaking).")] [SerializeField]
@@ -145,6 +134,8 @@ namespace Colorcrush.Game
             StartCoroutine(AddSmileyToTitle());
             StartCoroutine(PlaySoundAfterDelay());
 
+            SetRandomColors();
+
             if (enableEmojiShuffle)
             {
                 InstantiateTargetImage();
@@ -154,21 +145,11 @@ namespace Colorcrush.Game
                     _originalScale = _targetImage.transform.localScale;
                     _shuffleDuration = Mathf.Max(0, totalAnimationDuration - scaleDuration);
                     StartCoroutine(ShuffleAndScaleCoroutine());
-                    ShaderManager.SetColor(_targetImage.material, "_TargetColor", emojiColor);
                 }
                 else
                 {
                     Debug.LogError("Failed to instantiate target image for ShuffleEmojisEffect.");
                 }
-            }
-
-            if (backgroundImage != null)
-            {
-                backgroundImage.color = backgroundColor;
-            }
-            else
-            {
-                Debug.LogWarning("Background Image component not assigned in the inspector.");
             }
 
             _startTime = Time.time;
@@ -228,12 +209,12 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
-            AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
+            //AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
-            AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
+            //AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
         }
 
         private IEnumerator PlaySoundAfterDelay()
@@ -393,6 +374,40 @@ namespace Colorcrush.Game
             }
 
             _targetImage.transform.localScale = startScale;
+        }
+
+        private void SetRandomColors()
+        {
+            // Select one of the first three colors from ColorArray
+            var randomIndex = Random.Range(0, 4);
+            var selectedColor = ColorManager.SRGBTargetColors[randomIndex];
+
+            // Set the background color
+            if (backgroundImage != null)
+            {
+                backgroundImage.color = selectedColor;
+            }
+
+            // Set the emoji color
+            if (_targetImage != null)
+            {
+                ShaderManager.SetColor(_targetImage.material, "_TargetColor", selectedColor);
+            }
+
+            // Set the text color to a contrasting color
+            var contrastColor = GetContrastColor(selectedColor);
+            titleText.color = contrastColor;
+            versionText.color = contrastColor;
+            debugColorspaceInfoText.color = contrastColor;
+        }
+
+        private Color GetContrastColor(Color color)
+        {
+            // Calculate the luminance of the color
+            var luminance = 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
+
+            // Return black or white based on the luminance
+            return luminance > 0.5f ? Color.black : Color.white;
         }
     }
 }

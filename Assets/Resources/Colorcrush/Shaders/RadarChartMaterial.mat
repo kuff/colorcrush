@@ -42,14 +42,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 1
-    - _Axis1: 0.4045069
-    - _Axis2: 0.3241413
-    - _Axis3: 0.21551345
-    - _Axis4: 0.6186656
-    - _Axis5: 0.46745086
-    - _Axis6: 0.24595493
-    - _Axis7: 0.41291836
-    - _Axis8: 0.32060713
+    - _Axis1: 0.843
+    - _Axis2: 0.8428713
+    - _Axis3: 0.8428713
+    - _Axis4: 0.6873078
+    - _Axis5: 0.843
+    - _Axis6: 0.8428713
+    - _Axis7: 0.373
+    - _Axis8: 0.8428713
     - _AxisCount: 8
     - _EnableExternalAlpha: 0
     - _LevelCount: 3
@@ -60,7 +60,7 @@ Material:
     - _AxisValues: {r: 1.89, g: 2.37, b: 2.58, a: 0.53}
     - _BackgroundColor: {r: 0.7294118, g: 0.7294118, b: 0.7294118, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _FillColor: {r: 0.8235294, g: 0.47450978, b: 0.4588232, a: 0.5}
+    - _FillColor: {r: 0.74509805, g: 0.47450978, b: 0.6039216, a: 0.5}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _LineColor: {r: 0.7803922, g: 0.7803922, b: 0.7803922, a: 1}
     - _PointsData: {r: 0, g: 0, b: 0, a: 0}

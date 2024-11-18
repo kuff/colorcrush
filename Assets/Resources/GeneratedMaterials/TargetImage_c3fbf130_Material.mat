@@ -31,6 +31,7 @@ Material:
     m_Floats:
     - _Alpha: 1
     - _FillScale: 1
+    - _SkinColorMode: 0
     - _Tolerance: 0.1
     - _WhiteTolerance: 0.1
     m_Colors:
