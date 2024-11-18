@@ -56,7 +56,7 @@ Material:
     - _DropEffect: 1
     - _DropSize: 0.1
     - _EffectStrength: 1
-    - _EffectToggle: 1
+    - _EffectToggle: 0
     - _EnableExternalAlpha: 0
     - _LevelCount: 5
     - _LineThickness: 0.01
@@ -74,8 +74,8 @@ Material:
     - _ThresholdLow: 0
     - _TimeMultiplier: 5
     m_Colors:
-    - _AccentColor: {r: 0.16025963, g: 0.690566, b: 0.16025963, a: 1}
-    - _BackgroundColor: {r: 0.17646289, g: 0.6666667, b: 0.17646289, a: 1}
+    - _AccentColor: {r: 0.16025934, g: 0.690566, b: 0.16025934, a: 1}
+    - _BackgroundColor: {r: 0.87169814, g: 0.15624726, b: 0.15624726, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _FillColor: {r: 1, g: 0, b: 0, a: 0.5}
     - _Flip: {r: 1, g: 1, b: 1, a: 1}

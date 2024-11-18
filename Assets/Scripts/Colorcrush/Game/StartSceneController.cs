@@ -262,13 +262,13 @@ namespace Colorcrush.Game
                 else
                 {
                     Debug.LogWarning($"Failed to parse most recent color: {ProgressManager.MostRecentCompletedTargetColor}. Using first color from ColorArray.");
-                    targetColor = ColorArray.SRGBTargetColors[0];
+                    targetColor = ColorManager.SRGBTargetColors[0];
                 }
             }
             else
             {
                 // Use the first color from ColorArray
-                targetColor = ColorArray.SRGBTargetColors[0];
+                targetColor = ColorManager.SRGBTargetColors[0];
                 Debug.Log("No completed colors found. Using first color from ColorArray.");
             }
 

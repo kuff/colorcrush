@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 1
-    - _FillScale: 1
+    - _FillScale: 0.8
     - _Scale: 1
     - _SkinColorMode: 0
     - _Tolerance: 0.1

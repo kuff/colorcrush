@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Colorcrush.Game
 {
-    public static class ColorArray
+    public static partial class ColorManager
     {
         // Define the array of colors
         public static readonly Color[] SRGBTargetColors =

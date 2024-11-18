@@ -12,6 +12,7 @@ using Colorcrush.Util;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Colorcrush.Game.ColorManager;
 using Animator = Colorcrush.Animation.Animator;
 
 #endregion
@@ -29,9 +30,6 @@ namespace Colorcrush.Game
 
         [Tooltip("Default alpha (transparency) value for buttons when not toggled. 0 is fully transparent, 1 is fully opaque.")] [SerializeField]
         private float defaultAlpha = 1f;
-
-        [Tooltip("Number of color submissions required to complete the game and progress to the next scene.")] [SerializeField]
-        private int targetSubmitCount = 5;
 
         [Tooltip("Scale factor for initial setup animation. A value greater than 1 will make the target emoji appear larger before settling to their normal size.")] [SerializeField]
         private float setupScaleFactor = 1.2f;
@@ -87,7 +85,7 @@ namespace Colorcrush.Game
 
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
-        private Queue<Color> _colorQueue;
+        private List<ColorObject> _colorQueue;
         private GameState _currentState = GameState.Setup;
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
@@ -100,6 +98,10 @@ namespace Colorcrush.Game
         private Animator _targetEmojiAnimator;
         private Image _targetEmojiImage;
         private bool _targetReached;
+        private int _targetSubmitCount;
+        private ColorExperiment _colorExperiment;
+        private List<ColorObject> _selectedColors = new ();
+        private List<ColorObject> _nonSelectedColors = new ();
 
         private void Awake()
         {
@@ -108,7 +110,7 @@ namespace Colorcrush.Game
             if (string.IsNullOrEmpty(targetColorHex))
             {
 #if DEBUG
-                _targetColor = ColorArray.SRGBTargetColors[0];
+                _targetColor = SRGBTargetColors[0];
                 Debug.LogWarning($"Target color not found in PlayerPrefs. Using first color from ColorArray for debugging: {ColorUtility.ToHtmlStringRGBA(_targetColor)}");
 #else
                 throw new Exception("Target color not found in PlayerPrefs.");
@@ -134,12 +136,32 @@ namespace Colorcrush.Game
 
         private void InitializeColorQueue()
         {
-            _colorQueue = new Queue<Color>();
-            var colorVariations = ColorManager.GenerateColorVariations(_targetColor);
-            foreach (var color in colorVariations)
+            // NOTE: This is a temporary implementation. The final version should use the Experiment object as a form of iterator.
+            _colorQueue = new List<ColorObject>();
+            _colorExperiment = BeginColorExperiment(new ColorObject(_targetColor));
+            _targetSubmitCount = _colorExperiment.GetTotalBatches();
+            bool hasMore;
+            do
             {
-                _colorQueue.Enqueue(color);
+                var (nextBatch, moreColors) = _colorExperiment.GetNextColorVariantBatch();
+                foreach (var colorObject in nextBatch)
+                {
+                    _colorQueue.Add(colorObject);
+                }
+                hasMore = moreColors;
+            } while (hasMore);
+            
+            // Randomize the color queue using the configured random seed
+            var randomizedColors = _colorQueue.ToList();
+            var rng = new System.Random(ProjectConfig.InstanceConfig.randomSeed);
+            var n = randomizedColors.Count;
+            while (n > 1)
+            {
+                n--;
+                var k = rng.Next(n + 1);
+                (randomizedColors[k], randomizedColors[n]) = (randomizedColors[n], randomizedColors[k]);
             }
+            _colorQueue = new List<ColorObject>(randomizedColors);
         }
 
         private IEnumerator GameLoop()
@@ -225,6 +247,10 @@ namespace Colorcrush.Game
 
         private IEnumerator TeardownState()
         {
+            // Save the results
+            var results = _colorExperiment.GetFinalColors(_selectedColors, _nonSelectedColors);
+            LoggingManager.LogEvent(new FinalColorsEvent(results));
+            
             LoggingManager.LogEvent(new GameLevelEndEvent());
 
             _currentState = GameState.Teardown;
@@ -345,7 +371,7 @@ namespace Colorcrush.Game
         private void UpdateButton(int index, bool ignoreAlpha = false)
         {
             _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
-            var nextColor = GetNextColor();
+            var nextColor = GetNextColor(index);
             ShaderManager.SetColor(_selectionGridImages[index].material, "_TargetColor", nextColor);
             ShaderManager.SetColor(_selectionGridImages[index].material, "_OriginalColor", _targetColor);
             ShaderManager.SetFloat(_selectionGridImages[index].material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
@@ -398,16 +424,29 @@ namespace Colorcrush.Game
 
             AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
 
-            Debug.Log("Submit button clicked");
-
             AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
+
+            // Save selected and non-selected colors
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            {
+                // Use the color from the queue instead of the material
+                var color = _colorQueue[(_submitCount * _selectionGridButtons.Length + i) % _colorQueue.Count];
+                if (_buttonToggledStates[i])
+                {
+                    _selectedColors.Add(color);
+                }
+                else 
+                {
+                    _nonSelectedColors.Add(color);
+                }
+            }
 
             _submitCount++;
             StartCoroutine(AnimateEmojisAndResetButtons());
             UpdateProgressBar();
             UpdateTargetButtonColor();
 
-            if (_submitCount >= targetSubmitCount)
+            if (_submitCount >= _targetSubmitCount)
             {
                 _targetReached = true;
                 foreach (var button in _selectionButtons)
@@ -581,7 +620,7 @@ namespace Colorcrush.Game
         {
             if (progressBar != null)
             {
-                var progress = Mathf.Min((float)_submitCount / targetSubmitCount, 1f);
+                var progress = Mathf.Min((float)_submitCount / _targetSubmitCount, 1f);
                 var newWidth = _initialProgressBarWidth * progress;
                 progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, newWidth);
             }
@@ -595,14 +634,16 @@ namespace Colorcrush.Game
             }
         }
 
-        private Color GetNextColor()
+        private Color GetNextColor(int buttonIndex)
         {
             if (_colorQueue.Count == 0)
             {
                 InitializeColorQueue();
             }
 
-            return _colorQueue.Dequeue();
+            // Use submit count and button index to determine which color to return
+            var colorIndex = (_submitCount * _selectionGridButtons.Length + buttonIndex) % _colorQueue.Count;
+            return _colorQueue[colorIndex].ToColor();
         }
 
         private enum GameState

@@ -10,6 +10,7 @@ using Colorcrush.Animation;
 using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
+using static Colorcrush.Game.ColorManager;
 using Animator = Colorcrush.Animation.Animator;
 
 #endregion
@@ -167,16 +168,6 @@ namespace Colorcrush.Game
             {
                 HandleColorViewInspector();
             }
-
-            // Update custom time for boiling button shader
-            // if (submitButton != null)
-            // {
-            //     var image = submitButton.GetComponent<Image>();
-            //     if (image != null && image.material != null)
-            //     {
-            //         ShaderManager.SetFloat(image.material, "_CustomTime", Time.time);
-            //     }
-            // }
         }
 
         private void OnDestroy()
@@ -317,7 +308,24 @@ namespace Colorcrush.Game
 
         private void UpdateCircle1Color(Vector2 dragVector)
         {
-            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
+            // Get the index from completed colors list that matches current target color
+            var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
+            var completedColorIndex = ProgressManager.CompletedTargetColors.IndexOf(targetColorHex);
+            var finalColorsResult = ProgressManager.FinalColors[completedColorIndex];
+            
+            // Use the knowledge of the center color and the 8 result colors, as well as the magnitude of the vector, to determine the color at the edges of each axis
+            var edges = new Color[8];
+            
+            for (int i = 0; i < 8; i++)
+            {
+                var axisEncoding = finalColorsResult.AxisEncodings[i];
+                var axisColor = finalColorsResult.FinalColors[i].ToColor();
+                
+                var magnitude = axisEncoding.magnitude;
+                
+                edges[i] = Color.Lerp(_currentTargetColor, axisColor, 1 / magnitude);
+            }
+            
             var angle = Mathf.Atan2(dragVector.y, dragVector.x);
             if (angle < 0)
             {
@@ -541,7 +549,7 @@ namespace Colorcrush.Game
                     continue;
                 }
 
-                var targetColor = ColorArray.SRGBTargetColors[i];
+                var targetColor = SRGBTargetColors[i];
                 var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
 
                 // Check if all levels should be unlocked
@@ -605,7 +613,7 @@ namespace Colorcrush.Game
             // Select the most recently played level at startup
             if (!string.IsNullOrEmpty(mostRecentCompletedColor))
             {
-                var mostRecentIndex = Array.FindIndex(ColorArray.SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
+                var mostRecentIndex = Array.FindIndex(SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
                 if (mostRecentIndex != -1 && mostRecentIndex < buttons.Length)
                 {
                     OnButtonClicked(mostRecentIndex);
@@ -668,7 +676,7 @@ namespace Colorcrush.Game
             _selectedLevelIndex = index;
 
             // Update the current target color immediately
-            _currentTargetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = SRGBTargetColors[_selectedLevelIndex];
 
             // Scale down the newly selected button
             if (index < buttonGrid.transform.childCount)
@@ -783,9 +791,9 @@ namespace Colorcrush.Game
 
         private void OnSubmitButtonClicked()
         {
-            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count && _selectedLevelIndex < ColorArray.SRGBTargetColors.Length)
+            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count && _selectedLevelIndex < SRGBTargetColors.Length)
             {
-                var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+                var targetColor = SRGBTargetColors[_selectedLevelIndex];
                 PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
                 PlayerPrefs.Save();
 
@@ -839,7 +847,7 @@ namespace Colorcrush.Game
                 return;
             }
 
-            _currentTargetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = SRGBTargetColors[_selectedLevelIndex];
 
             if (_selectedLevelIndex == _uniqueCompletedColors.Count)
             {
@@ -850,16 +858,20 @@ namespace Colorcrush.Game
             }
             else
             {
-                var selectedColors = new List<Color>();
+                // Get the index from completed colors list that matches current target color
+                var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
+                var completedColorIndex = ProgressManager.CompletedTargetColors.IndexOf(targetColorHex);
 
-                if (_selectedLevelIndex < ProgressManager.SelectedColors.Count)
+                // Use that index to get the corresponding final colors result
+                if (completedColorIndex >= 0 && completedColorIndex < ProgressManager.FinalColors.Count)
                 {
-                    selectedColors = ProgressManager.SelectedColors[_selectedLevelIndex]
-                        .Select(colorHex => ColorUtility.TryParseHtmlString(colorHex, out var color) ? color : Color.black)
-                        .ToList();
+                    var finalColorsResult = ProgressManager.FinalColors[completedColorIndex];
+                    _currentAnalysisValues = finalColorsResult.AxisEncodings.Select(v => v.magnitude).ToArray();
                 }
-
-                _currentAnalysisValues = ColorManager.GenerateColorAnalysis(_currentTargetColor, selectedColors);
+                else
+                {
+                    _currentAnalysisValues = new float[8];
+                }
 
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
 

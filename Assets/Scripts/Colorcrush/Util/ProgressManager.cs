@@ -4,6 +4,8 @@
 
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Colorcrush.Game;
 using Colorcrush.Logging;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,10 +18,10 @@ namespace Colorcrush.Util
     {
         private static ProgressManager _instance;
         private static readonly Queue<ILogEvent> LogEventQueue = new();
-
         private static readonly List<string> _completedTargetColors = new();
         private static readonly List<string> _rewardedEmojis = new();
         private static readonly List<List<string>> _selectedColors = new();
+        private static readonly List<ColorManager.ColorMatrixResult> _finalColors = new();
         private static string _mostRecentCompletedTargetColor;
         private static bool _currentLevelCompleted = true;
         private static string _currentTargetColor;
@@ -53,6 +55,16 @@ namespace Colorcrush.Util
                 EnsureInstance();
                 ProcessLogEventQueue();
                 return _selectedColors;
+            }
+        }
+
+        public static List<ColorManager.ColorMatrixResult> FinalColors
+        {
+            get
+            {
+                EnsureInstance();
+                ProcessLogEventQueue();
+                return _finalColors;
             }
         }
 
@@ -125,6 +137,7 @@ namespace Colorcrush.Util
             _completedTargetColors.Clear();
             _rewardedEmojis.Clear();
             _selectedColors.Clear();
+            _finalColors.Clear();
             _currentLevelCompleted = true;
             _currentTargetColor = null;
             _generatedColors.Clear();
@@ -245,6 +258,39 @@ namespace Colorcrush.Util
                         }
                     }
 
+                    break;
+                case "finalcolors":
+                    if (!_currentLevelCompleted)
+                    {
+                        var chunks = eventData.Split(' ');
+                        
+                        // Parse the first 8 chunks as hex colors
+                        var colors = new List<ColorManager.ColorObject>();
+                        for (int i = 0; i < 8; i++)
+                        {
+                            ColorUtility.TryParseHtmlString("#" + chunks[i], out var color);
+                            colors.Add(new ColorManager.ColorObject(color));
+                        }
+
+                        // Parse the remaining chunks as Vector3 encodings
+                        var encodings = new List<Vector3>();
+                        for (int i = 0; i < 8; i++) 
+                        {
+                            // Combine the three parts of each Vector3
+                            string vectorStr = chunks[8 + i*3] + chunks[9 + i*3] + chunks[10 + i*3];
+                            // Remove parentheses and split by semicolon
+                            string[] components = vectorStr.Trim('(', ')').Split(';');
+                            
+                            float x = float.Parse(components[0], System.Globalization.CultureInfo.InvariantCulture);
+                            float y = float.Parse(components[1], System.Globalization.CultureInfo.InvariantCulture);
+                            float z = float.Parse(components[2], System.Globalization.CultureInfo.InvariantCulture);
+                            
+                            encodings.Add(new Vector3(x, y, z));
+                        }
+
+                        var result = new ColorManager.ColorMatrixResult(encodings, colors);
+                        _finalColors.Add(result);
+                    }
                     break;
             }
         }

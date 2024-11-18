@@ -3,6 +3,9 @@
 #region
 
 using System;
+using System.Globalization;
+using System.Linq;
+using Colorcrush.Game;
 using UnityEngine;
 
 #endregion
@@ -196,6 +199,30 @@ namespace Colorcrush.Logging
         public string GetStringifiedData()
         {
             return StartTime.ToString("o"); // ISO 8601 format
+        }
+    }
+
+    public class FinalColorsEvent : ILogEvent
+    {
+        public FinalColorsEvent(ColorManager.ColorMatrixResult result)
+        {
+            Result = result;
+        }
+
+        public ColorManager.ColorMatrixResult Result { get; }
+        public string EventName => "finalcolors";
+
+        public string GetStringifiedData()
+        {
+            // Print both encodings and colors
+
+            // Cast the result.finalColors.Vector255 to a Color (Unity) object and then to a string
+            var colors = string.Join(" ", Result.FinalColors.Select(color => ColorUtility.ToHtmlStringRGB(color.ToColor())));
+
+            // Encodings
+            var encodings = string.Join(" ", Result.AxisEncodings.Select(encoding => encoding.ToString("F3").Replace(",", ";")));
+
+            return $"{colors} {encodings}";
         }
     }
 }
