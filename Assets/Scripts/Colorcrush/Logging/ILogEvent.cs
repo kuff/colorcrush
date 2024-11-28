@@ -224,4 +224,20 @@ namespace Colorcrush.Logging
             return $"{colors} {encodings}";
         }
     }
+
+    public class SkinColorModeEvent : ILogEvent
+    {
+        public SkinColorModeEvent(bool isEnabled) 
+        {
+            IsEnabled = isEnabled;
+        }
+
+        public bool IsEnabled { get; }
+        public string EventName => "skincolormode";
+
+        public string GetStringifiedData()
+        {
+            return IsEnabled.ToString().ToLower();
+        }
+    }
 }

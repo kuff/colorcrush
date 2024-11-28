@@ -67,6 +67,7 @@ namespace Colorcrush
 
         [Tooltip("If true, allows toggling skin color mode with three-time tap in MenuSceneController.")]
         public bool enableTripleTapToggleSkinColorMode = true;
+        
         [Tooltip("If true, enables the result button in the menu scene. If false, the result button will be hidden.")]
         public bool enableResultButton = true;
 

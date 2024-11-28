@@ -954,12 +954,10 @@ namespace Colorcrush.Game
                 if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) != ProgressManager.MostRecentCompletedTargetColor)
                 {
                     SetDragSignifierActive(false);
-                    Debug.Log("SetDragSignifierActive(false)");
                 }
                 else if (!_hasColorAnalysisBeenClicked && ProgressManager.CompletedTargetColors.Count > 0)
                 {
                     SetDragSignifierActive(true);
-                    Debug.Log("SetDragSignifierActive(true)");
                 }
             }
         }

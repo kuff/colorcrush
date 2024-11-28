@@ -129,6 +129,8 @@ namespace Colorcrush.Game
             InitializeColorQueue();
             UpdateUI();
             StartCoroutine(GameLoop());
+
+            LoggingManager.LogEvent(new SkinColorModeEvent(ProjectConfig.InstanceConfig.useSkinColorMode));
         }
 
         private void InitializeColorQueue()
