@@ -183,9 +183,10 @@ namespace Colorcrush.Game
             ProgressManager.ResetAllProgress();
             _uniqueCompletedColors.Clear();
             _selectedLevelIndex = -1;
-            SetupButtons();
+            //SetupButtons();
+            OnButtonClicked(0);
             UpdateSubmitButton();
-            ScrollToButtonIndex(0);
+            //ScrollToButtonIndex(0);
             AudioManager.PlaySound("MENU B_Select");
         }
 
@@ -263,12 +264,6 @@ namespace Colorcrush.Game
 
             if (Input.GetMouseButtonDown(0))
             {
-                if (ProgressManager.CompletedTargetColors.Count == 0)
-                {
-                    AudioManager.PlaySound("MENU B_Back");
-                    return;
-                }
-
                 // Check if the selected button is the most recent one (yet to be completed)
                 if (_selectedLevelIndex == _uniqueCompletedColors.Count && !ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
@@ -288,6 +283,12 @@ namespace Colorcrush.Game
 
                 if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
                 {
+                    if (!ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor)))
+                    {
+                        AudioManager.PlaySound("MENU B_Back");
+                        return;
+                    }
+
                     _isDraggingColorAnalysisImage = true;
                     colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
 
@@ -744,10 +745,19 @@ namespace Colorcrush.Game
             }
 
             // Scale back the previously selected button, if any
-            if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
+            /*if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
             {
                 var previousButtonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
                 ScaleButton(previousButtonTransform, 1f);
+            }*/
+            // Scale back all buttons except the newly selected one
+            for (int i = 0; i < buttonGrid.transform.childCount; i++)
+            {
+                if (i != index)
+                {
+                    var buttonTransform = buttonGrid.transform.GetChild(i);
+                    ScaleButton(buttonTransform, 1f);
+                }
             }
 
             _selectedLevelIndex = index;
@@ -922,19 +932,17 @@ namespace Colorcrush.Game
             }
 
             _currentTargetColor = SRGBTargetColors[_selectedLevelIndex];
+            var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
 
-            if (_selectedLevelIndex == _uniqueCompletedColors.Count)
+            if (!ProgressManager.CompletedTargetColors.Contains(targetColorHex))
             {
-                // This is a new, uncompleted level
+                // This is an uncompleted level
                 _currentAnalysisValues = new float[8];
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
                 SetDragSignifierActive(false);
             }
             else
             {
-                // Get the index from completed colors list that matches current target color
-                var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
-
                 // Search the list of completed colors for the target color in reverse order, so that only the most recent completion is used
                 var completedColorIndex = ProgressManager.CompletedTargetColors.FindLastIndex(c => c == targetColorHex);
 
