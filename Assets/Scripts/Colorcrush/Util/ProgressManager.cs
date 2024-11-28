@@ -162,6 +162,22 @@ namespace Colorcrush.Util
             RefreshProgressionState();
         }
 
+        public static void ResetAllProgress()
+        {
+            EnsureInstance();
+            LoggingManager.StartNewLogFile();
+            _completedTargetColors.Clear();
+            _rewardedEmojis.Clear();
+            _selectedColors.Clear();
+            _finalColors.Clear();
+            _currentLevelCompleted = true;
+            _currentTargetColor = null;
+            _generatedColors.Clear();
+            _currentLevelSelectedColors.Clear();
+            _mostRecentCompletedTargetColor = null;
+            Debug.Log("ProgressManager: All progress has been reset");
+        }
+
         private static void ProcessLogLines(List<string> logLines)
         {
             foreach (var line in logLines)

@@ -30,6 +30,7 @@ MonoBehaviour:
   unlockAllLevelsFromStart: 1
   colorExperimentName: 8x6Stage1Solo
   enableTripleTapToggleSkinColorMode: 1
+  enableResultButton: 1
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4
   happyEmojiFolder: Colorcrush/Emoji/Happy

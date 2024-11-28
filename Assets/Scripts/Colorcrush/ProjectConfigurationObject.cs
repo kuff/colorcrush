@@ -67,6 +67,8 @@ namespace Colorcrush
 
         [Tooltip("If true, allows toggling skin color mode with three-time tap in MenuSceneController.")]
         public bool enableTripleTapToggleSkinColorMode = true;
+        [Tooltip("If true, enables the result button in the menu scene. If false, the result button will be hidden.")]
+        public bool enableResultButton = true;
 
         [Header("Emoji Configuration")] [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";

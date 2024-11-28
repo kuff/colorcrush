@@ -1542,7 +1542,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Created by Peter Guld Leth
+  m_text: 'Created by Aalborg University
 
     v'
   m_isRightToLeft: 0

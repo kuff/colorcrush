@@ -48,6 +48,9 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
         private Button submitButton;
 
+        [SerializeField] [Tooltip("The button that resets all progress.")]
+        private Button resetProgressButton;
+
         [SerializeField] [Tooltip("The color of the submit button when a new level is selected.")]
         private Color newLevelColor = Color.green;
 
@@ -159,7 +162,31 @@ namespace Colorcrush.Game
                 _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
             }
 
+            if (resetProgressButton != null)
+            {
+                if (ProjectConfig.InstanceConfig.enableResultButton)
+                {
+                    resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
+                }
+                else
+                {
+                    resetProgressButton.gameObject.SetActive(false);
+                }
+            }
+
             SetDragSignifierActive(true);
+            UpdateColorAnalysis();
+        }
+
+        private void OnResetProgressButtonClicked()
+        {
+            ProgressManager.ResetAllProgress();
+            _uniqueCompletedColors.Clear();
+            _selectedLevelIndex = -1;
+            SetupButtons();
+            UpdateSubmitButton();
+            ScrollToButtonIndex(0);
+            AudioManager.PlaySound("MENU B_Select");
         }
 
         private void Update()
@@ -236,6 +263,12 @@ namespace Colorcrush.Game
 
             if (Input.GetMouseButtonDown(0))
             {
+                if (ProgressManager.CompletedTargetColors.Count == 0)
+                {
+                    AudioManager.PlaySound("MENU B_Back");
+                    return;
+                }
+
                 // Check if the selected button is the most recent one (yet to be completed)
                 if (_selectedLevelIndex == _uniqueCompletedColors.Count && !ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
@@ -921,10 +954,12 @@ namespace Colorcrush.Game
                 if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) != ProgressManager.MostRecentCompletedTargetColor)
                 {
                     SetDragSignifierActive(false);
+                    Debug.Log("SetDragSignifierActive(false)");
                 }
-                else if (!_hasColorAnalysisBeenClicked)
+                else if (!_hasColorAnalysisBeenClicked && ProgressManager.CompletedTargetColors.Count > 0)
                 {
                     SetDragSignifierActive(true);
+                    Debug.Log("SetDragSignifierActive(true)");
                 }
             }
         }
