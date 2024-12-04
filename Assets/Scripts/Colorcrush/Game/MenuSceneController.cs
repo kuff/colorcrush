@@ -142,10 +142,9 @@ namespace Colorcrush.Game
         private int _selectedLevelIndex = -1;
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
-
         private int _tapCount;
         private HashSet<string> _uniqueCompletedColors;
-
+        
         private void Awake()
         {
             _uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
@@ -164,7 +163,7 @@ namespace Colorcrush.Game
 
             if (resetProgressButton != null)
             {
-                if (ProjectConfig.InstanceConfig.enableResultButton)
+                if (ProjectConfig.InstanceConfig.enableResetButton)
                 {
                     resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
                 }
@@ -183,10 +182,8 @@ namespace Colorcrush.Game
             ProgressManager.ResetAllProgress();
             _uniqueCompletedColors.Clear();
             _selectedLevelIndex = -1;
-            //SetupButtons();
             OnButtonClicked(0);
             UpdateSubmitButton();
-            //ScrollToButtonIndex(0);
             AudioManager.PlaySound("MENU B_Select");
         }
 
@@ -611,7 +608,7 @@ namespace Colorcrush.Game
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
             var mostRecentCompletedColor = ProgressManager.MostRecentCompletedTargetColor;
-            var nextColorIndex = _uniqueCompletedColors.Count;
+            var nextColorIndex = Enumerable.Range(0, SRGBTargetColors.Length).First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(SRGBTargetColors[i])));
 
             for (var i = 0; i < buttons.Length; i++)
             {
@@ -626,7 +623,7 @@ namespace Colorcrush.Game
                 var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
 
                 // Check if all levels should be unlocked
-                if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || i <= nextColorIndex)
+                if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || _uniqueCompletedColors.Contains(targetColorHex) || i == nextColorIndex)
                 {
                     // Enable button and set color
                     buttons[i].interactable = true;
@@ -721,8 +718,6 @@ namespace Colorcrush.Game
 
                     var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
                     AnimationManager.PlayAnimation(animator, shakeAnimation);
-
-                    //yield return new WaitForSeconds(buttonShakeDuration);
                 }
             }
         }
@@ -744,12 +739,6 @@ namespace Colorcrush.Game
                 _shakeCoroutine = null;
             }
 
-            // Scale back the previously selected button, if any
-            /*if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
-            {
-                var previousButtonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
-                ScaleButton(previousButtonTransform, 1f);
-            }*/
             // Scale back all buttons except the newly selected one
             for (int i = 0; i < buttonGrid.transform.childCount; i++)
             {
@@ -975,7 +964,6 @@ namespace Colorcrush.Game
             ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", isActive ? 1 : 0);
             var dragSignifierAnimator = dragSignifier.GetComponent<UnityEngine.Animator>();
             dragSignifierAnimator.enabled = isActive;
-            //dragSignifier.SetActive(isActive);
             var dragSignifierImage = dragSignifier.GetComponent<Image>();
             var color = dragSignifierImage.color;
             color.a = isActive ? 1f : 0f;
