@@ -177,10 +177,10 @@ namespace Colorcrush.Game
             // Set the target color and alpha for the target emoji image
             if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
-                ShaderManager.SetColor(_targetEmojiImage.material, "_TargetColor", _targetColor);
-                ShaderManager.SetColor(_targetEmojiImage.material, "_OriginalColor", _targetColor);
-                ShaderManager.SetFloat(_targetEmojiImage.material, "_Alpha", 1f);
-                ShaderManager.SetFloat(_targetEmojiImage.material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
+                ShaderManager.SetColor(_targetEmojiImage.gameObject, "_TargetColor", _targetColor);
+                ShaderManager.SetColor(_targetEmojiImage.gameObject, "_OriginalColor", _targetColor);
+                ShaderManager.SetFloat(_targetEmojiImage.gameObject, "_Alpha", 1f);
+                ShaderManager.SetFloat(_targetEmojiImage.gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
             }
             else
             {
@@ -198,7 +198,7 @@ namespace Colorcrush.Game
                 var image = button.GetComponent<Image>();
                 if (image != null && image.material != null)
                 {
-                    ShaderManager.SetFloat(image.material, "_Alpha", 0f);
+                    ShaderManager.SetFloat(button.gameObject, "_Alpha", 0f);
                 }
 
                 button.gameObject.SetActive(true);
@@ -373,12 +373,12 @@ namespace Colorcrush.Game
         {
             _selectionGridImages[index].sprite = EmojiManager.GetDefaultEmoji();
             var nextColor = GetNextColor(index);
-            ShaderManager.SetColor(_selectionGridImages[index].material, "_TargetColor", nextColor);
-            ShaderManager.SetColor(_selectionGridImages[index].material, "_OriginalColor", _targetColor);
-            ShaderManager.SetFloat(_selectionGridImages[index].material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
+            ShaderManager.SetColor(_selectionGridImages[index].gameObject, "_TargetColor", nextColor);
+            ShaderManager.SetColor(_selectionGridImages[index].gameObject, "_OriginalColor", _targetColor);
+            ShaderManager.SetFloat(_selectionGridImages[index].gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
             if (!ignoreAlpha)
             {
-                ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", defaultAlpha);
+                ShaderManager.SetFloat(_selectionGridImages[index].gameObject, "_Alpha", defaultAlpha);
             }
 
             LoggingManager.LogEvent(new ColorGeneratedEvent(index, nextColor));
@@ -393,7 +393,7 @@ namespace Colorcrush.Game
 
             _buttonToggledStates[index] = !_buttonToggledStates[index];
             var alpha = _buttonToggledStates[index] ? toggledAlpha : defaultAlpha;
-            ShaderManager.SetFloat(_selectionGridImages[index].material, "_Alpha", alpha);
+            ShaderManager.SetFloat(_selectionGridImages[index].gameObject, "_Alpha", alpha);
 
             var targetScale = _buttonToggledStates[index] ? _originalButtonScales[index] * shrinkFactor : _originalButtonScales[index];
             _selectionGridButtons[index].transform.localScale = targetScale;
@@ -507,7 +507,7 @@ namespace Colorcrush.Game
                 instance.transform.localScale = button.transform.localScale;
                 var color = buttonImage.color;
                 instanceImage.color = new Color(color.r, color.g, color.b, _buttonToggledStates[index] ? toggledAlpha : defaultAlpha);
-                ShaderManager.SetFloat(instanceImage.material, "_SkinColorMode", 0);
+                ShaderManager.SetFloat(instanceImage.gameObject, "_SkinColorMode", 0);
             }
 
             return instance;
@@ -518,7 +518,7 @@ namespace Colorcrush.Game
             foreach (var button in _selectionGridButtons)
             {
                 var image = button.GetComponent<Image>();
-                ShaderManager.SetFloat(image.material, "_Alpha", 0f);
+                ShaderManager.SetFloat(image.gameObject, "_Alpha", 0f);
                 button.interactable = false;
             }
         }
@@ -614,11 +614,11 @@ namespace Colorcrush.Game
 
         private IEnumerator ShowHappyEmojiCoroutine()
         {
-            ShaderManager.SetFloat(_targetEmojiImage.material, "_SkinColorMode", 0);
+            ShaderManager.SetFloat(_targetEmojiImage.gameObject, "_SkinColorMode", 0);
             _targetEmojiImage.sprite = EmojiManager.GetNextHappyEmoji();
             LoggingManager.LogEvent(new ColorsSubmittedEvent(EmojiManager.GetNextHappyEmoji().name));
             yield return new WaitForSeconds(1f);
-            ShaderManager.SetFloat(_targetEmojiImage.material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
+            ShaderManager.SetFloat(_targetEmojiImage.gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1 : 0);
             _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
         }
 
@@ -636,7 +636,7 @@ namespace Colorcrush.Game
         {
             if (_targetEmojiImage != null && _targetEmojiImage.material != null)
             {
-                ShaderManager.SetColor(_targetEmojiImage.material, "_TargetColor", _targetColor);
+                ShaderManager.SetColor(_targetEmojiImage.gameObject, "_TargetColor", _targetColor);
             }
         }
 

@@ -76,6 +76,9 @@ namespace Colorcrush.Game
         [Tooltip("Speed at which the reveal circle expands behind the emoji.")] [SerializeField]
         private float expandSpeed = 1.0f;
 
+        [Tooltip("Image component for the foreground of the start screen.")] [SerializeField]
+        private Image foregroundImage;
+
         [Header("Sound Effects")] [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
         private string smileySound = "MENU_Pick";
 
@@ -161,7 +164,7 @@ namespace Colorcrush.Game
             if (elapsedTime >= (enableEmojiShuffle ? 3.0f : 0f))
             {
                 _circleSize += Time.deltaTime * expandSpeed;
-                ShaderManager.SetFloat(circleMaterial, "_CircleSize", _circleSize);
+                ShaderManager.SetFloat(foregroundImage.gameObject, "_CircleSize", _circleSize);
             }
 
             UpdateColorspaceInfo();
@@ -391,7 +394,7 @@ namespace Colorcrush.Game
             // Set the emoji color
             if (_targetImage != null)
             {
-                ShaderManager.SetColor(_targetImage.material, "_TargetColor", selectedColor);
+                ShaderManager.SetColor(_targetImage.gameObject, "_TargetColor", selectedColor);
             }
 
             // Set the text color to a contrasting color

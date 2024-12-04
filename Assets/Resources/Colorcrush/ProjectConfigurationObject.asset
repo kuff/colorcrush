@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
-  useInitiatingScene: 0
+  useInitiatingScene: 1
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush

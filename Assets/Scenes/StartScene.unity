@@ -603,6 +603,7 @@ MonoBehaviour:
   backgroundImage: {fileID: 838381131}
   circleMaterial: {fileID: 2100000, guid: 630aaaf3cc0e0b640bb78751e4375dd6, type: 2}
   expandSpeed: 1
+  foregroundImage: {fileID: 766903114}
   smileySound: MENU_Pick
   smileyColonPitchShift: 1.25
   smileyParenthesisPitchShift: 0.5

@@ -226,7 +226,7 @@ namespace Colorcrush.Game
                             var material = image.material;
                             if (material != null && material.shader.name == "Colorcrush/ColorTransposeShader")
                             {
-                                ShaderManager.SetFloat(material, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1.0f : 0.0f);
+                                ShaderManager.SetFloat(button.gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1.0f : 0.0f);
                             }
                         }
                     }
@@ -419,7 +419,7 @@ namespace Colorcrush.Game
             if (compareView != null)
             {
                 var material = compareView.GetComponent<Image>().material;
-                ShaderManager.SetColor(material, "_Circle1Color", finalColor);
+                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_Circle1Color", finalColor);
             }
         }
 
@@ -431,7 +431,7 @@ namespace Colorcrush.Game
             if (compareView != null)
             {
                 var material = compareView.GetComponent<Image>().material;
-                ShaderManager.SetColor(material, "_Circle2Color", finalColor);
+                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_Circle2Color", finalColor);
             }
         }
 
@@ -627,9 +627,9 @@ namespace Colorcrush.Game
                 {
                     // Enable button and set color
                     buttons[i].interactable = true;
-                    ShaderManager.SetColor(buttonImage.material, "_TargetColor", targetColor);
-                    ShaderManager.SetColor(buttonImage.material, "_OriginalColor", targetColor);
-                    ShaderManager.SetFloat(buttonImage.material, "_Alpha", 1f);
+                    ShaderManager.SetColor(buttonImage.gameObject, "_TargetColor", targetColor);
+                    ShaderManager.SetColor(buttonImage.gameObject, "_OriginalColor", targetColor);
+                    ShaderManager.SetFloat(buttonImage.gameObject, "_Alpha", 1f);
                     var index = i;
                     buttons[i].onClick.AddListener(() => OnButtonClicked(index));
 
@@ -668,9 +668,9 @@ namespace Colorcrush.Game
                 {
                     // Disable button and set to black with 20% transparency
                     buttons[i].interactable = false;
-                    ShaderManager.SetColor(buttonImage.material, "_TargetColor", Color.black);
-                    ShaderManager.SetColor(buttonImage.material, "_OriginalColor", Color.black);
-                    ShaderManager.SetFloat(buttonImage.material, "_Alpha", 0.2f);
+                    ShaderManager.SetColor(buttonImage.gameObject, "_TargetColor", Color.black);
+                    ShaderManager.SetColor(buttonImage.gameObject, "_OriginalColor", Color.black);
+                    ShaderManager.SetFloat(buttonImage.gameObject, "_Alpha", 0.2f);
                     buttons[i].transform.localScale = Vector3.one * selectedButtonScale;
                 }
             }
@@ -819,16 +819,16 @@ namespace Colorcrush.Game
                     if (isNewLevel)
                     {
                         // Set colors for a new level
-                        ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", newLevelColor);
-                        ShaderManager.SetColor(buttonImage.material, "_AccentColor", newLevelAccentColor);
-                        ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 1f);
+                        ShaderManager.SetColor(buttonImage.gameObject, "_BackgroundColor", newLevelColor);
+                        ShaderManager.SetColor(buttonImage.gameObject, "_AccentColor", newLevelAccentColor);
+                        ShaderManager.SetFloat(buttonImage.gameObject, "_EffectToggle", 1f);
                         UpdateSubmitIcon("Colorcrush/Icons/icons8-advance-90");
                     }
                     else
                     {
                         // Set colors for a completed level
-                        ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", completedLevelColor);
-                        ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 0f);
+                        ShaderManager.SetColor(buttonImage.gameObject, "_BackgroundColor", completedLevelColor);
+                        ShaderManager.SetFloat(buttonImage.gameObject, "_EffectToggle", 0f);
                         UpdateSubmitIcon("Colorcrush/Icons/icons8-undo-90");
                     }
                 }
@@ -961,7 +961,7 @@ namespace Colorcrush.Game
 
         private void SetDragSignifierActive(bool isActive)
         {
-            ShaderManager.SetFloat(_colorAnalysisMaterial, "_PulseEffect", isActive ? 1 : 0);
+            ShaderManager.SetFloat(colorAnalysisImage.gameObject, "_PulseEffect", isActive ? 1 : 0);
             var dragSignifierAnimator = dragSignifier.GetComponent<UnityEngine.Animator>();
             dragSignifierAnimator.enabled = isActive;
             var dragSignifierImage = dragSignifier.GetComponent<Image>();
@@ -994,14 +994,14 @@ namespace Colorcrush.Game
                         var t = Mathf.Clamp01(axisElapsedTime / colorAnalysisAnimationDuration);
                         var easedT = EaseInOutCubic(t);
                         _currentAxisValues[i] = Mathf.Lerp(startValues[i], targetValues[i], easedT);
-                        ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
+                        ShaderManager.SetFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
                     }
                 }
 
                 var colorT = Mathf.Clamp01(elapsedTime / colorAnalysisAnimationDuration);
                 var easedColorT = EaseInOutCubic(colorT);
                 _currentFillColor = Color.Lerp(startColor, new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f), easedColorT);
-                ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
+                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
 
                 yield return null;
             }
@@ -1010,11 +1010,11 @@ namespace Colorcrush.Game
             for (var i = 0; i < 8; i++)
             {
                 _currentAxisValues[i] = targetValues[i];
-                ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
+                ShaderManager.SetFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
             }
 
             _currentFillColor = new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f);
-            ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
+            ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
         }
 
         private float EaseInOutCubic(float t)
