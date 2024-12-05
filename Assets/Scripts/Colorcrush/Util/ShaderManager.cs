@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 #endregion
 
@@ -43,7 +44,19 @@ namespace Colorcrush.Util
             {
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
+                SceneManager.sceneLoaded += OnSceneLoaded;
             }
+        }
+
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            CleanupTemporaryMaterials();
+            //ResetValues();
         }
 
         private void OnApplicationQuit()
@@ -64,6 +77,7 @@ namespace Colorcrush.Util
 
             tempMaterial = new Material(originalMaterial);
             _temporaryMaterials[targetObject] = tempMaterial;
+            Debug.Log($"ShaderManager: Created new temporary material for {targetObject.name} on {originalMaterial.name}");
             return tempMaterial;
         }
 
@@ -163,6 +177,7 @@ namespace Colorcrush.Util
                     Destroy(tempMaterial);
                 }
             }
+            Debug.Log($"ShaderManager: Cleaned up {_temporaryMaterials.Count} temporary materials.");
             _temporaryMaterials.Clear();
             _originalMaterials.Clear();
         }

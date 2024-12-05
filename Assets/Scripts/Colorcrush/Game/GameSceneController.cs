@@ -142,7 +142,7 @@ namespace Colorcrush.Game
             bool hasMore;
             do
             {
-                var (nextBatch, moreColors) = _colorExperiment.GetNextColorVariantBatch();
+                var (nextBatch, moreColors) = _colorExperiment.GetFirstColorVariantBatch();
                 foreach (var colorObject in nextBatch)
                 {
                     _colorQueue.Add(colorObject);

@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 #endregion
 
@@ -12,6 +13,8 @@ namespace Colorcrush.Util
 {
     public class SceneManager : MonoBehaviour
     {
+        public static event Action<Scene, LoadSceneMode> sceneLoaded;
+        
         private static SceneManager _instance;
         private Coroutine _activationWarningCoroutine;
         private AsyncOperation _asyncOperation;
@@ -148,6 +151,7 @@ namespace Colorcrush.Util
             }
 
             IsLoading = false;
+            sceneLoaded?.Invoke(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), LoadSceneMode.Single);
         }
 
         public static string GetPreviousSceneName()

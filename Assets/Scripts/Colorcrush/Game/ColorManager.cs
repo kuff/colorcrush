@@ -64,15 +64,7 @@ namespace Colorcrush.Game
 
         public static ColorExperiment BeginColorExperiment(ColorObject baseColor)
         {
-            switch (ProjectConfig.InstanceConfig.colorExperimentName)
-            {
-                case "8x6Stage1Solo":
-                    CurrentColorExperiment = new ColorExperiment8x6Stage1Solo(baseColor);
-                    break;
-                default:
-                    throw new InvalidOperationException($"Unknown color experiment name in ProjectConfig: {ProjectConfig.InstanceConfig.colorExperimentName}");
-            }
-
+            CurrentColorExperiment = CreateExperiment(ProjectConfig.InstanceConfig.colorExperimentName, baseColor);
             return CurrentColorExperiment;
         }
 

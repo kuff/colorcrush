@@ -12,53 +12,77 @@ namespace Colorcrush.Game
 {
     public static partial class ColorManager
     {
-        public abstract class ColorExperiment
+        public static ColorExperiment CreateExperiment(string experimentName, ColorObject baseColor)
         {
-            protected readonly ColorObject _baseColor;
-            protected int _currentIndex;
+            switch (experimentName)
+            {
+                case "8x6Stage1Solo":
+                    return new ColorExperiment8X6Stage1Solo(baseColor);
+                // TODO: Add more experiments here
+                default:
+                    throw new System.InvalidOperationException($"Unknown color experiment name: {experimentName}");
+            }
+        }
+
+        public class ColorMatrixResult
+        {
+            public ColorMatrixResult(List<Vector3> axisEncodings, List<ColorObject> finalColors)
+            {
+                AxisEncodings = axisEncodings;
+                FinalColors = finalColors;
+            }
+
+            public List<Vector3> AxisEncodings { get; }
+            public List<ColorObject> FinalColors { get; }
+        }
+
+        public abstract class ColorExperiment // TODO: Add more experiments by inheriting from this class
+        {
+            protected readonly ColorObject BaseColor;
+            protected int CurrentIndex;
 
             protected ColorExperiment(ColorObject baseColor)
             {
-                _baseColor = baseColor;
-                _currentIndex = 0;
+                BaseColor = baseColor;
+                CurrentIndex = 0;
             }
 
-            public abstract (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorVariantBatch();
+            public abstract (List<ColorObject> nextColorBatch, bool hasMore) GetFirstColorVariantBatch();
             public abstract (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorVariantBatch(List<ColorObject> selectedColors, List<ColorObject> unselectedColors);
             public abstract int GetTotalBatches();
             public abstract ColorMatrixResult GetFinalColors();
             public abstract ColorMatrixResult GetFinalColors(List<ColorObject> selectedColors, List<ColorObject> unselectedColors);
         }
 
-        public class ColorExperiment8x6Stage1Solo : ColorExperiment
+        public class ColorExperiment8X6Stage1Solo : ColorExperiment // TODO: Use this as an example for how to create new experiments
         {
-            private const float _startExpansion = 0.0005f; // 0.0005f
-            private const float _circleExpansion = 0.0013f; // 0.0013f
-            private const int _batchSize = 12;
-            private const int _nCircles = 6;
-            private const int _nDirections = 8;
+            private const float StartExpansion = 0.0005f;
+            private const float CircleExpansion = 0.0013f;
+            private const int BatchSize = 12;
+            private const int NCircles = 6;
+            private const int NDirections = 8;
             private readonly List<ColorObject> _allSelectedColors = new();
             private readonly List<ColorObject> _allUnselectedColors = new();
             private readonly int _totalBatches;
             private readonly List<ColorObject> _xyYCoordinates;
 
-            public ColorExperiment8x6Stage1Solo(ColorObject baseColor)
+            public ColorExperiment8X6Stage1Solo(ColorObject baseColor)
                 : base(baseColor)
             {
                 _xyYCoordinates = CreateCoordinates(baseColor);
-                _totalBatches = Mathf.CeilToInt((float)_xyYCoordinates.Count / _batchSize);
+                _totalBatches = Mathf.CeilToInt((float)_xyYCoordinates.Count / BatchSize);
             }
 
-            public override (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorVariantBatch()
+            public override (List<ColorObject> nextColorBatch, bool hasMore) GetFirstColorVariantBatch()
             {
                 var nextBatch = new List<ColorObject>();
 
-                for (var i = 0; i < _batchSize && _currentIndex < _xyYCoordinates.Count; i++, _currentIndex++)
+                for (var i = 0; i < BatchSize && CurrentIndex < _xyYCoordinates.Count; i++, CurrentIndex++)
                 {
-                    nextBatch.Add(_xyYCoordinates[_currentIndex]);
+                    nextBatch.Add(_xyYCoordinates[CurrentIndex]);
                 }
 
-                var hasMore = _currentIndex < _xyYCoordinates.Count;
+                var hasMore = CurrentIndex < _xyYCoordinates.Count;
                 return (nextBatch, hasMore);
             }
 
@@ -69,12 +93,12 @@ namespace Colorcrush.Game
 
                 var nextBatch = new List<ColorObject>();
 
-                for (var i = 0; i < _batchSize && _currentIndex < _xyYCoordinates.Count; i++, _currentIndex++)
+                for (var i = 0; i < BatchSize && CurrentIndex < _xyYCoordinates.Count; i++, CurrentIndex++)
                 {
-                    nextBatch.Add(_xyYCoordinates[_currentIndex]);
+                    nextBatch.Add(_xyYCoordinates[CurrentIndex]);
                 }
 
-                var hasMore = _currentIndex < _xyYCoordinates.Count;
+                var hasMore = CurrentIndex < _xyYCoordinates.Count;
                 return (nextBatch, hasMore);
             }
 
@@ -106,7 +130,7 @@ namespace Colorcrush.Game
                     new(), // direction6
                     new(), // direction7
                 };
-                var baseColorVector = _baseColor.ToColorFormat(ColorFormat.XYY).Vector;
+                var baseColorVector = BaseColor.ToColorFormat(ColorFormat.XYY).Vector;
 
                 AddToDirectionList(selectedColors, true);
                 AddToDirectionList(unselectedColors, false);
@@ -177,10 +201,10 @@ namespace Colorcrush.Game
 
             private float CalculateMaxDistanceForDirection(int directionIndex, Vector3 baseColor)
             {
-                const float maxExpansion = _nCircles * _circleExpansion + _startExpansion;
+                const float maxExpansion = NCircles * CircleExpansion + StartExpansion;
 
-                var x = Mathf.Cos(2 * Mathf.PI / _nDirections * directionIndex) * maxExpansion + baseColor.x;
-                var y = Mathf.Sin(2 * Mathf.PI / _nDirections * directionIndex) * maxExpansion + baseColor.y;
+                var x = Mathf.Cos(2 * Mathf.PI / NDirections * directionIndex) * maxExpansion + baseColor.x;
+                var y = Mathf.Sin(2 * Mathf.PI / NDirections * directionIndex) * maxExpansion + baseColor.y;
                 var maxPoint = new Vector3(x, y, baseColor.z);
 
                 return Vector3.Distance(baseColor, maxPoint);
@@ -191,12 +215,12 @@ namespace Colorcrush.Game
                 var xyYCoordinates = new List<ColorObject>();
                 var centerCoordinatexyY = centerColor.ToColorFormat(ColorFormat.XYY);
 
-                for (var direction = 0; direction < _nDirections; direction++)
+                for (var direction = 0; direction < NDirections; direction++)
                 {
-                    for (var circle = 0; circle < _nCircles; circle++)
+                    for (var circle = 0; circle < NCircles; circle++)
                     {
-                        var x = Mathf.Cos(2 * Mathf.PI / _nDirections * direction) * (circle * _circleExpansion + _startExpansion) + centerCoordinatexyY.Vector.x;
-                        var y = Mathf.Sin(2 * Mathf.PI / _nDirections * direction) * (circle * _circleExpansion + _startExpansion) + centerCoordinatexyY.Vector.y;
+                        var x = Mathf.Cos(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinatexyY.Vector.x;
+                        var y = Mathf.Sin(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinatexyY.Vector.y;
                         var currentCoordinate = new Vector3(x, y, centerCoordinatexyY.Vector.z);
 
                         xyYCoordinates.Add(new ColorObject(currentCoordinate, ColorFormat.XYY, direction));
@@ -205,18 +229,6 @@ namespace Colorcrush.Game
 
                 return xyYCoordinates;
             }
-        }
-
-        public class ColorMatrixResult
-        {
-            public ColorMatrixResult(List<Vector3> axisEncodings, List<ColorObject> finalColors)
-            {
-                AxisEncodings = axisEncodings;
-                FinalColors = finalColors;
-            }
-
-            public List<Vector3> AxisEncodings { get; }
-            public List<ColorObject> FinalColors { get; }
         }
     }
 }
