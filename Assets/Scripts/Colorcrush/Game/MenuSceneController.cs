@@ -21,7 +21,8 @@ namespace Colorcrush.Game
     {
         private const float DoubleTapTime = 0.3f;
 
-        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        [Header("Scroll View Settings")]
+        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -42,7 +43,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")]
+        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
@@ -60,7 +62,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        [Header("Color Analysis Settings")]
+        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
         private bool enableColorViewInspector = true;
 
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
@@ -90,7 +93,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The drag signifier object.")]
         private GameObject dragSignifier;
 
-        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [Header("Button Animation Settings")]
+        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -144,7 +148,7 @@ namespace Colorcrush.Game
         private Coroutine _smoothScrollCoroutine;
         private int _tapCount;
         private HashSet<string> _uniqueCompletedColors;
-        
+
         private void Awake()
         {
             _uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
@@ -175,16 +179,6 @@ namespace Colorcrush.Game
 
             SetDragSignifierActive(true);
             UpdateColorAnalysis();
-        }
-
-        private void OnResetProgressButtonClicked()
-        {
-            ProgressManager.ResetAllProgress();
-            _uniqueCompletedColors.Clear();
-            _selectedLevelIndex = -1;
-            OnButtonClicked(0);
-            UpdateSubmitButton();
-            AudioManager.PlaySound("MENU B_Select");
         }
 
         private void Update()
@@ -250,6 +244,16 @@ namespace Colorcrush.Game
             {
                 StopCoroutine(_smoothScrollCoroutine);
             }
+        }
+
+        private void OnResetProgressButtonClicked()
+        {
+            ProgressManager.ResetAllProgress();
+            _uniqueCompletedColors.Clear();
+            _selectedLevelIndex = -1;
+            OnButtonClicked(0);
+            UpdateSubmitButton();
+            AudioManager.PlaySound("MENU B_Select");
         }
 
         private void HandleColorViewInspector()
@@ -418,8 +422,8 @@ namespace Colorcrush.Game
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
             {
-                var material = compareView.GetComponent<Image>().material;
-                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_Circle1Color", finalColor);
+                var go = compareView.GetComponent<Image>();
+                ShaderManager.SetColor(go.gameObject, "_Circle1Color", finalColor);
             }
         }
 
@@ -430,8 +434,8 @@ namespace Colorcrush.Game
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
             {
-                var material = compareView.GetComponent<Image>().material;
-                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_Circle2Color", finalColor);
+                var go = compareView.GetComponent<Image>();
+                ShaderManager.SetColor(go.gameObject, "_Circle2Color", finalColor);
             }
         }
 
@@ -740,7 +744,7 @@ namespace Colorcrush.Game
             }
 
             // Scale back all buttons except the newly selected one
-            for (int i = 0; i < buttonGrid.transform.childCount; i++)
+            for (var i = 0; i < buttonGrid.transform.childCount; i++)
             {
                 if (i != index)
                 {

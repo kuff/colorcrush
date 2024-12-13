@@ -56,29 +56,13 @@ Shader "Colorcrush/BoilingButtonShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                // Early return if effect is disabled
-                if (_EffectToggle < 1)
-                {
-                    return fixed4(_BackgroundColor.rgb, _BackgroundColor.a * _Alpha);
-                }
-
-                // Calculate UV distance from center
-                float2 centeredUV = i.uv - 0.5;
-                half dist = length(centeredUV);
-
-                // Create animated ripple pattern using _Time
-                half timeOffset = _Time.y * _Speed * 4.0;
-                half ripplePattern = sin(dist * 12.0 - timeOffset);
-                half rippleIntensity = ripplePattern * 0.1;
-
-                // Create drop effect with ripple
-                half dropEdge = _DropSize + rippleIntensity;
-                half dropMask = smoothstep(dropEdge, _DropSize, dist);
-
-                // Blend colors based on drop mask
-                fixed4 finalColor = lerp(_AccentColor, _BackgroundColor, dropMask);
+                half dist = length(i.uv - 0.5);
+                half ripplePattern = sin(dist * 12.0 - _Time.y * _Speed * 4.0) * 0.1;
+                half dropMask = smoothstep(_DropSize + ripplePattern, _DropSize, dist);
+                fixed4 finalColor = _EffectToggle < 1 
+                    ? _BackgroundColor 
+                    : lerp(_AccentColor, _BackgroundColor, dropMask);
                 finalColor.a *= _Alpha;
-
                 return finalColor;
             }
             ENDCG

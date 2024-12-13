@@ -13,8 +13,6 @@ namespace Colorcrush.Util
 {
     public class SceneManager : MonoBehaviour
     {
-        public static event Action<Scene, LoadSceneMode> sceneLoaded;
-        
         private static SceneManager _instance;
         private Coroutine _activationWarningCoroutine;
         private AsyncOperation _asyncOperation;
@@ -52,6 +50,8 @@ namespace Colorcrush.Util
                 DontDestroyOnLoad(gameObject);
             }
         }
+
+        public static event Action<Scene, LoadSceneMode> sceneLoaded;
 
         public static void LoadSceneAsync(string sceneName)
         {

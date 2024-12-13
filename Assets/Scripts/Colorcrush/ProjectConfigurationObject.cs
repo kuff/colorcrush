@@ -46,9 +46,6 @@ namespace Colorcrush
         [Tooltip("The seed value used for random number generation. Setting a specific seed ensures that the sequence of random numbers is reproducible, which is useful for running experiments.")]
         public int randomSeed = 42;
 
-        [Tooltip("If enabled, all shaders will revert to their default states upon game shutdown, ensuring a consistent starting point for shaders in subsequent sessions.")]
-        public bool resetShadersOnShutdown = true;
-
         [Tooltip("The file path from which color data will be loaded. This should point to a valid text file containing color information.")]
         public string colorDataFilePath = "Assets/Resources/Colorcrush/ColorData.txt";
 

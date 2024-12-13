@@ -2,6 +2,7 @@
 
 #region
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,7 +21,7 @@ namespace Colorcrush.Game
                     return new ColorExperiment8X6Stage1Solo(baseColor);
                 // TODO: Add more experiments here
                 default:
-                    throw new System.InvalidOperationException($"Unknown color experiment name: {experimentName}");
+                    throw new InvalidOperationException($"Unknown color experiment name: {experimentName}");
             }
         }
 

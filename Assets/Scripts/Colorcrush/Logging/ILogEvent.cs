@@ -227,7 +227,7 @@ namespace Colorcrush.Logging
 
     public class SkinColorModeEvent : ILogEvent
     {
-        public SkinColorModeEvent(bool isEnabled) 
+        public SkinColorModeEvent(bool isEnabled)
         {
             IsEnabled = isEnabled;
         }

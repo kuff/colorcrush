@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
-  useInitiatingScene: 1
+  useInitiatingScene: 0
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
@@ -22,14 +22,13 @@ MonoBehaviour:
   emojiMaterialPrefix: EmojiMaterial_
   disableMaskingOnGenerate: 1
   randomSeed: 42
-  resetShadersOnShutdown: 1
   colorDataFilePath: Assets/Resources/Colorcrush/ColorData.txt
   colorSplitRegex: '(\d{1,3})\s+\d{1,3}\s+\d{1,3}\s*$  '
   colorDataFormat: 3
   useSkinColorMode: 0
   unlockAllLevelsFromStart: 0
   colorExperimentName: 8x6Stage1Solo
-  enableTripleTapToggleSkinColorMode: 1
+  enableTripleTapToggleSkinColorMode: 0
   enableResetButton: 0
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4

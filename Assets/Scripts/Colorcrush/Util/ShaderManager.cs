@@ -2,10 +2,11 @@
 
 #region
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 #endregion
 
@@ -14,10 +15,7 @@ namespace Colorcrush.Util
     public class ShaderManager : MonoBehaviour
     {
         private static ShaderManager _instance;
-
-        private readonly Dictionary<GameObject, Material> _originalMaterials = new();
-        private readonly Dictionary<GameObject, Material> _temporaryMaterials = new();
-        private readonly Dictionary<Material, Dictionary<string, object>> _originalValues = new();
+        private readonly Dictionary<GameObject, Material> _materialCopies = new();
 
         public static ShaderManager Instance
         {
@@ -53,172 +51,114 @@ namespace Colorcrush.Util
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            CleanupTemporaryMaterials();
-            //ResetValues();
-        }
-
         private void OnApplicationQuit()
         {
-            CleanupTemporaryMaterials();
-            ResetValues();
+            CleanupMaterialCopies();
         }
 
-        private Material GetOrCreateTemporaryMaterial(GameObject targetObject)
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (_temporaryMaterials.TryGetValue(targetObject, out var tempMaterial))
-            {
-                return tempMaterial;
-            }
-
-            var originalMaterial = GetOriginalMaterial(targetObject);
-            if (originalMaterial == null) return null;
-
-            tempMaterial = new Material(originalMaterial);
-            _temporaryMaterials[targetObject] = tempMaterial;
-            Debug.Log($"ShaderManager: Created new temporary material for {targetObject.name} on {originalMaterial.name}");
-            return tempMaterial;
+            Debug.Log("ShaderManager: Number of material copies before cleanup: " + _materialCopies.Count);
+            CleanupMaterialCopies();
         }
 
-        private Material GetOriginalMaterial(GameObject targetObject)
+        private Material GetOrCreateMaterialCopy(GameObject targetObject)
         {
-            if (_originalMaterials.TryGetValue(targetObject, out var originalMaterial))
+            if (targetObject == null)
             {
-                return originalMaterial;
+                throw new ArgumentNullException(nameof(targetObject));
             }
 
-            // Try to get material from Image component
+            if (_materialCopies.TryGetValue(targetObject, out var existingCopy))
+            {
+                return existingCopy;
+            }
+
             var image = targetObject.GetComponent<Image>();
-            if (image != null)
+            var originalMaterial = image != null
+                ? image.material
+                : targetObject.GetComponent<Renderer>()?.sharedMaterial;
+
+            if (originalMaterial == null)
             {
-                originalMaterial = image.material;
-                _originalMaterials[targetObject] = originalMaterial;
-                return originalMaterial;
+                throw new InvalidOperationException($"ShaderManager: No material found on GameObject {targetObject.name}");
             }
 
-            // Try to get material from Renderer component
-            var renderer = targetObject.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                originalMaterial = renderer.sharedMaterial;
-                _originalMaterials[targetObject] = originalMaterial;
-                return originalMaterial;
-            }
-
-            Debug.LogError($"ShaderManager: No material found on GameObject {targetObject.name}");
-            return null;
+            return _materialCopies[targetObject] = new Material(originalMaterial);
         }
 
         public static void SetColor(GameObject targetObject, string propertyName, Color color)
         {
-            var tempMaterial = Instance.GetOrCreateTemporaryMaterial(targetObject);
-            if (tempMaterial == null) return;
+            if (targetObject == null)
+            {
+                throw new ArgumentNullException(nameof(targetObject));
+            }
 
-            var originalMaterial = Instance.GetOriginalMaterial(targetObject);
-            Instance.SaveOriginalValue(originalMaterial, propertyName, originalMaterial.GetColor(propertyName));
-            tempMaterial.SetColor(propertyName, color);
-            
-            // Update the material reference on the target object
-            UpdateObjectMaterial(targetObject, tempMaterial);
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
+            var materialCopy = Instance.GetOrCreateMaterialCopy(targetObject);
+            try
+            {
+                materialCopy.SetColor(propertyName, color);
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException($"Failed to set color property '{propertyName}' on material", e);
+            }
+
+            UpdateObjectMaterial(targetObject, materialCopy);
         }
 
         public static void SetFloat(GameObject targetObject, string propertyName, float value)
         {
-            var tempMaterial = Instance.GetOrCreateTemporaryMaterial(targetObject);
-            if (tempMaterial == null) return;
+            if (targetObject == null)
+            {
+                throw new ArgumentNullException(nameof(targetObject));
+            }
 
-            var originalMaterial = Instance.GetOriginalMaterial(targetObject);
-            Instance.SaveOriginalValue(originalMaterial, propertyName, originalMaterial.GetFloat(propertyName));
-            tempMaterial.SetFloat(propertyName, value);
-            
-            // Update the material reference on the target object
-            UpdateObjectMaterial(targetObject, tempMaterial);
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
+            var materialCopy = Instance.GetOrCreateMaterialCopy(targetObject);
+            try
+            {
+                materialCopy.SetFloat(propertyName, value);
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException($"Failed to set float property '{propertyName}' on material", e);
+            }
+
+            UpdateObjectMaterial(targetObject, materialCopy);
         }
 
-        private static void UpdateObjectMaterial(GameObject targetObject, Material temporaryMaterial)
+        private static void UpdateObjectMaterial(GameObject targetObject, Material material)
         {
-            // Update UI Image
             var image = targetObject.GetComponent<Image>();
             if (image != null)
             {
-                image.material = temporaryMaterial;
+                image.material = material;
                 return;
             }
 
-            // Update Renderer
             var renderer = targetObject.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.material = temporaryMaterial;
-            }
-        }
-
-        private void SaveOriginalValue(Material material, string propertyName, object value)
-        {
-            if (!_originalValues.ContainsKey(material))
-            {
-                _originalValues[material] = new Dictionary<string, object>();
-            }
-
-            if (!_originalValues[material].ContainsKey(propertyName))
-            {
-                _originalValues[material][propertyName] = value;
-                Debug.Log($"ShaderManager: Saved original value of {value} for {propertyName} on {material.name}");
-            }
-        }
-
-        private void CleanupTemporaryMaterials()
-        {
-            foreach (var tempMaterial in _temporaryMaterials.Values)
-            {
-                if (tempMaterial != null)
-                {
-                    Destroy(tempMaterial);
-                }
-            }
-            Debug.Log($"ShaderManager: Cleaned up {_temporaryMaterials.Count} temporary materials.");
-            _temporaryMaterials.Clear();
-            _originalMaterials.Clear();
-        }
-
-        public static void ResetValues()
-        {
-            if (!ProjectConfig.InstanceConfig.resetShadersOnShutdown)
-            {
+                renderer.material = material;
                 return;
             }
 
-            var resetCount = 0;
-            foreach (var (gameObject, originalMaterial) in Instance._originalMaterials)
-            {
-                if (gameObject == null || originalMaterial == null) continue;
+            throw new InvalidOperationException($"ShaderManager: No Image or Renderer component found on GameObject {targetObject.name}");
+        }
 
-                // Reset the original material's values
-                if (Instance._originalValues.TryGetValue(originalMaterial, out var values))
-                {
-                    foreach (var (propertyName, value) in values)
-                    {
-                        if (value is Color color)
-                        {
-                            originalMaterial.SetColor(propertyName, color);
-                            resetCount++;
-                        }
-                        else if (value is float floatValue)
-                        {
-                            originalMaterial.SetFloat(propertyName, floatValue);
-                            resetCount++;
-                        }
-                    }
-                }
-
-                // Restore the original material on the game object
-                UpdateObjectMaterial(gameObject, originalMaterial);
-            }
-
-            Instance.CleanupTemporaryMaterials();
-            Instance._originalValues.Clear();
-            Debug.Log($"ShaderManager: Reset {resetCount} shader properties to their original values.");
+        private void CleanupMaterialCopies()
+        {
+            _materialCopies.Clear();
         }
     }
 }
