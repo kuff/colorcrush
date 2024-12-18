@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Random = System.Random;
 
@@ -59,18 +61,47 @@ namespace Colorcrush.Game
 
         // XYZ to Display P3 matrix
         private static Matrix4x4 _xyzToDisplayP3 = SrgbToDisplayP3 * _xyzToSrgb;
+
+        private static Color[] _targetColors;
         public static bool ApplyGammaCorrection => true;
         public static ColorExperiment CurrentColorExperiment { get; private set; }
+
+        // Define the array of colors
+        public static Color[] TargetColors
+        {
+            get
+            {
+                if (_targetColors == null)
+                {
+                    var loader = new ColorDataLoader(
+                        ProjectConfig.InstanceConfig.colorDataFilePath,
+                        ProjectConfig.InstanceConfig.colorSplitRegex,
+                        ProjectConfig.InstanceConfig.colorDataFormat
+                    );
+
+                    var colorObjects = loader.LoadColors();
+                    _targetColors = new Color[colorObjects.Count];
+
+                    for (var i = 0; i < colorObjects.Count; i++)
+                    {
+                        var srgbColor = colorObjects[i].ToColorFormat(ColorFormat.SrgbZeroToOne);
+                        _targetColors[i] = new Color(srgbColor.Vector.x, srgbColor.Vector.y, srgbColor.Vector.z);
+                    }
+                }
+
+                return _targetColors;
+            }
+        }
 
         public static ColorExperiment BeginColorExperiment(ColorObject baseColor)
         {
             var experimentName = ProjectConfig.InstanceConfig.colorExperimentName;
-            
+
             // Get the containing type (ColorManager) first
             var managerType = typeof(ColorManager);
             // Then find the nested type by name
             var experimentType = managerType.GetNestedType(experimentName);
-            
+
             if (experimentType == null)
             {
                 throw new InvalidOperationException($"Unknown color experiment name: {experimentName}. Make sure the class exists in the Colorcrush.Game.ColorManager namespace.");
@@ -352,11 +383,72 @@ namespace Colorcrush.Game
             public Color ToDisplayColor()
             {
                 // TODO: Convert to Display P3 if that setting is enabled
-                
+
                 // Convert to sRGB format if needed
                 var srgbColor = ToColorFormat(ColorFormat.SrgbZeroToOne).Vector;
 
                 return new Color(srgbColor.x, srgbColor.y, srgbColor.z, 1f);
+            }
+        }
+
+        public class ColorDataLoader
+        {
+            private readonly ColorFormat _colorFormat;
+            private readonly string _colorSplitRegex;
+            private readonly string _filePath;
+
+            public ColorDataLoader(string filePath, string colorSplitRegex, ColorFormat colorFormat)
+            {
+                _filePath = filePath;
+                _colorSplitRegex = colorSplitRegex;
+                _colorFormat = colorFormat;
+            }
+
+            public List<ColorObject> LoadColors()
+            {
+                var colors = new List<ColorObject>();
+                var linesProcessed = 0;
+                var colorsAdded = 0;
+
+                var lines = File.ReadAllLines(_filePath);
+
+                foreach (var line in lines)
+                {
+                    linesProcessed++;
+
+                    var match = Regex.Match(line.Trim(), _colorSplitRegex);
+                    if (!match.Success)
+                    {
+                        throw new FormatException($"Invalid color data format at line {linesProcessed}. Expected 3 integer color components at the end of the line.");
+                    }
+
+                    if (!float.TryParse(match.Groups[1].Value, out var x) ||
+                        !float.TryParse(match.Groups[2].Value, out var y) ||
+                        !float.TryParse(match.Groups[3].Value, out var z))
+                    {
+                        throw new FormatException($"Failed to parse color components at line {linesProcessed}. Values must be valid numbers.");
+                    }
+
+                    var newColor = new ColorObject(
+                        new Vector3(
+                            x,
+                            y,
+                            z
+                        ),
+                        _colorFormat
+                    );
+                    colors.Add(newColor);
+                    colorsAdded++;
+                }
+
+                if (colors.Count == 0)
+                {
+                    throw new InvalidOperationException("No valid colors were loaded from the file.");
+                }
+
+                Debug.Log($"Color data loading successful. Processed {linesProcessed} lines, added {colorsAdded} colors.");
+
+                return colors;
             }
         }
     }

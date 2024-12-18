@@ -33,15 +33,6 @@ namespace Colorcrush
         [Tooltip("If enabled, all log files will be automatically deleted when the Unity Editor starts. This is useful for maintaining a clean log environment during development.")]
         public bool deleteAllLogFilesOnEditorStartup = true;
 
-        [Tooltip("The directory path where generated emoji materials will be saved. Ensure this path is within the 'Resources' folder for proper asset management.")]
-        public string generatedMaterialsPath = "Assets/Resources/GeneratedMaterials";
-
-        [Tooltip("The prefix that will be added to the names of generated emoji materials. This helps in organizing and identifying generated materials.")]
-        public string emojiMaterialPrefix = "EmojiMaterial_";
-
-        [Tooltip("If enabled, image masking will be turned off when generating materials, allowing for unmasked image processing. Not enabling this has caused issues on iOS in the past.")]
-        public bool disableMaskingOnGenerate = true;
-
         [Header("Game Configuration")]
         [Tooltip("The seed value used for random number generation. Setting a specific seed ensures that the sequence of random numbers is reproducible, which is useful for running experiments.")]
         public int randomSeed = 42;
@@ -64,7 +55,7 @@ namespace Colorcrush
         [Tooltip("The identifier for the color experiment to execute. This name should correspond to a predefined experiment setup.")]
         public string colorExperimentName;
 
-        [Tooltip("If enabled, allows users to toggle the skin color mode by tapping three times in the MenuScene, providing a quick way to switch modes when the experiments are run by a conducter in-person.")]
+        [Tooltip("If enabled, allows users to toggle the skin color mode by tapping three times in the MenuScene, providing a quick way to switch modes when the experiments are run by a conductor in-person.")]
         public bool enableTripleTapToggleSkinColorMode = true;
 
         [FormerlySerializedAs("enableResultButton")] [Tooltip("If enabled, the reset button will be visible in the menu scene, allowing the experiment conductor to reset the game state. If disabled, the button will be hidden.")]
@@ -115,8 +106,8 @@ namespace Colorcrush
         [Tooltip("The maximum number of simultaneous audio sources that can play at once.")]
         public int maxAudioSources = 32;
 
-        [Tooltip("The target RMS (Root Mean Square) value for audio normalization.")]
-        public float targetRMS = 0.01f;
+        [FormerlySerializedAs("targetRMS")] [Tooltip("The target RMS (Root Mean Square) value for audio normalization.")]
+        public float targetRms = 0.01f;
 
         [Tooltip("The path within Resources where audio clips are stored.")]
         public string audioPath = "Colorcrush/Audio/";

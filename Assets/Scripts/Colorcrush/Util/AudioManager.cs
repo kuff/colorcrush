@@ -107,7 +107,7 @@ namespace Colorcrush.Util
             clip.GetData(samples, 0);
 
             var rms = Mathf.Sqrt(samples.Select(s => s * s).Average());
-            var volumeAdjustment = rms > 0 ? ProjectConfig.InstanceConfig.targetRMS / rms : 1f;
+            var volumeAdjustment = rms > 0 ? ProjectConfig.InstanceConfig.targetRms / rms : 1f;
 
             var mixerGainFactor = Mathf.Pow(10, ProjectConfig.InstanceConfig.mixerGainDB / 20f);
             volumeAdjustment /= mixerGainFactor;

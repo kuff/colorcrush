@@ -251,13 +251,13 @@ namespace Colorcrush.Game
                 else
                 {
                     Debug.LogWarning($"Failed to parse most recent color: {ProgressManager.MostRecentCompletedTargetColor}. Using first color from ColorArray.");
-                    targetColor = ColorManager.SRGBTargetColors[0];
+                    targetColor = ColorManager.TargetColors[0];
                 }
             }
             else
             {
                 // Use the first color from ColorArray
-                targetColor = ColorManager.SRGBTargetColors[0];
+                targetColor = ColorManager.TargetColors[0];
                 Debug.Log("No completed colors found. Using first color from ColorArray.");
             }
 
@@ -388,7 +388,7 @@ namespace Colorcrush.Game
         {
             // Select one of the first three colors from ColorArray
             var randomIndex = Random.Range(0, 4);
-            var selectedColor = ColorManager.SRGBTargetColors[randomIndex];
+            var selectedColor = ColorManager.TargetColors[randomIndex];
 
             // Set the background color
             if (backgroundImage != null)

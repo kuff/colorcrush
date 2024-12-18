@@ -165,20 +165,28 @@ namespace Colorcrush.Game
                 _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
             }
 
-            if (resetProgressButton != null)
+            if (SceneManager.GetPreviousSceneName() != "StartScene")
             {
-                if (ProjectConfig.InstanceConfig.enableResetButton)
-                {
-                    resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
-                }
-                else
-                {
-                    resetProgressButton.gameObject.SetActive(false);
-                }
+                SetDragSignifierActive(true);
+            }
+            else
+            {
+                SetDragSignifierActive(false);
             }
 
-            SetDragSignifierActive(true);
             UpdateColorAnalysis();
+        }
+
+        private void Start()
+        {
+            if (ProjectConfig.InstanceConfig.enableResetButton)
+            {
+                resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
+            }
+            else
+            {
+                resetProgressButton.gameObject.SetActive(false);
+            }
         }
 
         private void Update()
@@ -612,7 +620,7 @@ namespace Colorcrush.Game
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
             var mostRecentCompletedColor = ProgressManager.MostRecentCompletedTargetColor;
-            var nextColorIndex = Enumerable.Range(0, SRGBTargetColors.Length).First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(SRGBTargetColors[i])));
+            var nextColorIndex = Enumerable.Range(0, TargetColors.Length).First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(TargetColors[i])));
 
             for (var i = 0; i < buttons.Length; i++)
             {
@@ -623,7 +631,7 @@ namespace Colorcrush.Game
                     continue;
                 }
 
-                var targetColor = SRGBTargetColors[i];
+                var targetColor = TargetColors[i];
                 var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
 
                 // Check if all levels should be unlocked
@@ -665,7 +673,7 @@ namespace Colorcrush.Game
                     // Set up animation for the next level button if not unlocking all levels
                     if (!ProjectConfig.InstanceConfig.unlockAllLevelsFromStart && i == nextColorIndex)
                     {
-                        StartCoroutine(AnimateNextLevelButton(buttons[i]));
+                        StartCoroutine(AnimateNextLevelButton(buttons[i], i));
                     }
                 }
                 else
@@ -687,7 +695,7 @@ namespace Colorcrush.Game
             // Select the most recently played level at startup
             if (!string.IsNullOrEmpty(mostRecentCompletedColor))
             {
-                var mostRecentIndex = Array.FindIndex(SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
+                var mostRecentIndex = Array.FindIndex(TargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
                 if (mostRecentIndex != -1 && mostRecentIndex < buttons.Length)
                 {
                     OnButtonClicked(mostRecentIndex);
@@ -700,7 +708,7 @@ namespace Colorcrush.Game
             }
         }
 
-        private IEnumerator AnimateNextLevelButton(Button button)
+        private IEnumerator AnimateNextLevelButton(Button button, int buttonIndex)
         {
             var animator = button.GetComponent<Animator>();
             if (animator == null)
@@ -713,7 +721,7 @@ namespace Colorcrush.Game
             {
                 yield return new WaitForSeconds(buttonShakeInterval);
 
-                if (_selectedLevelIndex != _uniqueCompletedColors.Count)
+                if (_selectedLevelIndex != buttonIndex)
                 {
                     var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
                     AnimationManager.PlayAnimation(animator, bumpAnimation);
@@ -756,7 +764,7 @@ namespace Colorcrush.Game
             _selectedLevelIndex = index;
 
             // Update the current target color immediately
-            _currentTargetColor = SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = TargetColors[_selectedLevelIndex];
 
             // Scale down the newly selected button
             if (index < buttonGrid.transform.childCount)
@@ -871,7 +879,7 @@ namespace Colorcrush.Game
 
         private void OnSubmitButtonClicked()
         {
-            var targetColor = SRGBTargetColors[_selectedLevelIndex];
+            var targetColor = TargetColors[_selectedLevelIndex];
             PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
             PlayerPrefs.Save();
 
@@ -924,7 +932,7 @@ namespace Colorcrush.Game
                 return;
             }
 
-            _currentTargetColor = SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = TargetColors[_selectedLevelIndex];
             var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
 
             if (!ProgressManager.CompletedTargetColors.Contains(targetColorHex))
@@ -956,7 +964,7 @@ namespace Colorcrush.Game
                 {
                     SetDragSignifierActive(false);
                 }
-                else if (!_hasColorAnalysisBeenClicked && ProgressManager.CompletedTargetColors.Count > 0)
+                else if (!_hasColorAnalysisBeenClicked && ProgressManager.CompletedTargetColors.Count > 0 && SceneManager.GetPreviousSceneName() != "StartScene")
                 {
                     SetDragSignifierActive(true);
                 }
