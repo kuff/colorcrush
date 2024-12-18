@@ -19,10 +19,10 @@ namespace Colorcrush.Game
         {
             DisplayP3ZeroToOne,
             DisplayP3ZeroTo255,
-            SRGBZeroToOne,
-            SRGBZeroTo255,
+            SrgbZeroToOne,
+            SrgbZeroTo255,
             XYZ,
-            XYY,
+            Xyy,
         }
 
         private const int VariationsPerColor = 30;
@@ -33,7 +33,7 @@ namespace Colorcrush.Game
         // Conversion matrices
 
         // CIE XYZ to sRGB matrix
-        private static Matrix4x4 XYZTosRGB = new(
+        private static Matrix4x4 _xyzToSrgb = new(
             new Vector4(3.174569687f, -1.437132245f, -0.533239074f, 0f),
             new Vector4(-0.978559662f, 1.851015357f, 0.0734006f, 0f),
             new Vector4(0.071795226f, -0.224002081f, 1.061208354f, 0f),
@@ -41,31 +41,55 @@ namespace Colorcrush.Game
         );
 
         // sRGB to XYZ matrix
-        private static Matrix4x4 sRGBToXYZ = XYZTosRGB.inverse;
+        private static Matrix4x4 _srgbToXYZ = _xyzToSrgb.inverse;
 
         // sRGB to Display P3 matrix
-        private static readonly Matrix4x4 sRGBToDisplayP3 = new(
+        private static readonly Matrix4x4 SrgbToDisplayP3 = new(
             new Vector4(0.8225f, 0.1774f, 0f, 0f),
             new Vector4(0.0332f, 0.9669f, 0f, 0f),
             new Vector4(0.0171f, 0.0724f, 0.9108f, 0f),
             new Vector4(0f, 0f, 0f, 1f)
         );
 
-        // Display P3 to sRGB matrix (inverse of sRGBToDisplayP3)
-        private static readonly Matrix4x4 DisplayP3TosRGB = sRGBToDisplayP3.inverse;
+        // Display P3 to sRGB matrix (inverse of SRGBToDisplayP3)
+        private static readonly Matrix4x4 DisplayP3TosRGB = SrgbToDisplayP3.inverse;
 
         // Display P3 to XYZ matrix
-        private static Matrix4x4 DisplayP3ToXYZ = sRGBToXYZ * DisplayP3TosRGB;
+        private static Matrix4x4 _displayP3ToXYZ = _srgbToXYZ * DisplayP3TosRGB;
 
         // XYZ to Display P3 matrix
-        private static Matrix4x4 XYZToDisplayP3 = sRGBToDisplayP3 * XYZTosRGB;
+        private static Matrix4x4 _xyzToDisplayP3 = SrgbToDisplayP3 * _xyzToSrgb;
         public static bool ApplyGammaCorrection => true;
         public static ColorExperiment CurrentColorExperiment { get; private set; }
 
         public static ColorExperiment BeginColorExperiment(ColorObject baseColor)
         {
-            CurrentColorExperiment = CreateExperiment(ProjectConfig.InstanceConfig.colorExperimentName, baseColor);
-            return CurrentColorExperiment;
+            var experimentName = ProjectConfig.InstanceConfig.colorExperimentName;
+            
+            // Get the containing type (ColorManager) first
+            var managerType = typeof(ColorManager);
+            // Then find the nested type by name
+            var experimentType = managerType.GetNestedType(experimentName);
+            
+            if (experimentType == null)
+            {
+                throw new InvalidOperationException($"Unknown color experiment name: {experimentName}. Make sure the class exists in the Colorcrush.Game.ColorManager namespace.");
+            }
+
+            if (!typeof(ColorExperiment).IsAssignableFrom(experimentType))
+            {
+                throw new InvalidOperationException($"Type {experimentName} must inherit from ColorExperiment.");
+            }
+
+            try
+            {
+                CurrentColorExperiment = (ColorExperiment)Activator.CreateInstance(experimentType, baseColor);
+                return CurrentColorExperiment;
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"Failed to create instance of {experimentName}: {e.Message}", e);
+            }
         }
 
         public static ColorObject ConvertToDisplayP3(ColorObject color)
@@ -73,14 +97,14 @@ namespace Colorcrush.Game
             return color.ToColorFormat(ColorFormat.DisplayP3ZeroToOne);
         }
 
-        public static ColorObject ConvertToSRGB(ColorObject color)
+        public static ColorObject ConvertToSrgb(ColorObject color)
         {
-            return color.ToColorFormat(ColorFormat.SRGBZeroToOne);
+            return color.ToColorFormat(ColorFormat.SrgbZeroToOne);
         }
 
         public static ColorObject ConvertToXyY(ColorObject color)
         {
-            return color.ToColorFormat(ColorFormat.XYY);
+            return color.ToColorFormat(ColorFormat.Xyy);
         }
 
         private static Color ConvertColor(Color color, ColorFormat fromFormat, ColorFormat toFormat, bool disableGammaExpansion = false)
@@ -126,7 +150,7 @@ namespace Colorcrush.Game
         {
             switch (format)
             {
-                case ColorFormat.SRGBZeroTo255:
+                case ColorFormat.SrgbZeroTo255:
                 case ColorFormat.DisplayP3ZeroTo255:
                     return vector / 255f;
                 default:
@@ -138,7 +162,7 @@ namespace Colorcrush.Game
         {
             switch (format)
             {
-                case ColorFormat.SRGBZeroTo255:
+                case ColorFormat.SrgbZeroTo255:
                 case ColorFormat.DisplayP3ZeroTo255:
                     return vector * 255f;
                 default:
@@ -150,13 +174,13 @@ namespace Colorcrush.Game
         {
             switch (format)
             {
-                case ColorFormat.SRGBZeroToOne:
-                case ColorFormat.SRGBZeroTo255:
-                    return sRGBToXYZ.MultiplyPoint3x4(vector);
+                case ColorFormat.SrgbZeroToOne:
+                case ColorFormat.SrgbZeroTo255:
+                    return _srgbToXYZ.MultiplyPoint3x4(vector);
                 case ColorFormat.DisplayP3ZeroToOne:
                 case ColorFormat.DisplayP3ZeroTo255:
-                    return DisplayP3ToXYZ.MultiplyPoint3x4(vector);
-                case ColorFormat.XYY:
+                    return _displayP3ToXYZ.MultiplyPoint3x4(vector);
+                case ColorFormat.Xyy:
                     return XyYToXYZ(vector);
                 case ColorFormat.XYZ:
                     return vector;
@@ -169,13 +193,13 @@ namespace Colorcrush.Game
         {
             switch (format)
             {
-                case ColorFormat.SRGBZeroToOne:
-                case ColorFormat.SRGBZeroTo255:
-                    return XYZTosRGB.MultiplyPoint3x4(xyzVector);
+                case ColorFormat.SrgbZeroToOne:
+                case ColorFormat.SrgbZeroTo255:
+                    return _xyzToSrgb.MultiplyPoint3x4(xyzVector);
                 case ColorFormat.DisplayP3ZeroToOne:
                 case ColorFormat.DisplayP3ZeroTo255:
-                    return XYZToDisplayP3.MultiplyPoint3x4(xyzVector);
-                case ColorFormat.XYY:
+                    return _xyzToDisplayP3.MultiplyPoint3x4(xyzVector);
+                case ColorFormat.Xyy:
                     return XYZToXyY(xyzVector);
                 case ColorFormat.XYZ:
                     return xyzVector;
@@ -186,20 +210,20 @@ namespace Colorcrush.Game
 
         private static bool IsGammaEncodedFormat(ColorFormat format)
         {
-            return format is ColorFormat.SRGBZeroToOne or ColorFormat.SRGBZeroTo255 or ColorFormat.DisplayP3ZeroToOne or ColorFormat.DisplayP3ZeroTo255;
+            return format is ColorFormat.SrgbZeroToOne or ColorFormat.SrgbZeroTo255 or ColorFormat.DisplayP3ZeroToOne or ColorFormat.DisplayP3ZeroTo255;
         }
 
         private static Vector3 ClampVector(Vector3 vector, ColorFormat format)
         {
             switch (format)
             {
-                case ColorFormat.SRGBZeroToOne:
+                case ColorFormat.SrgbZeroToOne:
                 case ColorFormat.DisplayP3ZeroToOne:
                     vector.x = Mathf.Clamp01(vector.x);
                     vector.y = Mathf.Clamp01(vector.y);
                     vector.z = Mathf.Clamp01(vector.z);
                     break;
-                case ColorFormat.SRGBZeroTo255:
+                case ColorFormat.SrgbZeroTo255:
                 case ColorFormat.DisplayP3ZeroTo255:
                     vector.x = Mathf.Clamp(vector.x, 0f, 255f);
                     vector.y = Mathf.Clamp(vector.y, 0f, 255f);
@@ -211,7 +235,7 @@ namespace Colorcrush.Game
                     vector.y = Mathf.Max(0f, vector.y);
                     vector.z = Mathf.Max(0f, vector.z);
                     break;
-                case ColorFormat.XYY:
+                case ColorFormat.Xyy:
                     // x and y chromaticity coordinates are typically in [0,1], but z (Y) can be greater
                     vector.x = Mathf.Clamp01(vector.x);
                     vector.y = Mathf.Clamp01(vector.y);
@@ -250,14 +274,14 @@ namespace Colorcrush.Game
             return Mathf.Pow((c + 0.055f) / 1.055f, 2.4f);
         }
 
-        private static float GammaCompression(float c_lin)
+        private static float GammaCompression(float cLin)
         {
-            if (c_lin <= 0.0031308f)
+            if (cLin <= 0.0031308f)
             {
-                return c_lin * 12.92f;
+                return cLin * 12.92f;
             }
 
-            return 1.055f * Mathf.Pow(c_lin, 1.0f / 2.4f) - 0.055f;
+            return 1.055f * Mathf.Pow(cLin, 1.0f / 2.4f) - 0.055f;
         }
 
         private static Vector3 XyYToXYZ(Vector3 xyY)
@@ -267,10 +291,10 @@ namespace Colorcrush.Game
                 return Vector3.zero; // Avoid division by zero
             }
 
-            var X = xyY.x * xyY.z / xyY.y;
-            var Y = xyY.z;
-            var Z = (1 - xyY.x - xyY.y) * xyY.z / xyY.y;
-            return new Vector3(X, Y, Z);
+            var x = xyY.x * xyY.z / xyY.y;
+            var y = xyY.z;
+            var z = (1 - xyY.x - xyY.y) * xyY.z / xyY.y;
+            return new Vector3(x, y, z);
         }
 
         private static Vector3 XYZToXyY(Vector3 xyz)
@@ -298,7 +322,7 @@ namespace Colorcrush.Game
             public ColorObject(Color unityColor, int directionIndex = -1)
             {
                 Vector = new Vector3(unityColor.r, unityColor.g, unityColor.b);
-                Format = ColorFormat.SRGBZeroToOne;
+                Format = ColorFormat.SrgbZeroToOne;
                 DirectionIndex = directionIndex;
             }
 
@@ -308,7 +332,7 @@ namespace Colorcrush.Game
             {
                 get
                 {
-                    if (Format == ColorFormat.DisplayP3ZeroToOne || Format == ColorFormat.SRGBZeroToOne)
+                    if (Format is ColorFormat.DisplayP3ZeroToOne or ColorFormat.SrgbZeroToOne)
                     {
                         return Vector * 255f;
                     }
@@ -325,12 +349,14 @@ namespace Colorcrush.Game
                 return new ColorObject(ConvertColor(Vector, Format, targetFormat), targetFormat);
             }
 
-            public Color ToColor()
+            public Color ToDisplayColor()
             {
+                // TODO: Convert to Display P3 if that setting is enabled
+                
                 // Convert to sRGB format if needed
-                var sRGBColor = ToColorFormat(ColorFormat.SRGBZeroToOne).Vector;
+                var srgbColor = ToColorFormat(ColorFormat.SrgbZeroToOne).Vector;
 
-                return new Color(sRGBColor.x, sRGBColor.y, sRGBColor.z, 1f);
+                return new Color(srgbColor.x, srgbColor.y, srgbColor.z, 1f);
             }
         }
     }

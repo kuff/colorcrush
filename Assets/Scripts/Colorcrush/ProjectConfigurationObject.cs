@@ -53,7 +53,7 @@ namespace Colorcrush
         public string colorSplitRegex = @"\s+";
 
         [Tooltip("Specifies the format of the color data within the file. This setting should match the format used in the color data file for accurate color processing.")]
-        public ColorManager.ColorFormat colorDataFormat = ColorManager.ColorFormat.SRGBZeroToOne;
+        public ColorManager.ColorFormat colorDataFormat = ColorManager.ColorFormat.SrgbZeroToOne;
 
         [Tooltip("The default mode for the ColorTransposeShader regarding skin color. If true, all non-white pixels are converted to skin color (no emoji face and shade). If false, only pixels closely matching the skin color are changed to the provided target color (leaving the emoji face and shade visible).")]
         public bool useSkinColorMode;

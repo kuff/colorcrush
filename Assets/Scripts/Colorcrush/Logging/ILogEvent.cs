@@ -216,7 +216,7 @@ namespace Colorcrush.Logging
             // Print both encodings and colors
 
             // Cast the result.finalColors.Vector255 to a Color (Unity) object and then to a string
-            var colors = string.Join(" ", Result.FinalColors.Select(color => ColorUtility.ToHtmlStringRGB(color.ToColor())));
+            var colors = string.Join(" ", Result.FinalColors.Select(color => ColorUtility.ToHtmlStringRGB(color.ToDisplayColor())));
 
             // Encodings
             var encodings = string.Join(" ", Result.AxisEncodings.Select(encoding => encoding.ToString("F3").Replace(",", ";")));

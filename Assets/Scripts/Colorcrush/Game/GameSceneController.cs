@@ -649,7 +649,7 @@ namespace Colorcrush.Game
         {
             // Use submit count and button index to determine which color to return
             var colorIndex = _submitCount * _selectionGridButtons.Length + buttonIndex;
-            return _colorQueue[colorIndex].ToColor();
+            return _colorQueue[colorIndex].ToDisplayColor();
         }
 
         private enum GameState

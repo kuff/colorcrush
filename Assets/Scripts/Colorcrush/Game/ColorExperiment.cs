@@ -13,18 +13,6 @@ namespace Colorcrush.Game
 {
     public static partial class ColorManager
     {
-        public static ColorExperiment CreateExperiment(string experimentName, ColorObject baseColor)
-        {
-            switch (experimentName)
-            {
-                case "8x6Stage1Solo":
-                    return new ColorExperiment8X6Stage1Solo(baseColor);
-                // TODO: Add more experiments here
-                default:
-                    throw new InvalidOperationException($"Unknown color experiment name: {experimentName}");
-            }
-        }
-
         public class ColorMatrixResult
         {
             public ColorMatrixResult(List<Vector3> axisEncodings, List<ColorObject> finalColors)
@@ -115,10 +103,10 @@ namespace Colorcrush.Game
 
             public override ColorMatrixResult GetFinalColors(List<ColorObject> selectedColors, List<ColorObject> unselectedColors)
             {
-                var sortedXyYCoordinates = _xyYCoordinates.OrderBy(c => c.ToColorFormat(ColorFormat.XYY).Vector.magnitude).ToList();
+                /*var sortedXyYCoordinates = _xyYCoordinates.OrderBy(c => c.ToColorFormat(ColorFormat.XYY).Vector.magnitude).ToList();
                 var combinedColors = selectedColors.Concat(unselectedColors)
                     .OrderBy(c => c.ToColorFormat(ColorFormat.XYY).Vector.magnitude)
-                    .ToList();
+                    .ToList();*/
 
                 var directions = new List<List<(Vector3, bool)>>
                 {
@@ -131,7 +119,7 @@ namespace Colorcrush.Game
                     new(), // direction6
                     new(), // direction7
                 };
-                var baseColorVector = BaseColor.ToColorFormat(ColorFormat.XYY).Vector;
+                var baseColorVector = BaseColor.ToColorFormat(ColorFormat.Xyy).Vector;
 
                 AddToDirectionList(selectedColors, true);
                 AddToDirectionList(unselectedColors, false);
@@ -146,7 +134,7 @@ namespace Colorcrush.Game
                     var maxDistance = CalculateMaxDistanceForDirection(i, baseColorVector);
                     var normalizedDistance = directionVector.magnitude / maxDistance;
                     axis.Add(directionVector.normalized * normalizedDistance);
-                    finalColors.Add(new ColorObject(finalPoint, ColorFormat.XYY));
+                    finalColors.Add(new ColorObject(finalPoint, ColorFormat.Xyy));
                 }
 
                 return new ColorMatrixResult(axis, finalColors);
@@ -155,7 +143,6 @@ namespace Colorcrush.Game
                 {
                     foreach (var colorObject in colors)
                     {
-                        //var directionIndex = GetDirectionIndex(baseColorVector, colorObject.ToColorFormat(ColorFormat.XYY).Vector);
                         var directionIndex = colorObject.DirectionIndex;
                         directions[directionIndex].Add((colorObject.Vector, wasSelected));
                     }
@@ -168,8 +155,7 @@ namespace Colorcrush.Game
 
                 if (!ordered.Any())
                 {
-                    Debug.LogWarning("Direction list is empty");
-                    return baseColor;
+                    throw new InvalidOperationException("Direction list is empty");
                 }
 
                 var startPoint = Vector3.zero;
@@ -214,17 +200,17 @@ namespace Colorcrush.Game
             private List<ColorObject> CreateCoordinates(ColorObject centerColor)
             {
                 var xyYCoordinates = new List<ColorObject>();
-                var centerCoordinatexyY = centerColor.ToColorFormat(ColorFormat.XYY);
+                var centerCoordinateXyy = centerColor.ToColorFormat(ColorFormat.Xyy);
 
                 for (var direction = 0; direction < NDirections; direction++)
                 {
                     for (var circle = 0; circle < NCircles; circle++)
                     {
-                        var x = Mathf.Cos(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinatexyY.Vector.x;
-                        var y = Mathf.Sin(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinatexyY.Vector.y;
-                        var currentCoordinate = new Vector3(x, y, centerCoordinatexyY.Vector.z);
+                        var x = Mathf.Cos(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinateXyy.Vector.x;
+                        var y = Mathf.Sin(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinateXyy.Vector.y;
+                        var currentCoordinate = new Vector3(x, y, centerCoordinateXyy.Vector.z);
 
-                        xyYCoordinates.Add(new ColorObject(currentCoordinate, ColorFormat.XYY, direction));
+                        xyYCoordinates.Add(new ColorObject(currentCoordinate, ColorFormat.Xyy, direction));
                     }
                 }
 

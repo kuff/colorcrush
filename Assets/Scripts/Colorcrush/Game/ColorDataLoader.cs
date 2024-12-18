@@ -86,13 +86,13 @@ namespace Colorcrush.Game
                 {
                     switch (_colorFormat)
                     {
-                        case ColorFormat.SRGBZeroTo255:
+                        case ColorFormat.SrgbZeroTo255:
                         case ColorFormat.DisplayP3ZeroTo255:
                             return Mathf.Clamp(parsedValue, 0f, 255f) / 255f;
-                        case ColorFormat.SRGBZeroToOne:
+                        case ColorFormat.SrgbZeroToOne:
                         case ColorFormat.DisplayP3ZeroToOne:
                             return Mathf.Clamp01(parsedValue);
-                        case ColorFormat.XYY:
+                        case ColorFormat.Xyy:
                         case ColorFormat.XYZ:
                             return parsedValue; // XYY and XYZ values are not clamped
                         default:

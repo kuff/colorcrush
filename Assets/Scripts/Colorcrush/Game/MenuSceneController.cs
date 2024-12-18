@@ -393,7 +393,7 @@ namespace Colorcrush.Game
             for (var i = 0; i < 8; i++)
             {
                 var axisEncoding = finalColorsResult.AxisEncodings[i];
-                var axisColor = finalColorsResult.FinalColors[i].ToColor();
+                var axisColor = finalColorsResult.FinalColors[i].ToDisplayColor();
 
                 var magnitude = axisEncoding.magnitude;
 
