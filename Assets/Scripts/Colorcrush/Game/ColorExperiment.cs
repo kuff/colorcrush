@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
+// ReSharper disable UnusedType.Global
+
 #endregion
 
 namespace Colorcrush.Game
@@ -36,11 +38,9 @@ namespace Colorcrush.Game
                 CurrentIndex = 0;
             }
 
-            public abstract (List<ColorObject> nextColorBatch, bool hasMore) GetFirstColorVariantBatch();
-            public abstract (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorVariantBatch(List<ColorObject> selectedColors, List<ColorObject> unselectedColors);
+            public abstract (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorBatch(List<ColorObject> selectedColors, List<ColorObject> unselectedColors);
             public abstract int GetTotalBatches();
-            public abstract ColorMatrixResult GetFinalColors();
-            public abstract ColorMatrixResult GetFinalColors(List<ColorObject> selectedColors, List<ColorObject> unselectedColors);
+            public abstract ColorMatrixResult GetResultingColors();
         }
 
         public class ColorExperiment8X6Stage1Solo : ColorExperiment // TODO: Use this as an example for how to create new experiments
@@ -62,33 +62,34 @@ namespace Colorcrush.Game
                 _totalBatches = Mathf.CeilToInt((float)_xyYCoordinates.Count / BatchSize);
             }
 
-            public override (List<ColorObject> nextColorBatch, bool hasMore) GetFirstColorVariantBatch()
+            public override (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorBatch(List<ColorObject> selectedColors, List<ColorObject> unselectedColors)
             {
+                if (selectedColors != null)
+                {
+                    _allSelectedColors.AddRange(selectedColors);
+                }
+
+                if (unselectedColors != null)
+                {
+                    _allUnselectedColors.AddRange(unselectedColors);
+                }
+
                 var nextBatch = new List<ColorObject>();
 
+                // If we've already gone through all coordinates, return empty list and false
+                if (CurrentIndex >= _xyYCoordinates.Count)
+                {
+                    return (nextBatch, false);
+                }
+
+                // Add colors to next batch
                 for (var i = 0; i < BatchSize && CurrentIndex < _xyYCoordinates.Count; i++, CurrentIndex++)
                 {
                     nextBatch.Add(_xyYCoordinates[CurrentIndex]);
                 }
 
-                var hasMore = CurrentIndex < _xyYCoordinates.Count;
-                return (nextBatch, hasMore);
-            }
-
-            public override (List<ColorObject> nextColorBatch, bool hasMore) GetNextColorVariantBatch(List<ColorObject> selectedColors, List<ColorObject> unselectedColors)
-            {
-                _allSelectedColors.AddRange(selectedColors);
-                _allUnselectedColors.AddRange(unselectedColors);
-
-                var nextBatch = new List<ColorObject>();
-
-                for (var i = 0; i < BatchSize && CurrentIndex < _xyYCoordinates.Count; i++, CurrentIndex++)
-                {
-                    nextBatch.Add(_xyYCoordinates[CurrentIndex]);
-                }
-
-                var hasMore = CurrentIndex < _xyYCoordinates.Count;
-                return (nextBatch, hasMore);
+                // Always return true until we've actually returned the last batch
+                return (nextBatch, true);
             }
 
             public override int GetTotalBatches()
@@ -96,12 +97,12 @@ namespace Colorcrush.Game
                 return _totalBatches;
             }
 
-            public override ColorMatrixResult GetFinalColors()
+            public override ColorMatrixResult GetResultingColors()
             {
-                return GetFinalColors(_allSelectedColors, _allUnselectedColors);
+                return GetResultingColors(_allSelectedColors, _allUnselectedColors);
             }
 
-            public override ColorMatrixResult GetFinalColors(List<ColorObject> selectedColors, List<ColorObject> unselectedColors)
+            private ColorMatrixResult GetResultingColors(List<ColorObject> selectedColors, List<ColorObject> unselectedColors)
             {
                 /*var sortedXyYCoordinates = _xyYCoordinates.OrderBy(c => c.ToColorFormat(ColorFormat.XYY).Vector.magnitude).ToList();
                 var combinedColors = selectedColors.Concat(unselectedColors)

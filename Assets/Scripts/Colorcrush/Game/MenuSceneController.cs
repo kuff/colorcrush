@@ -453,7 +453,14 @@ namespace Colorcrush.Game
             {
                 if (child.gameObject != colorAnalysisImage.gameObject && child.gameObject != _colorViewInstance)
                 {
-                    child.gameObject.SetActive(isActive);
+                    if (!isActive)
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else if (child.gameObject != resetProgressButton.gameObject)
+                    {
+                        child.gameObject.SetActive(true);
+                    }
                 }
             }
         }

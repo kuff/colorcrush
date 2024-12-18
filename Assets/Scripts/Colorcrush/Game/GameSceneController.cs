@@ -14,7 +14,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using static Colorcrush.Game.ColorManager;
 using Animator = Colorcrush.Animation.Animator;
-using Random = System.Random;
 
 #endregion
 
@@ -84,14 +83,12 @@ namespace Colorcrush.Game
         [Tooltip("Name of the scene to load after successfully completing all color submissions.")] [SerializeField]
         private string nextSceneName = "MuralScene";
 
-        private readonly List<ColorObject> _nonSelectedColors = new();
-        private readonly List<ColorObject> _selectedColors = new();
-
         private bool _buttonsInteractable = true;
         private bool[] _buttonToggledStates;
         private ColorExperiment _colorExperiment;
-        private List<ColorObject> _colorQueue;
+        private List<ColorObject> _currentBatch;
         private GameState _currentState = GameState.Setup;
+        private bool _hasMoreBatches;
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
         private Vector3 _originalTargetScale;
@@ -103,7 +100,6 @@ namespace Colorcrush.Game
         private Animator _targetEmojiAnimator;
         private Image _targetEmojiImage;
         private bool _targetReached;
-        private int _targetSubmitCount;
 
         private void Awake()
         {
@@ -131,43 +127,17 @@ namespace Colorcrush.Game
             InitializeComponents();
             InitializeButtons();
             InitializeProgressBar();
-            InitializeColorQueue();
+            InitializeColorExperiment();
             UpdateUI();
             StartCoroutine(GameLoop());
 
             LoggingManager.LogEvent(new SkinColorModeEvent(ProjectConfig.InstanceConfig.useSkinColorMode));
         }
 
-        private void InitializeColorQueue()
+        private void InitializeColorExperiment()
         {
-            // NOTE: This is a temporary implementation. The final version should use the Experiment object as a form of iterator.
-            _colorQueue = new List<ColorObject>();
             _colorExperiment = BeginColorExperiment(new ColorObject(_targetColor));
-            _targetSubmitCount = _colorExperiment.GetTotalBatches();
-            bool hasMore;
-            do
-            {
-                var (nextBatch, moreColors) = _colorExperiment.GetFirstColorVariantBatch();
-                foreach (var colorObject in nextBatch)
-                {
-                    _colorQueue.Add(colorObject);
-                }
-
-                hasMore = moreColors;
-            } while (hasMore);
-
-            // Randomize the color queue using the configured random seed
-            var randomizedColors = _colorQueue.ToList();
-            var rng = new Random(ProjectConfig.InstanceConfig.randomSeed);
-            var n = randomizedColors.Count;
-            while (n > 1)
-            {
-                n--;
-                var k = rng.Next(n + 1);
-                (randomizedColors[k], randomizedColors[n]) = (randomizedColors[n], randomizedColors[k]);
-            }
-
-            _colorQueue = new List<ColorObject>(randomizedColors);
+            (_currentBatch, _hasMoreBatches) = _colorExperiment.GetNextColorBatch(null, null);
         }
 
         private IEnumerator GameLoop()
@@ -254,7 +224,7 @@ namespace Colorcrush.Game
         private IEnumerator TeardownState()
         {
             // Save the results
-            var results = _colorExperiment.GetFinalColors(_selectedColors, _nonSelectedColors);
+            var results = _colorExperiment.GetResultingColors();
             LoggingManager.LogEvent(new FinalColorsEvent(results));
 
             LoggingManager.LogEvent(new GameLevelEndEvent());
@@ -433,26 +403,30 @@ namespace Colorcrush.Game
             AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
 
             // Save selected and non-selected colors
+            var selectedBatchColors = new List<ColorObject>();
+            var nonSelectedBatchColors = new List<ColorObject>();
+
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
-                // Use the color from the queue instead of the material
-                var color = _colorQueue[_submitCount * _selectionGridButtons.Length + i];
+                var color = _currentBatch[i];
                 if (_buttonToggledStates[i])
                 {
-                    _selectedColors.Add(color);
+                    selectedBatchColors.Add(color);
                 }
                 else
                 {
-                    _nonSelectedColors.Add(color);
+                    nonSelectedBatchColors.Add(color);
                 }
             }
 
+            (_currentBatch, _hasMoreBatches) = _colorExperiment.GetNextColorBatch(selectedBatchColors, nonSelectedBatchColors);
             _submitCount++;
+
             StartCoroutine(AnimateEmojisAndResetButtons());
             UpdateProgressBar();
             UpdateTargetButtonColor();
 
-            if (_submitCount >= _targetSubmitCount)
+            if (!_hasMoreBatches)
             {
                 _targetReached = true;
                 foreach (var button in _selectionButtons)
@@ -577,7 +551,7 @@ namespace Colorcrush.Game
 
         private void ResetButtons()
         {
-            if (_submitCount == _colorExperiment.GetTotalBatches())
+            if (!_hasMoreBatches)
             {
                 return;
             }
@@ -631,7 +605,7 @@ namespace Colorcrush.Game
         {
             if (progressBar != null)
             {
-                var progress = Mathf.Min((float)_submitCount / _targetSubmitCount, 1f);
+                var progress = Mathf.Min((float)_submitCount / _colorExperiment.GetTotalBatches(), 1f);
                 var newWidth = _initialProgressBarWidth * progress;
                 progressBar.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, newWidth);
             }
@@ -647,9 +621,7 @@ namespace Colorcrush.Game
 
         private Color GetNextColor(int buttonIndex)
         {
-            // Use submit count and button index to determine which color to return
-            var colorIndex = _submitCount * _selectionGridButtons.Length + buttonIndex;
-            return _colorQueue[colorIndex].ToDisplayColor();
+            return _currentBatch[buttonIndex].ToDisplayColor();
         }
 
         private enum GameState
