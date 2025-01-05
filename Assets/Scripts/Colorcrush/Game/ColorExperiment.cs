@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = System.Random;
 
 // ReSharper disable UnusedType.Global
 
@@ -43,22 +44,23 @@ namespace Colorcrush.Game
             public abstract ColorMatrixResult GetResultingColors();
         }
 
-        public class ColorExperiment8X6Stage1Solo : ColorExperiment // TODO: Use this as an example for how to create new experiments
+        public class ColorExperiment9X8Stage1Polynomic : ColorExperiment // TODO: Use this as an example for how to create new experiments
         {
             private const float StartExpansion = 0.0005f;
             private const float CircleExpansion = 0.0013f;
             private const int BatchSize = 12;
-            private const int NCircles = 6;
+            private const int NCircles = 9;
             private const int NDirections = 8;
+            private const float PolynomicFactor = 1.1f;
             private readonly List<ColorObject> _allSelectedColors = new();
             private readonly List<ColorObject> _allUnselectedColors = new();
             private readonly int _totalBatches;
             private readonly List<ColorObject> _xyYCoordinates;
 
-            public ColorExperiment8X6Stage1Solo(ColorObject baseColor)
+            public ColorExperiment9X8Stage1Polynomic(ColorObject baseColor)
                 : base(baseColor)
             {
-                _xyYCoordinates = CreateCoordinates(baseColor);
+                _xyYCoordinates = CreateCoordinates(baseColor); // In this case the coordinates are created in the beginning and we therefore don't need to use the selected and unselected color list inputs
                 _totalBatches = Mathf.CeilToInt((float)_xyYCoordinates.Count / BatchSize);
             }
 
@@ -104,11 +106,6 @@ namespace Colorcrush.Game
 
             private ColorMatrixResult GetResultingColors(List<ColorObject> selectedColors, List<ColorObject> unselectedColors)
             {
-                /*var sortedXyYCoordinates = _xyYCoordinates.OrderBy(c => c.ToColorFormat(ColorFormat.XYY).Vector.magnitude).ToList();
-                var combinedColors = selectedColors.Concat(unselectedColors)
-                    .OrderBy(c => c.ToColorFormat(ColorFormat.XYY).Vector.magnitude)
-                    .ToList();*/
-
                 var directions = new List<List<(Vector3, bool)>>
                 {
                     new(), // direction0
@@ -121,6 +118,10 @@ namespace Colorcrush.Game
                     new(), // direction7
                 };
                 var baseColorVector = BaseColor.ToColorFormat(ColorFormat.Xyy).Vector;
+
+                // Filter out the base color from selected and unselected colors
+                selectedColors = selectedColors?.Where(c => !VectorsEqual(c.ToColorFormat(ColorFormat.Xyy).Vector, baseColorVector)).ToList() ?? new List<ColorObject>();
+                unselectedColors = unselectedColors?.Where(c => !VectorsEqual(c.ToColorFormat(ColorFormat.Xyy).Vector, baseColorVector)).ToList() ?? new List<ColorObject>();
 
                 AddToDirectionList(selectedColors, true);
                 AddToDirectionList(unselectedColors, false);
@@ -147,6 +148,12 @@ namespace Colorcrush.Game
                         var directionIndex = colorObject.DirectionIndex;
                         directions[directionIndex].Add((colorObject.Vector, wasSelected));
                     }
+                }
+
+                bool VectorsEqual(Vector3 a, Vector3 b)
+                {
+                    const float epsilon = 0.0001f;
+                    return Vector3.Distance(a, b) < epsilon;
                 }
             }
 
@@ -203,16 +210,84 @@ namespace Colorcrush.Game
                 var xyYCoordinates = new List<ColorObject>();
                 var centerCoordinateXyy = centerColor.ToColorFormat(ColorFormat.Xyy);
 
+                // Create validation samples of the center color
+                var validationSamples = new List<ColorObject>();
+                for (var i = 0; i < BatchSize; i++)
+                {
+                    validationSamples.Add(new ColorObject(centerCoordinateXyy.Vector, ColorFormat.Xyy));
+                }
+
+                var colorsByDistance = new List<(ColorObject color, float distance)>();
+
+                // Create all coordinates and store with their distances
                 for (var direction = 0; direction < NDirections; direction++)
                 {
                     for (var circle = 0; circle < NCircles; circle++)
                     {
-                        var x = Mathf.Cos(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinateXyy.Vector.x;
-                        var y = Mathf.Sin(2 * Mathf.PI / NDirections * direction) * (circle * CircleExpansion + StartExpansion) + centerCoordinateXyy.Vector.y;
+                        var expansion = StartExpansion + CircleExpansion * Mathf.Pow(circle, PolynomicFactor);
+
+                        var x = Mathf.Cos(2 * Mathf.PI / NDirections * direction) * expansion + centerCoordinateXyy.Vector.x;
+                        var y = Mathf.Sin(2 * Mathf.PI / NDirections * direction) * expansion + centerCoordinateXyy.Vector.y;
                         var currentCoordinate = new Vector3(x, y, centerCoordinateXyy.Vector.z);
 
-                        xyYCoordinates.Add(new ColorObject(currentCoordinate, ColorFormat.Xyy, direction));
+                        var color = new ColorObject(currentCoordinate, ColorFormat.Xyy, direction);
+                        var distance = Vector3.Distance(currentCoordinate, centerCoordinateXyy.Vector);
+                        colorsByDistance.Add((color, distance));
                     }
+                }
+
+                // Sort by distance (farthest first)
+                colorsByDistance.Sort((a, b) => b.distance.CompareTo(a.distance));
+
+                var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
+                var totalColors = colorsByDistance.Count;
+                var validationIndex = 0;
+
+                // Sort colors by distance (farthest first)
+                var sortedColors = colorsByDistance.Select(x => x.color).ToList();
+
+                // Create batches with an overweight of far colors at the start and close colors at the end
+                for (var i = 0; i < totalColors; i += BatchSize)
+                {
+                    var remainingColors = totalColors - i;
+                    var currentBatchSize = Math.Min(BatchSize, remainingColors);
+
+                    // Determine the range for the current batch
+                    var start = i;
+                    var end = Math.Min(i + currentBatchSize, totalColors);
+
+                    // Select colors for the batch
+                    var batchColors = sortedColors.GetRange(start, end - start);
+
+                    // Randomize the batch
+                    batchColors = batchColors.OrderBy(x => random.Next()).ToList();
+
+                    xyYCoordinates.AddRange(batchColors);
+                }
+
+                // Randomly insert validation samples into the list
+                for (var j = 0; j < validationSamples.Count; j++)
+                {
+                    var insertPosition = random.Next(xyYCoordinates.Count + 1);
+                    xyYCoordinates.Insert(insertPosition, validationSamples[j]);
+                }
+
+                Debug.Log($"Created {xyYCoordinates.Count} coordinates");
+
+                // Print out the indexes of the validation colors in the array
+                foreach (var validationSample in validationSamples)
+                {
+                    var index = xyYCoordinates.IndexOf(validationSample);
+                    Debug.Log($"Validation color index: {index}");
+                }
+
+                // Calculate and print the mean distance from the base color for each 12 color batches
+                for (var i = 0; i < xyYCoordinates.Count; i += BatchSize)
+                {
+                    var batch = xyYCoordinates.Skip(i).Take(BatchSize).ToList();
+                    var totalDistance = batch.Sum(color => Vector3.Distance(color.ToColorFormat(ColorFormat.Xyy).Vector, centerCoordinateXyy.Vector));
+                    var meanDistance = totalDistance / batch.Count;
+                    Debug.Log($"Batch {i / BatchSize + 1} mean distance: {meanDistance}");
                 }
 
                 return xyYCoordinates;

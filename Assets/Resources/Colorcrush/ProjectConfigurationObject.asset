@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ProjectConfigurationObject
   m_EditorClassIdentifier: 
   initiatingScenePath: Assets/Scenes/StartScene.unity
-  useInitiatingScene: 0
+  useInitiatingScene: 1
   mainResourcesPath: Assets/Resources/Colorcrush
   mainScenesPath: Assets/Scenes
   mainScriptsPath: Assets/Scripts/Colorcrush
@@ -24,9 +24,9 @@ MonoBehaviour:
   colorDataFormat: 3
   useSkinColorMode: 0
   unlockAllLevelsFromStart: 0
-  colorExperimentName: ColorExperiment8X6Stage1Solo
+  colorExperimentName: ColorExperiment9X8Stage1Polynomic
   enableTripleTapToggleSkinColorMode: 0
-  enableResetButton: 1
+  enableResetButton: 0
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4
   happyEmojiFolder: Colorcrush/Emoji/Happy
