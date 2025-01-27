@@ -60,6 +60,9 @@ namespace Colorcrush
 
         [FormerlySerializedAs("enableResultButton")] [Tooltip("If enabled, the reset button will be visible in the menu scene, allowing the experiment conductor to reset the game state. If disabled, the button will be hidden.")]
         public bool enableResetButton = true;
+        
+        [Tooltip("If enabled, colors will be converted to Display P3 color space before being displayed. If disabled, colors will remain in sRGB color space.")]
+        public bool useDisplayP3ColorSpace;
 
         [Header("Emoji Configuration")]
         [Tooltip("The name of the default emoji sprite (without the file extension).")]

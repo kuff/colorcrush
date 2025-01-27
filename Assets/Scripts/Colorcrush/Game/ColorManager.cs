@@ -382,12 +382,20 @@ namespace Colorcrush.Game
 
             public Color ToDisplayColor()
             {
-                // TODO: Convert to Display P3 if that setting is enabled
+                ColorObject colorToDisplay;
+                
+                if (ProjectConfig.InstanceConfig.useDisplayP3ColorSpace)
+                {
+                    // Convert to Display P3 format
+                    colorToDisplay = ToColorFormat(ColorFormat.DisplayP3ZeroToOne);
+                }
+                else
+                {
+                    // Convert to sRGB format
+                    colorToDisplay = ToColorFormat(ColorFormat.SrgbZeroToOne);
+                }
 
-                // Convert to sRGB format if needed
-                var srgbColor = ToColorFormat(ColorFormat.SrgbZeroToOne).Vector;
-
-                return new Color(srgbColor.x, srgbColor.y, srgbColor.z, 1f);
+                return new Color(colorToDisplay.Vector.x, colorToDisplay.Vector.y, colorToDisplay.Vector.z, 1f);
             }
         }
 

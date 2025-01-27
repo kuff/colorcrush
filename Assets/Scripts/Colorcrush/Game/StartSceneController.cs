@@ -83,6 +83,9 @@ namespace Colorcrush.Game
         private Image foregroundImage;
 
         [Header("Sound Effects")]
+        [Tooltip("Enable or disable sound effects for the smiley animation.")] [SerializeField]
+        private bool enableSmileySound = false;
+
         [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
         private string smileySound = "MENU_Pick";
 
@@ -217,12 +220,18 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
-            //AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
+            if (enableSmileySound)
+            {
+                AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
+            }
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
-            //AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
+            if (enableSmileySound)
+            {
+                AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
+            }
         }
 
         private IEnumerator PlaySoundAfterDelay()

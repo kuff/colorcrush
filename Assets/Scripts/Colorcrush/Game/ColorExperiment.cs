@@ -241,7 +241,6 @@ namespace Colorcrush.Game
 
                 var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
                 var totalColors = colorsByDistance.Count;
-                var validationIndex = 0;
 
                 // Sort colors by distance (farthest first)
                 var sortedColors = colorsByDistance.Select(x => x.color).ToList();
