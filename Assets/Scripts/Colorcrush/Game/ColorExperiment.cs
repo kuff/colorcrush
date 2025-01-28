@@ -52,6 +52,7 @@ namespace Colorcrush.Game
             private const int NCircles = 9;
             private const int NDirections = 8;
             private const float PolynomicFactor = 1.1f;
+            private const int ValidationSamples = 12;
             private readonly List<ColorObject> _allSelectedColors = new();
             private readonly List<ColorObject> _allUnselectedColors = new();
             private readonly int _totalBatches;
@@ -207,25 +208,31 @@ namespace Colorcrush.Game
 
             private List<ColorObject> CreateCoordinates(ColorObject centerColor)
             {
+                // Convert center color to XYY color space coordinates
                 var xyYCoordinates = new List<ColorObject>();
                 var centerCoordinateXyy = centerColor.ToColorFormat(ColorFormat.Xyy);
 
-                // Create validation samples of the center color
+                // Create validation samples - copies of the center color used to check participant consistency
                 var validationSamples = new List<ColorObject>();
-                for (var i = 0; i < BatchSize; i++)
+                for (var i = 0; i < ValidationSamples; i++)
                 {
                     validationSamples.Add(new ColorObject(centerCoordinateXyy.Vector, ColorFormat.Xyy));
                 }
 
+                // Store colors with their distances from center for later sorting
                 var colorsByDistance = new List<(ColorObject color, float distance)>();
 
-                // Create all coordinates and store with their distances
+                // Create a circular pattern of color coordinates around the center
+                // NDirections controls number of "spokes", NCircles controls number of points along each spoke
                 for (var direction = 0; direction < NDirections; direction++)
                 {
                     for (var circle = 0; circle < NCircles; circle++)
                     {
+                        // Calculate expansion distance using polynomial growth for non-linear spacing
+                        // Higher circles will be spaced further apart than lower ones
                         var expansion = StartExpansion + CircleExpansion * Mathf.Pow(circle, PolynomicFactor);
 
+                        // Convert polar coordinates to XY coordinates and offset by center position
                         var x = Mathf.Cos(2 * Mathf.PI / NDirections * direction) * expansion + centerCoordinateXyy.Vector.x;
                         var y = Mathf.Sin(2 * Mathf.PI / NDirections * direction) * expansion + centerCoordinateXyy.Vector.y;
                         var currentCoordinate = new Vector3(x, y, centerCoordinateXyy.Vector.z);
@@ -236,57 +243,65 @@ namespace Colorcrush.Game
                     }
                 }
 
-                // Sort by distance (farthest first)
+                // Sort colors by distance from center, farthest first
                 colorsByDistance.Sort((a, b) => b.distance.CompareTo(a.distance));
 
-                var random = new Random(ProjectConfig.InstanceConfig.randomSeed);
+                // Create deterministic but seemingly random seed based on center color
+                // This ensures consistent for the same color but varying between trials
+                var seedVector = centerCoordinateXyy.Vector * 1000;
+                var colorSeed = (int)(seedVector.x + seedVector.y + seedVector.z);
+                var random = new Random(colorSeed);
                 var totalColors = colorsByDistance.Count;
 
-                // Sort colors by distance (farthest first)
                 var sortedColors = colorsByDistance.Select(x => x.color).ToList();
 
-                // Create batches with an overweight of far colors at the start and close colors at the end
-                for (var i = 0; i < totalColors; i += BatchSize)
+                // Organize colors into batches, with one validation sample per batch
+                // BatchSize - 1 regular colors + 1 validation sample = BatchSize total per batch
+                var completeBatches = totalColors / (BatchSize - 1);
+                var remainingColors = totalColors % (BatchSize - 1);
+                var validationSamplesUsed = 0;
+
+                // Create complete batches with validation samples randomly inserted
+                for (var i = 0; i < completeBatches; i++)
                 {
-                    var remainingColors = totalColors - i;
-                    var currentBatchSize = Math.Min(BatchSize, remainingColors);
+                    var start = i * (BatchSize - 1);
+                    // Randomize order of colors within each batch
+                    var batchColors = sortedColors.GetRange(start, BatchSize - 1).OrderBy(x => random.Next()).ToList();
 
-                    // Determine the range for the current batch
-                    var start = i;
-                    var end = Math.Min(i + currentBatchSize, totalColors);
-
-                    // Select colors for the batch
-                    var batchColors = sortedColors.GetRange(start, end - start);
-
-                    // Randomize the batch
-                    batchColors = batchColors.OrderBy(x => random.Next()).ToList();
+                    // Insert validation sample at random position in batch
+                    var insertPosition = random.Next(batchColors.Count + 1);
+                    batchColors.Insert(insertPosition, validationSamples[validationSamplesUsed++]);
 
                     xyYCoordinates.AddRange(batchColors);
                 }
 
-                // Randomly insert validation samples into the list
-                for (var j = 0; j < validationSamples.Count; j++)
+                // Handle remaining colors and unused validation samples in final batch
+                if (remainingColors > 0 || validationSamplesUsed < validationSamples.Count)
                 {
-                    var insertPosition = random.Next(xyYCoordinates.Count + 1);
-                    xyYCoordinates.Insert(insertPosition, validationSamples[j]);
+                    var finalBatchColors = new List<ColorObject>();
+                    
+                    if (remainingColors > 0)
+                    {
+                        var start = completeBatches * (BatchSize - 1);
+                        finalBatchColors.AddRange(sortedColors.GetRange(start, remainingColors));
+                    }
+
+                    // Insert any remaining validation samples at random positions
+                    while (validationSamplesUsed < validationSamples.Count)
+                    {
+                        var insertPosition = random.Next(finalBatchColors.Count + 1);
+                        finalBatchColors.Insert(insertPosition, validationSamples[validationSamplesUsed++]);
+                    }
+
+                    xyYCoordinates.AddRange(finalBatchColors);
                 }
 
-                Debug.Log($"Created {xyYCoordinates.Count} coordinates");
-
-                // Print out the indexes of the validation colors in the array
-                foreach (var validationSample in validationSamples)
+                // Verify we have the expected number of colors (NCircles * NDirections regular colors + ValidationSamples)
+                var expectedColorCount = NCircles * NDirections + ValidationSamples; // 9 * 8 + 12 = 84
+                if (xyYCoordinates.Count != expectedColorCount)
                 {
-                    var index = xyYCoordinates.IndexOf(validationSample);
-                    Debug.Log($"Validation color index: {index}");
-                }
-
-                // Calculate and print the mean distance from the base color for each 12 color batches
-                for (var i = 0; i < xyYCoordinates.Count; i += BatchSize)
-                {
-                    var batch = xyYCoordinates.Skip(i).Take(BatchSize).ToList();
-                    var totalDistance = batch.Sum(color => Vector3.Distance(color.ToColorFormat(ColorFormat.Xyy).Vector, centerCoordinateXyy.Vector));
-                    var meanDistance = totalDistance / batch.Count;
-                    Debug.Log($"Batch {i / BatchSize + 1} mean distance: {meanDistance}");
+                    throw new InvalidOperationException(
+                        $"Expected {expectedColorCount} colors but got {xyYCoordinates.Count} colors");
                 }
 
                 return xyYCoordinates;
