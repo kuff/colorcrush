@@ -210,73 +210,13 @@ namespace Colorcrush.Util
             switch (eventName)
             {
                 case "gamelevelbegun":
-                    if (_currentLevelCompleted)
-                    {
-                        _currentTargetColor = eventData;
-                        _currentLevelCompleted = false;
-                        _currentLevelSelectedColors.Clear();
-                        _generatedColors.Clear();
-                    }
-
-                    break;
-                case "gamelevelend":
-                    if (!_currentLevelCompleted && _currentTargetColor != null)
-                    {
-                        _completedTargetColors.Add(_currentTargetColor);
-                        _mostRecentCompletedTargetColor = _currentTargetColor;
-                        _currentLevelCompleted = true;
-                        _currentTargetColor = null;
-                        if (_currentLevelSelectedColors.Count > 0)
-                        {
-                            _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
-                        }
-                    }
-
-                    break;
-                case "emojirewarded":
-                    _rewardedEmojis.Add(eventData);
-                    break;
-                case "colorssubmitted":
-                    if (!_currentLevelCompleted)
-                    {
-                        _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
-                        _currentLevelSelectedColors.Clear();
-                    }
-
-                    break;
-                case "colorsgenerated":
-                    var parts = eventData.Split(' ');
-                    if (parts.Length == 2)
-                    {
-                        int.TryParse(parts[0], out var buttonIndex);
-                        _generatedColors[buttonIndex] = parts[1];
-                    }
-
-                    break;
-                case "colorselected":
-                    if (!_currentLevelCompleted)
-                    {
-                        int.TryParse(eventData, out var selectedIndex);
-                        if (_generatedColors.TryGetValue(selectedIndex, out var selectedColor))
-                        {
-                            _currentLevelSelectedColors.Add(selectedColor);
-                        }
-                    }
-
-                    break;
-                case "colordeselected":
-                    if (!_currentLevelCompleted)
-                    {
-                        int.TryParse(eventData, out var deselectedIndex);
-                        if (_generatedColors.TryGetValue(deselectedIndex, out var deselectedColor))
-                        {
-                            _currentLevelSelectedColors.Remove(deselectedColor);
-                        }
-                    }
-
+                    _currentTargetColor = eventData;
+                    _currentLevelCompleted = false;
+                    _currentLevelSelectedColors.Clear();
+                    _generatedColors.Clear();
                     break;
                 case "finalcolors":
-                    if (!_currentLevelCompleted)
+                    if (_currentTargetColor != null)
                     {
                         var chunks = eventData.Split(' ');
 
@@ -292,9 +232,7 @@ namespace Colorcrush.Util
                         var encodings = new List<Vector3>();
                         for (var i = 0; i < 8; i++)
                         {
-                            // Combine the three parts of each Vector3
                             var vectorStr = chunks[8 + i * 3] + chunks[9 + i * 3] + chunks[10 + i * 3];
-                            // Remove parentheses and split by semicolon
                             var components = vectorStr.Trim('(', ')').Split(';');
 
                             var x = float.Parse(components[0], CultureInfo.InvariantCulture);
@@ -307,7 +245,57 @@ namespace Colorcrush.Util
                         var result = new ColorManager.ColorMatrixResult(encodings, colors);
                         _finalColors.Add(result);
                     }
-
+                    break;
+                case "gamelevelend":
+                    if (!_currentLevelCompleted && _currentTargetColor != null)
+                    {
+                        _completedTargetColors.Add(_currentTargetColor);
+                        _mostRecentCompletedTargetColor = _currentTargetColor;
+                        if (_currentLevelSelectedColors.Count > 0)
+                        {
+                            _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
+                        }
+                        _currentLevelCompleted = true;
+                        _currentTargetColor = null;
+                    }
+                    break;
+                case "emojirewarded":
+                    _rewardedEmojis.Add(eventData);
+                    break;
+                case "colorssubmitted":
+                    if (!_currentLevelCompleted)
+                    {
+                        _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
+                        _currentLevelSelectedColors.Clear();
+                    }
+                    break;
+                case "colorsgenerated":
+                    var parts = eventData.Split(' ');
+                    if (parts.Length == 2)
+                    {
+                        int.TryParse(parts[0], out var buttonIndex);
+                        _generatedColors[buttonIndex] = parts[1];
+                    }
+                    break;
+                case "colorselected":
+                    if (!_currentLevelCompleted)
+                    {
+                        int.TryParse(eventData, out var selectedIndex);
+                        if (_generatedColors.TryGetValue(selectedIndex, out var selectedColor))
+                        {
+                            _currentLevelSelectedColors.Add(selectedColor);
+                        }
+                    }
+                    break;
+                case "colordeselected":
+                    if (!_currentLevelCompleted)
+                    {
+                        int.TryParse(eventData, out var deselectedIndex);
+                        if (_generatedColors.TryGetValue(deselectedIndex, out var deselectedColor))
+                        {
+                            _currentLevelSelectedColors.Remove(deselectedColor);
+                        }
+                    }
                     break;
             }
         }
