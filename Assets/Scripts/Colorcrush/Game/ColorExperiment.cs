@@ -197,10 +197,10 @@ namespace Colorcrush.Game
 
             private float CalculateMaxDistanceForDirection(int directionIndex, Vector3 baseColor)
             {
-                const float maxExpansion = NCircles * CircleExpansion + StartExpansion;
+                var expansion = StartExpansion + CircleExpansion * Mathf.Pow(NCircles - 1, PolynomicFactor);
 
-                var x = Mathf.Cos(2 * Mathf.PI / NDirections * directionIndex) * maxExpansion + baseColor.x;
-                var y = Mathf.Sin(2 * Mathf.PI / NDirections * directionIndex) * maxExpansion + baseColor.y;
+                var x = Mathf.Cos(2 * Mathf.PI / NDirections * directionIndex) * expansion + baseColor.x;
+                var y = Mathf.Sin(2 * Mathf.PI / NDirections * directionIndex) * expansion + baseColor.y;
                 var maxPoint = new Vector3(x, y, baseColor.z);
 
                 return Vector3.Distance(baseColor, maxPoint);
@@ -247,7 +247,7 @@ namespace Colorcrush.Game
                 colorsByDistance.Sort((a, b) => b.distance.CompareTo(a.distance));
 
                 // Create deterministic but seemingly random seed based on center color
-                // This ensures consistent for the same color but varying between trials
+                // This ensures consistent randomization for the same color but variation between trials
                 var seedVector = centerCoordinateXyy.Vector * 1000;
                 var colorSeed = (int)(seedVector.x + seedVector.y + seedVector.z);
                 var random = new Random(colorSeed);
