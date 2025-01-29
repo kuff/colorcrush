@@ -418,7 +418,13 @@ namespace Colorcrush.Game
                 var linesProcessed = 0;
                 var colorsAdded = 0;
 
-                var lines = File.ReadAllLines(_filePath);
+                var textAsset = Resources.Load<TextAsset>(_filePath);
+                if (textAsset == null)
+                {
+                    throw new InvalidOperationException($"Failed to load color data file from Resources: {_filePath}");
+                }
+
+                var lines = textAsset.text.Split('\n');
 
                 foreach (var line in lines)
                 {
@@ -437,14 +443,7 @@ namespace Colorcrush.Game
                         throw new FormatException($"Failed to parse color components at line {linesProcessed}. Values must be valid numbers.");
                     }
 
-                    var newColor = new ColorObject(
-                        new Vector3(
-                            x,
-                            y,
-                            z
-                        ),
-                        _colorFormat
-                    );
+                    var newColor = new ColorObject(new Vector3(x, y, z), _colorFormat);
                     colors.Add(newColor);
                     colorsAdded++;
                 }

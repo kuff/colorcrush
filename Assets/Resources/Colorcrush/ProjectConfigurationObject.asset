@@ -19,14 +19,14 @@ MonoBehaviour:
   mainScriptsPath: Assets/Scripts/Colorcrush
   deleteAllLogFilesOnEditorStartup: 0
   randomSeed: 42
-  colorDataFilePath: Assets/Resources/Colorcrush/ColorData.txt
+  colorDataFilePath: Colorcrush/ColorData
   colorSplitRegex: (\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s*$
   colorDataFormat: 3
   useSkinColorMode: 0
-  unlockAllLevelsFromStart: 0
+  unlockAllLevelsFromStart: 1
   colorExperimentName: ColorExperiment9X8Stage1Polynomic
   enableTripleTapToggleSkinColorMode: 0
-  enableResetButton: 0
+  enableResetButton: 1
   useDisplayP3ColorSpace: 0
   defaultEmojiName: reshot-icon-blank-XN4TPFSGQ8
   defaultHappyEmojiName: reshot-icon-happy-laugh-72WQS35RC4

@@ -604,6 +604,7 @@ MonoBehaviour:
   circleMaterial: {fileID: 2100000, guid: 630aaaf3cc0e0b640bb78751e4375dd6, type: 2}
   expandSpeed: 1
   foregroundImage: {fileID: 766903114}
+  enableSmileySound: 0
   smileySound: MENU_Pick
   smileyColonPitchShift: 1.25
   smileyParenthesisPitchShift: 0.5
@@ -817,7 +818,7 @@ MonoBehaviour:
   m_Color: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1262,7 +1263,7 @@ MonoBehaviour:
   m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
+  m_Maskable: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
