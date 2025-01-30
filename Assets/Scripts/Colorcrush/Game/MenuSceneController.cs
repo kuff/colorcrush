@@ -181,11 +181,8 @@ namespace Colorcrush.Game
         {
             if (ProjectConfig.InstanceConfig.enableResetButton)
             {
+                resetProgressButton.gameObject.SetActive(true);
                 resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
-            }
-            else
-            {
-                resetProgressButton.gameObject.SetActive(false);
             }
         }
 
