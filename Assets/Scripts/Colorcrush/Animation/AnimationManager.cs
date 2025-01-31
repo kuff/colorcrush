@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Peter Guld Leth
+﻿// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -17,7 +17,7 @@ namespace Colorcrush.Animation
         private readonly Dictionary<Animation, List<AnimationState>> _activeAnimations = new();
         private readonly Dictionary<Animator, HashSet<Animation>> _animatorAnimations = new();
 
-        public static AnimationManager Instance
+        private static AnimationManager Instance
         {
             get
             {

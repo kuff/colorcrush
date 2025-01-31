@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -75,16 +75,6 @@ namespace Colorcrush.Util
                 EnsureInstance();
                 ProcessLogEventQueue();
                 return _mostRecentCompletedTargetColor;
-            }
-            private set => _mostRecentCompletedTargetColor = value;
-        }
-
-        public static ProgressManager Instance
-        {
-            get
-            {
-                EnsureInstance();
-                return _instance;
             }
         }
 
@@ -245,6 +235,7 @@ namespace Colorcrush.Util
                         var result = new ColorManager.ColorMatrixResult(encodings, colors);
                         _finalColors.Add(result);
                     }
+
                     break;
                 case "gamelevelend":
                     if (!_currentLevelCompleted && _currentTargetColor != null)
@@ -255,9 +246,11 @@ namespace Colorcrush.Util
                         {
                             _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
                         }
+
                         _currentLevelCompleted = true;
                         _currentTargetColor = null;
                     }
+
                     break;
                 case "emojirewarded":
                     _rewardedEmojis.Add(eventData);
@@ -268,6 +261,7 @@ namespace Colorcrush.Util
                         _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
                         _currentLevelSelectedColors.Clear();
                     }
+
                     break;
                 case "colorsgenerated":
                     var parts = eventData.Split(' ');
@@ -276,6 +270,7 @@ namespace Colorcrush.Util
                         int.TryParse(parts[0], out var buttonIndex);
                         _generatedColors[buttonIndex] = parts[1];
                     }
+
                     break;
                 case "colorselected":
                     if (!_currentLevelCompleted)
@@ -286,6 +281,7 @@ namespace Colorcrush.Util
                             _currentLevelSelectedColors.Add(selectedColor);
                         }
                     }
+
                     break;
                 case "colordeselected":
                     if (!_currentLevelCompleted)
@@ -296,6 +292,7 @@ namespace Colorcrush.Util
                             _currentLevelSelectedColors.Remove(deselectedColor);
                         }
                     }
+
                     break;
             }
         }

@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -17,7 +17,7 @@ namespace Colorcrush.Util
         private static ShaderManager _instance;
         private readonly Dictionary<GameObject, Material> _materialCopies = new();
 
-        public static ShaderManager Instance
+        private static ShaderManager Instance
         {
             get
             {

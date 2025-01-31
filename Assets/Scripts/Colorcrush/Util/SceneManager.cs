@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -18,7 +18,7 @@ namespace Colorcrush.Util
         private AsyncOperation _asyncOperation;
         private string _previousSceneName;
 
-        public static SceneManager Instance
+        private static SceneManager Instance
         {
             get
             {

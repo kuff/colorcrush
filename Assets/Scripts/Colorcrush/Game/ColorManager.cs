@@ -1,10 +1,9 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using Random = System.Random;
@@ -383,7 +382,7 @@ namespace Colorcrush.Game
             public Color ToDisplayColor()
             {
                 ColorObject colorToDisplay;
-                
+
                 if (ProjectConfig.InstanceConfig.useDisplayP3ColorSpace)
                 {
                     // Convert to Display P3 format

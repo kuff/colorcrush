@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 Shader "Colorcrush/TwoCirclesShader"
 {
@@ -15,7 +15,10 @@ Shader "Colorcrush/TwoCirclesShader"
     }
     SubShader
     {
-        Tags { "Queue" = "Transparent" "RenderType" = "Transparent" }
+        Tags
+        {
+            "Queue" = "Transparent" "RenderType" = "Transparent"
+        }
         LOD 100
 
         Pass
@@ -51,7 +54,7 @@ Shader "Colorcrush/TwoCirclesShader"
             float4 _Circle1Position;
             float4 _Circle2Position;
 
-            v2f vert (appdata_t v)
+            v2f vert(appdata_t v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -59,7 +62,7 @@ Shader "Colorcrush/TwoCirclesShader"
                 return o;
             }
 
-            half4 frag (v2f i) : SV_Target
+            half4 frag(v2f i) : SV_Target
             {
                 float2 uv = i.uv;
 

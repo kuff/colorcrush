@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 Shader "Colorcrush/BoilingButtonShader"
 {
@@ -11,10 +11,13 @@ Shader "Colorcrush/BoilingButtonShader"
         _DropSize ("Drop Size", Float) = 0.25
         _Alpha ("Alpha", Range(0, 1)) = 1.0
     }
-    
+
     SubShader
     {
-        Tags { "Queue"="Overlay" "IgnoreProjector"="True" "RenderType"="Transparent" }
+        Tags
+        {
+            "Queue"="Overlay" "IgnoreProjector"="True" "RenderType"="Transparent"
+        }
         LOD 100
         Blend SrcAlpha OneMinusSrcAlpha
 
@@ -59,15 +62,15 @@ Shader "Colorcrush/BoilingButtonShader"
                 half dist = length(i.uv - 0.5);
                 half ripplePattern = sin(dist * 12.0 - _Time.y * _Speed * 4.0) * 0.1;
                 half dropMask = smoothstep(_DropSize + ripplePattern, _DropSize, dist);
-                fixed4 finalColor = _EffectToggle < 1 
-                    ? _BackgroundColor 
-                    : lerp(_AccentColor, _BackgroundColor, dropMask);
+                fixed4 finalColor = _EffectToggle < 1
+                                        ? _BackgroundColor
+                                        : lerp(_AccentColor, _BackgroundColor, dropMask);
                 finalColor.a *= _Alpha;
                 return finalColor;
             }
             ENDCG
         }
     }
-    
+
     FallBack "Unlit/Transparent"
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Peter Guld Leth
+﻿// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -279,7 +279,7 @@ namespace Colorcrush.Game
                 if (remainingColors > 0 || validationSamplesUsed < validationSamples.Count)
                 {
                     var finalBatchColors = new List<ColorObject>();
-                    
+
                     if (remainingColors > 0)
                     {
                         var start = completeBatches * (BatchSize - 1);

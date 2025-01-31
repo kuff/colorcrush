@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# Copyright (C) 2025 Peter Guld Leth
+
 from PIL import Image, ImageDraw, ImageFilter, ImageChops
 import os
 import sys

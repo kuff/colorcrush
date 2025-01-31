@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 Shader "Colorcrush/ColorTransposeShader"
 {
@@ -69,7 +69,7 @@ Shader "Colorcrush/ColorTransposeShader"
             {
                 float2 centeredUV = i.texcoord - 0.5;
                 float2 scaledUV = centeredUV / _FillScale + 0.5;
-                
+
                 fixed4 originalColor = tex2D(_MainTex, i.texcoord);
 
                 // Check if the pixel is within the original non-transparent area
@@ -88,9 +88,9 @@ Shader "Colorcrush/ColorTransposeShader"
                 }
 
                 // Sample the scaled color only if it's within the texture bounds
-                fixed4 scaledColor = (scaledUV.x >= 0 && scaledUV.x <= 1 && scaledUV.y >= 0 && scaledUV.y <= 1) 
-                    ? tex2D(_MainTex, scaledUV) 
-                    : _FillColor;
+                fixed4 scaledColor = (scaledUV.x >= 0 && scaledUV.x <= 1 && scaledUV.y >= 0 && scaledUV.y <= 1)
+                         ? tex2D(_MainTex, scaledUV)
+                         : _FillColor;
 
                 // If the scaled pixel is transparent (including very low alpha) and within the original area, use the fill color
                 if (scaledColor.a <= 0.1)
@@ -113,7 +113,7 @@ Shader "Colorcrush/ColorTransposeShader"
                     // In skin color mode, all non-white pixels become skin colored
                     return fixed4(_TargetColor.rgb, scaledColor.a * _Alpha);
                 }
-                else 
+                else
                 {
                     // Original behavior
                     if (skinDistance < _Tolerance)

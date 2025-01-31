@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -23,7 +23,7 @@ namespace Colorcrush.Util
         private AudioSource[] _audioSources;
         private int _currentAudioSourceIndex;
 
-        public static AudioManager Instance
+        private static AudioManager Instance
         {
             get
             {

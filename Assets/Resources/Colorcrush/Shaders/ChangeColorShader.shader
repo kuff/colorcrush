@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 Shader "Colorcrush/ChangeColorShader"
 {
@@ -9,7 +9,10 @@ Shader "Colorcrush/ChangeColorShader"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
+        Tags
+        {
+            "RenderType"="Transparent" "Queue"="Transparent"
+        }
         LOD 100
 
         Pass
@@ -38,7 +41,7 @@ Shader "Colorcrush/ChangeColorShader"
                 float4 vertex : SV_POSITION;
             };
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -46,7 +49,7 @@ Shader "Colorcrush/ChangeColorShader"
                 return o;
             }
 
-            half4 frag (v2f i) : SV_Target
+            half4 frag(v2f i) : SV_Target
             {
                 half4 col = tex2D(_MainTex, i.uv);
 
