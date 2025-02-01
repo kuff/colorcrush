@@ -162,22 +162,31 @@ namespace Colorcrush.Game
 
             AudioManager.PlaySound("MENU B_Back");
 
-            // Set grid buttons' opacity to 0 and activate them
-            foreach (var button in _selectionGridButtons)
+            // Ensure all buttons are properly set up before starting animations
+            for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
+                var button = _selectionGridButtons[i];
                 var image = button.GetComponent<Image>();
                 if (image != null && image.material != null)
                 {
                     ShaderManager.SetFloat(button.gameObject, "_Alpha", 0f);
                 }
-
                 button.gameObject.SetActive(true);
+                
+                // Clean up any existing animations
+                var buttonAnimator = button.GetComponent<EmojiAnimator>();
+                if (buttonAnimator != null)
+                {
+                    AnimationManager.RemoveExistingAnimations(buttonAnimator);
+                }
             }
 
-            // Hide submit button
+            // Hide and clean up submit button
             var submitButtonAnimator = submitButton.GetComponent<Animator>();
+            AnimationManager.RemoveExistingAnimations(submitButtonAnimator);
             submitButtonAnimator.SetOpacity(0f, null);
             submitButton.interactable = false;
+            submitButton.gameObject.SetActive(false);
 
             // Scale down target
             AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale, setupAnimationDuration));
@@ -185,15 +194,20 @@ namespace Colorcrush.Game
             yield return new WaitForSeconds(setupAnimationDuration / 2); // Start fading in buttons halfway through target scaling
 
             // Fade in grid buttons with staggered delay
+            var fadeInDuration = 0.5f;
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
-                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
-                AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, 0.5f));
-                yield return new WaitForSeconds(buttonFadeInDelay);
+                var button = _selectionGridButtons[i];
+                var buttonAnimator = button.GetComponent<EmojiAnimator>();
+                if (buttonAnimator != null)
+                {
+                    AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, fadeInDuration));
+                    yield return new WaitForSeconds(buttonFadeInDelay);
+                }
             }
 
-            // Wait for all grid buttons to finish fading in
-            yield return new WaitForSeconds(0.25f);
+            // Wait for all fade animations to complete
+            yield return new WaitForSeconds(fadeInDuration);
 
             // Fade in submit button
             submitButton.gameObject.SetActive(true);
@@ -296,6 +310,10 @@ namespace Colorcrush.Game
 
                 _originalTargetScale = targetEmojiObject.transform.localScale;
             }
+            else
+            {
+                Debug.LogError("Target emoji object not found in scene!");
+            }
         }
 
         private void OnTargetEmojiClicked()
@@ -372,12 +390,12 @@ namespace Colorcrush.Game
             if (_buttonToggledStates[index])
             {
                 LoggingManager.LogEvent(new ColorSelectedEvent(index));
-                AudioManager.PlaySound("MENU_Pick");
+                AudioManager.PlaySound("MENU_Pick", pitchShift: 1.85f);
             }
             else
             {
                 LoggingManager.LogEvent(new ColorDeselectedEvent(index));
-                AudioManager.PlaySound("MENU_Pick", pitchShift: 0.85f);
+                AudioManager.PlaySound("MENU_Pick", pitchShift: 1.55f);
             }
 
             // Add debug info

@@ -181,7 +181,13 @@ namespace Colorcrush.Game
 
         private void UpdateColorspaceInfo()
         {
-            var info = $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
+            var info = $"Device Model: {SystemInfo.deviceModel}\n";
+            info += $"Operating System: {SystemInfo.operatingSystem}\n";
+            /*info += $"System Memory: {SystemInfo.systemMemorySize}MB\n";
+            info += $"Graphics Device: {SystemInfo.graphicsDeviceName}\n";
+            info += $"Graphics Memory: {SystemInfo.graphicsMemorySize}MB\n\n";*/
+            
+            info += $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
             info += $"Actual Color Space: {QualitySettings.activeColorSpace}\n";
             info += $"Quality Level: {QualitySettings.GetQualityLevel()}\n";
             info += $"HDR Enabled: {QualitySettings.vSyncCount > 0}\n";

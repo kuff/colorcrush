@@ -455,7 +455,7 @@ namespace Colorcrush.Game
                     {
                         child.gameObject.SetActive(false);
                     }
-                    else if (child.gameObject != resetProgressButton.gameObject)
+                    else if (child.gameObject != resetProgressButton.gameObject || ProjectConfig.InstanceConfig.enableResetButton)
                     {
                         child.gameObject.SetActive(true);
                     }
@@ -806,7 +806,7 @@ namespace Colorcrush.Game
                 }
             }
 
-            AudioManager.PlaySound("MENU_Pick");
+            AudioManager.PlaySound("MENU_Pick", pitchShift: 1.85f);
         }
 
         private void ScaleButton(Transform buttonTransform, float targetScale)

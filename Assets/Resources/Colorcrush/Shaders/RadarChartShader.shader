@@ -11,6 +11,7 @@ Shader "Colorcrush/RadarChartShader"
         _BackgroundColor ("Background Color", Color) = (0.5, 0.5, 0.5, 1) // Color for non-transparent pixels
         _LineColor ("Line Color", Color) = (0.3, 0.3, 0.3, 1) // Color for chart lines
         _FillColor ("Fill Color", Color) = (1, 0, 0, 0.5) // Color for the filled area
+        _ClampValue ("Clamp Value", Range(0.1, 1)) = 0.85 // Maximum value for axis values
         _Axis1 ("Axis 1", Range(0, 1)) = 0.5
         _Axis2 ("Axis 2", Range(0, 1)) = 0.5
         _Axis3 ("Axis 3", Range(0, 1)) = 0.5
@@ -47,6 +48,7 @@ Shader "Colorcrush/RadarChartShader"
             float4 _BackgroundColor;
             float4 _LineColor;
             float4 _FillColor;
+            float _ClampValue;
             float _Axis1, _Axis2, _Axis3, _Axis4, _Axis5, _Axis6, _Axis7, _Axis8;
             float _PulseEffect;
             float _PulseSpeed;
@@ -92,14 +94,14 @@ Shader "Colorcrush/RadarChartShader"
             {
                 float angle = axisIndex * (2.0 * PI / AXIS_COUNT);
                 float radius;
-                if (axisIndex == 0) radius = _Axis1;
-                else if (axisIndex == 1) radius = _Axis2;
-                else if (axisIndex == 2) radius = _Axis3;
-                else if (axisIndex == 3) radius = _Axis4;
-                else if (axisIndex == 4) radius = _Axis5;
-                else if (axisIndex == 5) radius = _Axis6;
-                else if (axisIndex == 6) radius = _Axis7;
-                else radius = _Axis8;
+                if (axisIndex == 0) radius = min(_ClampValue, _Axis1);
+                else if (axisIndex == 1) radius = min(_ClampValue, _Axis2);
+                else if (axisIndex == 2) radius = min(_ClampValue, _Axis3);
+                else if (axisIndex == 3) radius = min(_ClampValue, _Axis4);
+                else if (axisIndex == 4) radius = min(_ClampValue, _Axis5);
+                else if (axisIndex == 5) radius = min(_ClampValue, _Axis6);
+                else if (axisIndex == 6) radius = min(_ClampValue, _Axis7);
+                else radius = min(_ClampValue, _Axis8);
                 return float2(cos(angle), sin(angle)) * radius;
             }
 
