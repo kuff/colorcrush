@@ -195,7 +195,7 @@ namespace Colorcrush.Game
                 return Vector3.Lerp(startPoint, endPoint, 0.5f);
             }
 
-            private float CalculateMaxDistanceForDirection(int directionIndex, Vector3 baseColor)
+            private static float CalculateMaxDistanceForDirection(int directionIndex, Vector3 baseColor)
             {
                 var expansion = StartExpansion + CircleExpansion * Mathf.Pow(NCircles - 1, PolynomicFactor);
 
@@ -297,7 +297,7 @@ namespace Colorcrush.Game
                 }
 
                 // Verify we have the expected number of colors (NCircles * NDirections regular colors + ValidationSamples)
-                var expectedColorCount = NCircles * NDirections + ValidationSamples; // 9 * 8 + 12 = 84
+                const int expectedColorCount = NCircles * NDirections + ValidationSamples; // 9 * 8 + 12 = 84
                 if (xyYCoordinates.Count != expectedColorCount)
                 {
                     throw new InvalidOperationException(

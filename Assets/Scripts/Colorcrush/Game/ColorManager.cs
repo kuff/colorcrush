@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using Random = System.Random;
 
 // ReSharper disable UnusedMember.Global
 
@@ -25,11 +24,6 @@ namespace Colorcrush.Game
             XYZ,
             Xyy,
         }
-
-        private const int VariationsPerColor = 30;
-        private const float VariationRange = 0.05f;
-        private static readonly Random RandomInstance = new(ProjectConfig.InstanceConfig.randomSeed);
-        private static readonly Dictionary<Color, float[]> ColorAnalysisCache = new();
 
         // Conversion matrices
 
@@ -178,64 +172,44 @@ namespace Colorcrush.Game
 
         private static Vector3 NormalizeInput(Vector3 vector, ColorFormat format)
         {
-            switch (format)
+            return format switch
             {
-                case ColorFormat.SrgbZeroTo255:
-                case ColorFormat.DisplayP3ZeroTo255:
-                    return vector / 255f;
-                default:
-                    return vector;
-            }
+                ColorFormat.SrgbZeroTo255 or ColorFormat.DisplayP3ZeroTo255 => vector / 255f,
+                _ => vector,
+            };
         }
 
         private static Vector3 DenormalizeOutput(Vector3 vector, ColorFormat format)
         {
-            switch (format)
+            return format switch
             {
-                case ColorFormat.SrgbZeroTo255:
-                case ColorFormat.DisplayP3ZeroTo255:
-                    return vector * 255f;
-                default:
-                    return vector;
-            }
+                ColorFormat.SrgbZeroTo255 or ColorFormat.DisplayP3ZeroTo255 => vector * 255f,
+                _ => vector,
+            };
         }
 
         private static Vector3 ToXYZ(Vector3 vector, ColorFormat format)
         {
-            switch (format)
+            return format switch
             {
-                case ColorFormat.SrgbZeroToOne:
-                case ColorFormat.SrgbZeroTo255:
-                    return _srgbToXYZ.MultiplyPoint3x4(vector);
-                case ColorFormat.DisplayP3ZeroToOne:
-                case ColorFormat.DisplayP3ZeroTo255:
-                    return _displayP3ToXYZ.MultiplyPoint3x4(vector);
-                case ColorFormat.Xyy:
-                    return XyYToXYZ(vector);
-                case ColorFormat.XYZ:
-                    return vector;
-                default:
-                    return vector; // Assume it's already XYZ
-            }
+                ColorFormat.SrgbZeroToOne or ColorFormat.SrgbZeroTo255 => _srgbToXYZ.MultiplyPoint3x4(vector),
+                ColorFormat.DisplayP3ZeroToOne or ColorFormat.DisplayP3ZeroTo255 => _displayP3ToXYZ.MultiplyPoint3x4(vector),
+                ColorFormat.Xyy => XyYToXYZ(vector),
+                ColorFormat.XYZ => vector,
+                _ => vector,
+            };
         }
 
         private static Vector3 FromXYZ(Vector3 xyzVector, ColorFormat format)
         {
-            switch (format)
+            return format switch
             {
-                case ColorFormat.SrgbZeroToOne:
-                case ColorFormat.SrgbZeroTo255:
-                    return _xyzToSrgb.MultiplyPoint3x4(xyzVector);
-                case ColorFormat.DisplayP3ZeroToOne:
-                case ColorFormat.DisplayP3ZeroTo255:
-                    return _xyzToDisplayP3.MultiplyPoint3x4(xyzVector);
-                case ColorFormat.Xyy:
-                    return XYZToXyY(xyzVector);
-                case ColorFormat.XYZ:
-                    return xyzVector;
-                default:
-                    return xyzVector; // Assume XYZ
-            }
+                ColorFormat.SrgbZeroToOne or ColorFormat.SrgbZeroTo255 => _xyzToSrgb.MultiplyPoint3x4(xyzVector),
+                ColorFormat.DisplayP3ZeroToOne or ColorFormat.DisplayP3ZeroTo255 => _xyzToDisplayP3.MultiplyPoint3x4(xyzVector),
+                ColorFormat.Xyy => XYZToXyY(xyzVector),
+                ColorFormat.XYZ => xyzVector,
+                _ => xyzVector,
+            };
         }
 
         private static bool IsGammaEncodedFormat(ColorFormat format)
@@ -271,6 +245,8 @@ namespace Colorcrush.Game
                     vector.y = Mathf.Clamp01(vector.y);
                     vector.z = Mathf.Max(0f, vector.z);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(format), format, null);
             }
 
             return vector;
@@ -381,18 +357,13 @@ namespace Colorcrush.Game
 
             public Color ToDisplayColor()
             {
-                ColorObject colorToDisplay;
-
-                if (ProjectConfig.InstanceConfig.useDisplayP3ColorSpace)
-                {
+                var colorToDisplay = ToColorFormat(ProjectConfig.InstanceConfig.useDisplayP3ColorSpace
+                    ?
                     // Convert to Display P3 format
-                    colorToDisplay = ToColorFormat(ColorFormat.DisplayP3ZeroToOne);
-                }
-                else
-                {
+                    ColorFormat.DisplayP3ZeroToOne
+                    :
                     // Convert to sRGB format
-                    colorToDisplay = ToColorFormat(ColorFormat.SrgbZeroToOne);
-                }
+                    ColorFormat.SrgbZeroToOne);
 
                 return new Color(colorToDisplay.Vector.x, colorToDisplay.Vector.y, colorToDisplay.Vector.z, 1f);
             }

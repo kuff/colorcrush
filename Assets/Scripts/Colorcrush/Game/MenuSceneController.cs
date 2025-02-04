@@ -21,7 +21,8 @@ namespace Colorcrush.Game
     {
         private const float DoubleTapTime = 0.3f;
 
-        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        [Header("Scroll View Settings")]
+        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -42,7 +43,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")]
+        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
@@ -60,7 +62,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        [Header("Color Analysis Settings")]
+        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
         private bool enableColorViewInspector = true;
 
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
@@ -90,7 +93,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The drag signifier object.")]
         private GameObject dragSignifier;
 
-        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [Header("Button Animation Settings")]
+        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -339,8 +343,7 @@ namespace Colorcrush.Game
 
             if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
             {
-                Vector2 localPoint;
-                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out var localPoint))
                 {
                     // Calculate the vector from the original center of the analysis image to the mouse position
                     var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, 1389);
@@ -1034,7 +1037,7 @@ namespace Colorcrush.Game
             ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
         }
 
-        private float EaseInOutCubic(float t)
+        private static float EaseInOutCubic(float t)
         {
             return t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
         }

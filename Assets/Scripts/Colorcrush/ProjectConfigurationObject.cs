@@ -14,7 +14,8 @@ namespace Colorcrush
     [CreateAssetMenu(fileName = "ProjectConfigurationObject", menuName = "Colorcrush/Project Configuration")]
     public class ProjectConfigurationObject : ScriptableObject
     {
-        [Header("Editor Configuration")] [FormerlySerializedAs("startScenePath")] [Tooltip("The file path to the initial scene that the game will load when 'Use Initiating Scene' is enabled. This should be a valid scene path within the project.")]
+        [Header("Editor Configuration")]
+        [FormerlySerializedAs("startScenePath")] [Tooltip("The file path to the initial scene that the game will load when 'Use Initiating Scene' is enabled. This should be a valid scene path within the project.")]
         public string initiatingScenePath;
 
         [Tooltip("Determines whether the game starts from the specified initiating scene. If set to false, the game will follow Unity's default scene loading sequence.")]
@@ -32,7 +33,8 @@ namespace Colorcrush
         [Tooltip("If enabled, all log files will be automatically deleted when the Unity Editor starts. This is useful for maintaining a clean log environment during development.")]
         public bool deleteAllLogFilesOnEditorStartup = true;
 
-        [Header("Game Configuration")] [Tooltip("The seed value used for random number generation. Setting a specific seed ensures that the sequence of random numbers is reproducible, which is useful for running experiments.")]
+        [Header("Game Configuration")]
+        [Tooltip("The seed value used for random number generation. Setting a specific seed ensures that the sequence of random numbers is reproducible, which is useful for running experiments.")]
         public int randomSeed = 42;
 
         [Tooltip("The file path from which color data will be loaded. This should point to a valid text file containing color information.")]
@@ -62,7 +64,8 @@ namespace Colorcrush
         [Tooltip("If enabled, colors will be converted to Display P3 color space before being displayed. If disabled, colors will remain in sRGB color space.")]
         public bool useDisplayP3ColorSpace;
 
-        [Header("Emoji Configuration")] [Tooltip("The name of the default emoji sprite (without the file extension).")]
+        [Header("Emoji Configuration")]
+        [Tooltip("The name of the default emoji sprite (without the file extension).")]
         public string defaultEmojiName = "reshot-icon-blank-XN4TPFSGQ8";
 
         [Tooltip("The name of the default happy emoji sprite (without the file extension).")]
@@ -74,7 +77,8 @@ namespace Colorcrush
         [Tooltip("The path to the folder containing sad emoji sprites.")]
         public string sadEmojiFolder = "Colorcrush/Emoji/Sad";
 
-        [Header("Logging Configuration")] [Tooltip("The prefix used for log file names.")]
+        [Header("Logging Configuration")]
+        [Tooltip("The prefix used for log file names.")]
         public string logFilePrefix = "game_log_";
 
         [Tooltip("If true, timestamps in log files will be relative to the creation of the log file, and not reset between restarts.")]
@@ -98,7 +102,8 @@ namespace Colorcrush
         [Tooltip("If true, Console output will not be logged when running in the Unity Editor, regardless of the minimum log severity setting.")]
         public bool suppressConsoleLoggingInEditor;
 
-        [Header("Audio Configuration")] [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]
+        [Header("Audio Configuration")]
+        [Tooltip("The global gain factor applied to all audio. This is a multiplier, where 1 is normal volume.")]
         public float globalGain = 1f;
 
         [Tooltip("The maximum number of simultaneous audio sources that can play at once.")]
