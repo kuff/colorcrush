@@ -91,14 +91,13 @@ namespace Colorcrush.Game
         private float _initialProgressBarWidth;
         private Vector3[] _originalButtonScales;
         private Vector3 _originalTargetScale;
-        private GameObject[] _selectionButtons;
         private Button[] _selectionGridButtons;
         private Image[] _selectionGridImages;
         private int _submitCount;
         private Color _targetColor;
-        private CustomAnimator targetEmojiCustomAnimator;
         private Image _targetEmojiImage;
         private bool _targetReached;
+        private CustomAnimator targetEmojiCustomAnimator;
 
         private void Awake()
         {
@@ -199,9 +198,9 @@ namespace Colorcrush.Game
 
             // Fade in grid buttons with staggered delay
             const float fadeInDuration = 0.5f;
-            foreach (var button in _selectionGridButtons)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
-                var buttonAnimator = button.GetComponent<EmojiCustomAnimator>();
+                var buttonAnimator = _selectionGridButtons[i].GetComponent<EmojiCustomAnimator>();
                 if (buttonAnimator != null)
                 {
                     AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, fadeInDuration));
@@ -245,9 +244,9 @@ namespace Colorcrush.Game
             _buttonsInteractable = false;
 
             // Fade out grid and submit button
-            foreach (var button in _selectionGridButtons)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
-                var buttonAnimator = button.GetComponent<CustomAnimator>();
+                var buttonAnimator = _selectionGridButtons[i].GetComponent<CustomAnimator>();
                 AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(defaultAlpha, 0f, setupAnimationDuration / 2));
             }
 
@@ -284,14 +283,14 @@ namespace Colorcrush.Game
 
         private void InitializeButtons()
         {
-            _selectionButtons = GameObject.FindGameObjectsWithTag("SelectionButton");
-            if (_selectionButtons.Length == 0)
+            var selectionButtons = GameObject.FindGameObjectsWithTag("SelectionButton");
+            if (selectionButtons.Length == 0)
             {
                 return;
             }
 
-            _selectionGridImages = GetSortedComponentsFromButtons<Image>(_selectionButtons);
-            _selectionGridButtons = GetSortedComponentsFromButtons<Button>(_selectionButtons);
+            _selectionGridImages = GetSortedComponentsFromButtons<Image>(selectionButtons);
+            _selectionGridButtons = GetSortedComponentsFromButtons<Button>(selectionButtons);
             _buttonToggledStates = new bool[_selectionGridButtons.Length];
             _originalButtonScales = _selectionGridButtons.Select(b => b.transform.localScale).ToArray();
 
@@ -351,7 +350,7 @@ namespace Colorcrush.Game
 
         private void UpdateUI()
         {
-            for (var i = 0; i < _selectionGridImages.Length; i++)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
                 UpdateButton(i);
             }
@@ -377,7 +376,7 @@ namespace Colorcrush.Game
 
         public void OnButtonClicked(int index)
         {
-            if (_currentState != GameState.Main || !_buttonsInteractable || index < 0 || index >= _selectionGridButtons.Length)
+            if (_currentState != GameState.Main || !_buttonsInteractable || index < 0 || index >= _currentBatch.Count)
             {
                 return;
             }
@@ -422,7 +421,7 @@ namespace Colorcrush.Game
             var selectedBatchColors = new List<ColorObject>();
             var nonSelectedBatchColors = new List<ColorObject>();
 
-            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
                 var color = _currentBatch[i];
                 if (_buttonToggledStates[i])
@@ -435,19 +434,20 @@ namespace Colorcrush.Game
                 }
             }
 
+            var oldBatchCount = _currentBatch.Count;
             (_currentBatch, _hasMoreBatches) = _colorExperiment.GetNextColorBatch(selectedBatchColors, nonSelectedBatchColors);
             _submitCount++;
 
-            StartCoroutine(AnimateEmojisAndResetButtons());
+            StartCoroutine(AnimateEmojisAndResetButtons(oldBatchCount));
             UpdateProgressBar();
             UpdateTargetButtonColor();
 
             if (!_hasMoreBatches)
             {
                 _targetReached = true;
-                foreach (var button in _selectionButtons)
+                foreach (var button in _selectionGridButtons)
                 {
-                    button.SetActive(false);
+                    button.gameObject.SetActive(false);
                 }
 
                 // Set the target emoji to the reward emoji
@@ -461,20 +461,20 @@ namespace Colorcrush.Game
             }
         }
 
-        private IEnumerator AnimateEmojisAndResetButtons()
+        private IEnumerator AnimateEmojisAndResetButtons(int buttonsInPreviousBatch)
         {
             _buttonsInteractable = false;
             var instantiatedObjects = new List<GameObject>();
             var emojiAnimators = new List<EmojiCustomAnimator>();
 
-            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            for (var i = 0; i < buttonsInPreviousBatch; i++)
             {
                 var instance = CreateEmojiInstance(i);
                 instantiatedObjects.Add(instance);
                 emojiAnimators.Add(instance.AddComponent<EmojiCustomAnimator>());
             }
 
-            SetOriginalButtonsInactive();
+            SetOriginalButtonsInactive(buttonsInPreviousBatch);
             yield return AnimateEmojis(emojiAnimators);
 
             foreach (var obj in instantiatedObjects)
@@ -508,10 +508,11 @@ namespace Colorcrush.Game
             return instance;
         }
 
-        private void SetOriginalButtonsInactive()
+        private void SetOriginalButtonsInactive(int buttonsInPreviousBatch)
         {
-            foreach (var button in _selectionGridButtons)
+            for (var i = 0; i < buttonsInPreviousBatch; i++)
             {
+                var button = _selectionGridButtons[i];
                 var image = button.GetComponent<Image>();
                 ShaderManager.SetFloat(image.gameObject, "_Alpha", 0f);
                 button.interactable = false;
@@ -572,7 +573,7 @@ namespace Colorcrush.Game
                 return;
             }
 
-            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
                 UpdateButton(i, true);
                 if (_buttonToggledStates[i])
@@ -590,18 +591,18 @@ namespace Colorcrush.Game
                 button.interactable = false;
             }
 
-            for (var i = 0; i < _selectionGridButtons.Length; i++)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
-                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiCustomAnimator>();
+                var buttonAnimator = _selectionGridButtons[i].GetComponent<EmojiCustomAnimator>();
                 AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, setupAnimationDuration));
                 yield return new WaitForSeconds(buttonFadeInDelay);
             }
 
             yield return new WaitForSeconds(setupAnimationDuration);
 
-            foreach (var button in _selectionGridButtons)
+            for (var i = 0; i < _currentBatch.Count; i++)
             {
-                button.interactable = true;
+                _selectionGridButtons[i].interactable = true;
             }
 
             _buttonsInteractable = true;

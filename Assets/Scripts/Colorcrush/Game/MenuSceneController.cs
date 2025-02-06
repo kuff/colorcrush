@@ -981,7 +981,7 @@ namespace Colorcrush.Game
         private void SetDragSignifierActive(bool isActive)
         {
             ShaderManager.SetFloat(colorAnalysisImage.gameObject, "_PulseEffect", isActive ? 1 : 0);
-            var dragSignifierAnimator = dragSignifier.GetComponent<UnityEngine.Animator>();
+            var dragSignifierAnimator = dragSignifier.GetComponent<Animator>();
             dragSignifierAnimator.enabled = isActive;
             var dragSignifierImage = dragSignifier.GetComponent<Image>();
             var color = dragSignifierImage.color;
