@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace Colorcrush.Animation
 {
-    public class ButtonAnimator : Animator
+    public class ButtonCustomAnimator : CustomAnimator
     {
         [SerializeField] private RectTransform rectTransform;
         [SerializeField] private Image image;

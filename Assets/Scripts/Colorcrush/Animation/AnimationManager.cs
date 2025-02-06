@@ -15,7 +15,7 @@ namespace Colorcrush.Animation
         private static AnimationManager _instance;
 
         private readonly Dictionary<Animation, List<AnimationState>> _activeAnimations = new();
-        private readonly Dictionary<Animator, HashSet<Animation>> _animatorAnimations = new();
+        private readonly Dictionary<CustomAnimator, HashSet<Animation>> _animatorAnimations = new();
 
         private static AnimationManager Instance
         {
@@ -58,11 +58,11 @@ namespace Colorcrush.Animation
 
                     try
                     {
-                        anim.Play(state.Animator, progress);
+                        anim.Play(state.CustomAnimator, progress);
                     }
                     catch (InvalidOperationException e)
                     {
-                        Debug.Log($"AnimationManager: Animation.Play threw an InvalidOperationException for {state.Animator.name}: {e.Message} - Treating animation as finished.");
+                        Debug.Log($"AnimationManager: Animation.Play threw an InvalidOperationException for {state.CustomAnimator.name}: {e.Message} - Treating animation as finished.");
                         completedStates.Add(state);
                         continue;
                     }
@@ -84,7 +84,7 @@ namespace Colorcrush.Animation
                 foreach (var state in completedStates)
                 {
                     states.Remove(state);
-                    RemoveAnimatorAnimation(state.Animator, anim);
+                    RemoveAnimatorAnimation(state.CustomAnimator, anim);
                 }
 
                 if (states.Count == 0)
@@ -99,12 +99,12 @@ namespace Colorcrush.Animation
             }
         }
 
-        public static void PlayAnimation(Animator animator, Animation animation)
+        public static void PlayAnimation(CustomAnimator customAnimator, Animation animation)
         {
-            PlayAnimation(new[] { animator, }, animation);
+            PlayAnimation(new[] { customAnimator, }, animation);
         }
 
-        public static void PlayAnimation(IEnumerable<Animator> animators, Animation animation)
+        public static void PlayAnimation(IEnumerable<CustomAnimator> animators, Animation animation)
         {
             if (!Instance._activeAnimations.TryGetValue(animation, out var states))
             {
@@ -122,8 +122,8 @@ namespace Colorcrush.Animation
             {
                 if (animator != null)
                 {
-                    // Check if the animation is already playing for this animator
-                    var existingState = states.Find(s => s.Animator == animator);
+                    // Check if the animation is already playing for this customAnimator
+                    var existingState = states.Find(s => s.CustomAnimator == animator);
                     if (existingState != null)
                     {
                         // Reset the existing state instead of adding a new one
@@ -132,21 +132,21 @@ namespace Colorcrush.Animation
                     }
                     else
                     {
-                        // Add a new state for this animator
-                        states.Add(new AnimationState { Animator = animator, ElapsedTime = 0, IsReversing = false, });
+                        // Add a new state for this customAnimator
+                        states.Add(new AnimationState { CustomAnimator = animator, ElapsedTime = 0, IsReversing = false, });
                         Instance.AddAnimatorAnimation(animator, animation);
                         count++;
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("AnimationManager: Attempted to add a null animator to the animation state");
+                    Debug.LogWarning("AnimationManager: Attempted to add a null customAnimator to the animation state");
                 }
             }
 
             if (count > 0)
             {
-                Debug.Log($"AnimationManager: Added {count} animator(s) to {animation.GetType().Name}");
+                Debug.Log($"AnimationManager: Added {count} customAnimator(s) to {animation.GetType().Name}");
             }
             else
             {
@@ -154,41 +154,41 @@ namespace Colorcrush.Animation
             }
         }
 
-        public static void RemoveExistingAnimations(Animator animator)
+        public static void RemoveExistingAnimations(CustomAnimator customAnimator)
         {
-            if (Instance._animatorAnimations.TryGetValue(animator, out var animations))
+            if (Instance._animatorAnimations.TryGetValue(customAnimator, out var animations))
             {
                 foreach (var anim in animations)
                 {
                     if (Instance._activeAnimations.TryGetValue(anim, out var states))
                     {
-                        states.RemoveAll(s => s.Animator == animator);
+                        states.RemoveAll(s => s.CustomAnimator == customAnimator);
                     }
                 }
 
-                Instance._animatorAnimations.Remove(animator);
+                Instance._animatorAnimations.Remove(customAnimator);
             }
         }
 
-        private void AddAnimatorAnimation(Animator animator, Animation animation)
+        private void AddAnimatorAnimation(CustomAnimator customAnimator, Animation animation)
         {
-            if (!_animatorAnimations.TryGetValue(animator, out var animations))
+            if (!_animatorAnimations.TryGetValue(customAnimator, out var animations))
             {
                 animations = new HashSet<Animation>();
-                _animatorAnimations[animator] = animations;
+                _animatorAnimations[customAnimator] = animations;
             }
 
             animations.Add(animation);
         }
 
-        private void RemoveAnimatorAnimation(Animator animator, Animation animation)
+        private void RemoveAnimatorAnimation(CustomAnimator customAnimator, Animation animation)
         {
-            if (_animatorAnimations.TryGetValue(animator, out var animations))
+            if (_animatorAnimations.TryGetValue(customAnimator, out var animations))
             {
                 animations.Remove(animation);
                 if (animations.Count == 0)
                 {
-                    _animatorAnimations.Remove(animator);
+                    _animatorAnimations.Remove(customAnimator);
                 }
             }
         }
@@ -197,12 +197,12 @@ namespace Colorcrush.Animation
         {
             public bool IsTemporary { get; protected set; }
             public float Duration { get; protected set; }
-            public abstract void Play(Animator animator, float progress);
+            public abstract void Play(CustomAnimator customAnimator, float progress);
         }
 
         private class AnimationState
         {
-            public Animator Animator;
+            public CustomAnimator CustomAnimator;
             public float ElapsedTime;
             public bool IsReversing;
         }

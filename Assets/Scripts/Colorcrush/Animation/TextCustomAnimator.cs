@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Colorcrush.Animation
 {
-    public class TextAnimator : Animator
+    public class TextCustomAnimator : CustomAnimator
     {
         [SerializeField] private TextMeshProUGUI textComponent;
 

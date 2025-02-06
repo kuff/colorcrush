@@ -11,7 +11,6 @@ using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
 using static Colorcrush.Game.ColorManager;
-using Animator = Colorcrush.Animation.Animator;
 
 #endregion
 
@@ -279,14 +278,14 @@ namespace Colorcrush.Game
                 if (_selectedLevelIndex == _uniqueCompletedColors.Count && !ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
                     var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
-                    var submitButtonAnimator = submitButton.GetComponent<Animator>();
+                    var submitButtonAnimator = submitButton.GetComponent<CustomAnimator>();
                     if (submitButtonAnimator != null)
                     {
                         AnimationManager.PlayAnimation(submitButtonAnimator, bumpAnimation);
                     }
                     else
                     {
-                        Debug.LogWarning("Submit button is missing Animator component.");
+                        Debug.LogWarning("Submit button is missing CustomAnimator component.");
                     }
 
                     return;
@@ -718,10 +717,10 @@ namespace Colorcrush.Game
 
         private IEnumerator AnimateNextLevelButton(Button button, int buttonIndex)
         {
-            var animator = button.GetComponent<Animator>();
+            var animator = button.GetComponent<CustomAnimator>();
             if (animator == null)
             {
-                Debug.LogError("Next level button is missing Animator component.");
+                Debug.LogError("Next level button is missing CustomAnimator component.");
                 yield break;
             }
 
@@ -778,7 +777,7 @@ namespace Colorcrush.Game
             if (index < buttonGrid.transform.childCount)
             {
                 var buttonTransform = buttonGrid.transform.GetChild(index);
-                var animator = buttonTransform.GetComponent<Animator>();
+                var animator = buttonTransform.GetComponent<CustomAnimator>();
                 if (animator != null)
                 {
                     ScaleButton(buttonTransform, selectedButtonScale);
@@ -786,7 +785,7 @@ namespace Colorcrush.Game
                 }
                 else
                 {
-                    Debug.LogError("Button is missing Animator component.");
+                    Debug.LogError("Button is missing CustomAnimator component.");
                 }
             }
 
@@ -797,7 +796,7 @@ namespace Colorcrush.Game
             // Animate the submit button with a bump animation
             if (submitButton != null)
             {
-                var submitButtonAnimator = submitButton.GetComponent<Animator>();
+                var submitButtonAnimator = submitButton.GetComponent<CustomAnimator>();
                 if (submitButtonAnimator != null)
                 {
                     var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
@@ -805,7 +804,7 @@ namespace Colorcrush.Game
                 }
                 else
                 {
-                    Debug.LogError("Submit button is missing Animator component.");
+                    Debug.LogError("Submit button is missing CustomAnimator component.");
                 }
             }
 
@@ -814,7 +813,7 @@ namespace Colorcrush.Game
 
         private void ScaleButton(Transform buttonTransform, float targetScale)
         {
-            var animator = buttonTransform.GetComponent<Animator>();
+            var animator = buttonTransform.GetComponent<CustomAnimator>();
             if (animator != null)
             {
                 var scaleAnimation = new FillScaleAnimation(targetScale, buttonBumpDuration);
@@ -822,7 +821,7 @@ namespace Colorcrush.Game
             }
             else
             {
-                Debug.LogError("Button is missing Animator component.");
+                Debug.LogError("Button is missing CustomAnimator component.");
             }
         }
 
@@ -892,7 +891,7 @@ namespace Colorcrush.Game
             PlayerPrefs.Save();
 
             // Play bump animation
-            var animator = submitButton.GetComponent<Animator>();
+            var animator = submitButton.GetComponent<CustomAnimator>();
             if (animator != null)
             {
                 var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
@@ -900,7 +899,7 @@ namespace Colorcrush.Game
             }
             else
             {
-                Debug.LogError("Submit button is missing Animator component.");
+                Debug.LogError("Submit button is missing CustomAnimator component.");
             }
 
             // Wait for 1 second before loading the scene

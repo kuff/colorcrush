@@ -21,19 +21,19 @@ namespace Colorcrush.Animation
             IsTemporary = false;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
             var easedProgress = EaseInOutQuad(progress);
 
             // Handle position animation
-            var startPosition = animator.GetOriginalPosition();
-            animator.SetPosition(Vector3.Lerp(startPosition, _targetPosition, easedProgress), this);
+            var startPosition = customAnimator.GetOriginalPosition();
+            customAnimator.SetPosition(Vector3.Lerp(startPosition, _targetPosition, easedProgress), this);
 
             // Handle scale animation if endScale is provided
             if (_endScale.HasValue)
             {
-                var startScale = animator.GetOriginalScale();
-                animator.SetScale(Vector3.Lerp(startScale, _endScale.Value, easedProgress), this);
+                var startScale = customAnimator.GetOriginalScale();
+                customAnimator.SetScale(Vector3.Lerp(startScale, _endScale.Value, easedProgress), this);
             }
         }
 

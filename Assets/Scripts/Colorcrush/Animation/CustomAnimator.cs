@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Colorcrush.Animation
 {
-    public abstract class Animator : MonoBehaviour
+    public abstract class CustomAnimator : MonoBehaviour
     {
         private readonly Dictionary<string, int> _currentPropertyOwners = new();
         private readonly Dictionary<string, HashSet<int>> _previousPropertyOwners = new();
@@ -31,7 +31,7 @@ namespace Colorcrush.Animation
         {
             if (self == null)
             {
-                Debug.LogWarning($"Animator: Set {propertyName} with a null Animation reference. The ownership model may break.");
+                Debug.LogWarning($"CustomAnimator: Set {propertyName} with a null Animation reference. The ownership model may break.");
                 setter();
                 return;
             }
@@ -53,7 +53,7 @@ namespace Colorcrush.Animation
 
             if (_previousPropertyOwners.TryGetValue(propertyName, out var previousOwnerIds) && previousOwnerIds.Contains(selfId))
             {
-                throw new InvalidOperationException($"Animator: Animation {self.GetType().Name} attempted to set {propertyName} after losing ownership.");
+                throw new InvalidOperationException($"CustomAnimator: Animation {self.GetType().Name} attempted to set {propertyName} after losing ownership.");
             }
 
             if (!_previousPropertyOwners.ContainsKey(propertyName))

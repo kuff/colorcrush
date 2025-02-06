@@ -13,7 +13,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using static Colorcrush.Game.ColorManager;
-using Animator = Colorcrush.Animation.Animator;
 
 #endregion
 
@@ -97,7 +96,7 @@ namespace Colorcrush.Game
         private Image[] _selectionGridImages;
         private int _submitCount;
         private Color _targetColor;
-        private Animator _targetEmojiAnimator;
+        private CustomAnimator targetEmojiCustomAnimator;
         private Image _targetEmojiImage;
         private bool _targetReached;
 
@@ -179,7 +178,7 @@ namespace Colorcrush.Game
                 button.gameObject.SetActive(true);
 
                 // Clean up any existing animations
-                var buttonAnimator = button.GetComponent<EmojiAnimator>();
+                var buttonAnimator = button.GetComponent<EmojiCustomAnimator>();
                 if (buttonAnimator != null)
                 {
                     AnimationManager.RemoveExistingAnimations(buttonAnimator);
@@ -187,14 +186,14 @@ namespace Colorcrush.Game
             }
 
             // Hide and clean up submit button
-            var submitButtonAnimator = submitButton.GetComponent<Animator>();
+            var submitButtonAnimator = submitButton.GetComponent<CustomAnimator>();
             AnimationManager.RemoveExistingAnimations(submitButtonAnimator);
             submitButtonAnimator.SetOpacity(0f, null);
             submitButton.interactable = false;
             submitButton.gameObject.SetActive(false);
 
             // Scale down target
-            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale, setupAnimationDuration));
+            AnimationManager.PlayAnimation(targetEmojiCustomAnimator, new ScaleAnimation(_originalTargetScale, setupAnimationDuration));
 
             yield return new WaitForSeconds(setupAnimationDuration / 2); // Start fading in buttons halfway through target scaling
 
@@ -202,7 +201,7 @@ namespace Colorcrush.Game
             const float fadeInDuration = 0.5f;
             foreach (var button in _selectionGridButtons)
             {
-                var buttonAnimator = button.GetComponent<EmojiAnimator>();
+                var buttonAnimator = button.GetComponent<EmojiCustomAnimator>();
                 if (buttonAnimator != null)
                 {
                     AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, fadeInDuration));
@@ -248,7 +247,7 @@ namespace Colorcrush.Game
             // Fade out grid and submit button
             foreach (var button in _selectionGridButtons)
             {
-                var buttonAnimator = button.GetComponent<Animator>();
+                var buttonAnimator = button.GetComponent<CustomAnimator>();
                 AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(defaultAlpha, 0f, setupAnimationDuration / 2));
             }
 
@@ -257,14 +256,14 @@ namespace Colorcrush.Game
             var sceneIsLoaded = false;
             SceneManager.LoadSceneAsync(nextSceneName, () => sceneIsLoaded = true);
 
-            var submitAnimator = submitButton.GetComponent<Animator>();
+            var submitAnimator = submitButton.GetComponent<CustomAnimator>();
             AnimationManager.PlayAnimation(submitAnimator, new FadeAnimation(defaultAlpha, 0f, setupAnimationDuration / 2));
 
             // Wait for an additional second before scaling up the target
             yield return new WaitForSeconds(setupAnimationDuration / 2);
 
             // Scale up target
-            AnimationManager.PlayAnimation(_targetEmojiAnimator, new ScaleAnimation(_originalTargetScale * setupScaleFactor, setupAnimationDuration));
+            AnimationManager.PlayAnimation(targetEmojiCustomAnimator, new ScaleAnimation(_originalTargetScale * setupScaleFactor, setupAnimationDuration));
             AudioManager.PlaySound("MENU B_Select");
 
             yield return new WaitForSeconds(setupAnimationDuration);
@@ -300,7 +299,7 @@ namespace Colorcrush.Game
             if (targetEmojiObject != null)
             {
                 _targetEmojiImage = targetEmojiObject.GetComponent<Image>();
-                _targetEmojiAnimator = targetEmojiObject.GetComponent<Animator>();
+                targetEmojiCustomAnimator = targetEmojiObject.GetComponent<CustomAnimator>();
                 if (_targetEmojiImage != null)
                 {
                     _targetEmojiImage.sprite = EmojiManager.GetDefaultEmoji();
@@ -322,9 +321,9 @@ namespace Colorcrush.Game
 
         private void OnTargetEmojiClicked()
         {
-            if (_targetEmojiAnimator != null)
+            if (targetEmojiCustomAnimator != null)
             {
-                AnimationManager.PlayAnimation(_targetEmojiAnimator, new ShakeAnimation(0.5f, 5f, 15f));
+                AnimationManager.PlayAnimation(targetEmojiCustomAnimator, new ShakeAnimation(0.5f, 5f, 15f));
             }
         }
 
@@ -410,14 +409,14 @@ namespace Colorcrush.Game
         {
             if (_currentState != GameState.Main || SceneManager.IsLoading || !_buttonsInteractable)
             {
-                AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new ShakeAnimation(0.1f, 9f));
+                AnimationManager.PlayAnimation(submitButton.GetComponent<CustomAnimator>(), new ShakeAnimation(0.1f, 9f));
                 AudioManager.PlaySound("misc_menu", pitchShift: 0.85f);
                 return;
             }
 
             AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
 
-            AnimationManager.PlayAnimation(submitButton.GetComponent<Animator>(), new BumpAnimation(0.1f, 0.9f));
+            AnimationManager.PlayAnimation(submitButton.GetComponent<CustomAnimator>(), new BumpAnimation(0.1f, 0.9f));
 
             // Save selected and non-selected colors
             var selectedBatchColors = new List<ColorObject>();
@@ -466,13 +465,13 @@ namespace Colorcrush.Game
         {
             _buttonsInteractable = false;
             var instantiatedObjects = new List<GameObject>();
-            var emojiAnimators = new List<EmojiAnimator>();
+            var emojiAnimators = new List<EmojiCustomAnimator>();
 
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
                 var instance = CreateEmojiInstance(i);
                 instantiatedObjects.Add(instance);
-                emojiAnimators.Add(instance.AddComponent<EmojiAnimator>());
+                emojiAnimators.Add(instance.AddComponent<EmojiCustomAnimator>());
             }
 
             SetOriginalButtonsInactive();
@@ -519,7 +518,7 @@ namespace Colorcrush.Game
             }
         }
 
-        private IEnumerator AnimateEmojis(List<EmojiAnimator> emojiAnimators)
+        private IEnumerator AnimateEmojis(List<EmojiCustomAnimator> emojiAnimators)
         {
             var nonSelectedCount = emojiAnimators.Count(i => !_buttonToggledStates[emojiAnimators.IndexOf(i)]);
             var pitchStep = nonSelectedCount > 1 ? nonSelectedEmojiPitchStep / (nonSelectedCount - 1) : 0f;
@@ -541,27 +540,27 @@ namespace Colorcrush.Game
             yield return new WaitForSeconds(1f);
         }
 
-        private void AnimateSelectedEmoji(EmojiAnimator animator)
+        private void AnimateSelectedEmoji(EmojiCustomAnimator customAnimator)
         {
-            var image = animator.GetComponent<Image>();
+            var image = customAnimator.GetComponent<Image>();
             if (image != null)
             {
                 image.sprite = EmojiManager.GetNextSadEmoji();
             }
 
-            AnimationManager.PlayAnimation(animator, new FadeAnimation(toggledAlpha, 0f, selectedEmojiFadeDuration));
+            AnimationManager.PlayAnimation(customAnimator, new FadeAnimation(toggledAlpha, 0f, selectedEmojiFadeDuration));
         }
 
-        private IEnumerator AnimateNonSelectedEmoji(EmojiAnimator animator, float pitch)
+        private IEnumerator AnimateNonSelectedEmoji(EmojiCustomAnimator customAnimator, float pitch)
         {
-            var image = animator.GetComponent<Image>();
+            var image = customAnimator.GetComponent<Image>();
             if (image != null)
             {
                 image.sprite = EmojiManager.GetNextHappyEmoji();
             }
 
             var targetPosition = progressBar.transform.position + nonSelectedEmojiMoveOffset;
-            AnimationManager.PlayAnimation(animator, new MoveToAnimation(targetPosition, nonSelectedEmojiMoveDuration, Vector3.zero));
+            AnimationManager.PlayAnimation(customAnimator, new MoveToAnimation(targetPosition, nonSelectedEmojiMoveDuration, Vector3.zero));
             yield return new WaitForSeconds(0.05f);
             AudioManager.PlaySound(nonSelectedEmojiSound, pitchShift: pitch, gain: nonSelectedEmojiGain);
         }
@@ -593,7 +592,7 @@ namespace Colorcrush.Game
 
             for (var i = 0; i < _selectionGridButtons.Length; i++)
             {
-                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiAnimator>();
+                var buttonAnimator = _selectionButtons[i].GetComponent<EmojiCustomAnimator>();
                 AnimationManager.PlayAnimation(buttonAnimator, new FadeAnimation(0f, defaultAlpha, setupAnimationDuration));
                 yield return new WaitForSeconds(buttonFadeInDelay);
             }

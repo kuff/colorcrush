@@ -19,12 +19,12 @@ namespace Colorcrush.Animation
             IsTemporary = false;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
-            var emojiAnimator = animator as EmojiAnimator;
+            var emojiAnimator = customAnimator as EmojiCustomAnimator;
             if (emojiAnimator == null)
             {
-                Debug.LogError("FillScaleAnimation requires an EmojiAnimator.");
+                Debug.LogError("FillScaleAnimation requires an EmojiCustomAnimator.");
                 return;
             }
 

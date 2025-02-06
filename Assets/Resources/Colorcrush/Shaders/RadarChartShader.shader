@@ -11,7 +11,7 @@ Shader "Colorcrush/RadarChartShader"
         _BackgroundColor ("Background Color", Color) = (0.5, 0.5, 0.5, 1) // Color for non-transparent pixels
         _LineColor ("Line Color", Color) = (0.3, 0.3, 0.3, 1) // Color for chart lines
         _FillColor ("Fill Color", Color) = (1, 0, 0, 0.5) // Color for the filled area
-        _ClampValue ("Clamp Value", Range(0.1, 1)) = 0.85 // Maximum value for axis values
+        _ClampValue ("Clamp Value", Range(0.1, 1)) = 0.87 // Maximum value for axis values
         _Axis1 ("Axis 1", Range(0, 1)) = 0.5
         _Axis2 ("Axis 2", Range(0, 1)) = 0.5
         _Axis3 ("Axis 3", Range(0, 1)) = 0.5

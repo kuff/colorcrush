@@ -11,7 +11,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Animator = Colorcrush.Animation.Animator;
 
 #endregion
 
@@ -123,7 +122,7 @@ namespace Colorcrush.Game
         [Tooltip("Number of shakes per second in the shake animation.")] [SerializeField]
         private float shakeVibrato = 15f;
 
-        private Animator[] _animators;
+        private CustomAnimator[] _animators;
         private float _circleSize;
         private bool _isLoading;
         private Vector3 _originalScale;
@@ -140,7 +139,7 @@ namespace Colorcrush.Game
             }
 
             SetVersionText();
-            _animators = FindObjectsOfType<Animator>();
+            _animators = FindObjectsOfType<CustomAnimator>();
             StartCoroutine(PlayTwitchAnimationPeriodically());
             StartCoroutine(AddSmileyToTitle());
             StartCoroutine(PlaySoundAfterDelay());
@@ -152,7 +151,7 @@ namespace Colorcrush.Game
                 InstantiateTargetImage();
                 if (_targetImage != null)
                 {
-                    _ = _targetImage.gameObject.GetComponent<Animator>() ?? _targetImage.gameObject.AddComponent<Animator>();
+                    _ = _targetImage.gameObject.GetComponent<CustomAnimator>() ?? _targetImage.gameObject.AddComponent<CustomAnimator>();
                     _originalScale = _targetImage.transform.localScale;
                     _shuffleDuration = Mathf.Max(0, totalAnimationDuration - scaleDuration);
                     StartCoroutine(ShuffleAndScaleCoroutine());
@@ -215,7 +214,7 @@ namespace Colorcrush.Game
             while (true)
             {
                 yield return new WaitForSeconds(shakeInterval);
-                var animatorsList = new List<Animator>(_animators);
+                var animatorsList = new List<CustomAnimator>(_animators);
                 AnimationManager.PlayAnimation(animatorsList, new ShakeAnimation(shakeDuration, shakeStrength, shakeVibrato));
             }
         }

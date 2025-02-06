@@ -23,9 +23,9 @@ namespace Colorcrush.Animation
             _frequency = frequency;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
-            var originalRotation = animator.GetOriginalRotation();
+            var originalRotation = customAnimator.GetOriginalRotation();
             var time = progress * _duration;
 
             // Calculate the rotation offset using a sine wave
@@ -33,11 +33,11 @@ namespace Colorcrush.Animation
 
             // Apply the rotation offset
             var newRotation = originalRotation * Quaternion.Euler(0, 0, rotationOffset);
-            animator.SetRotation(newRotation, this);
+            customAnimator.SetRotation(newRotation, this);
 
             // Gradually reduce the twitching intensity as the animation progresses
             var fadeOutFactor = 1 - progress * progress; // Quadratic ease-out
-            animator.SetRotation(Quaternion.Slerp(originalRotation, newRotation, fadeOutFactor), this);
+            customAnimator.SetRotation(Quaternion.Slerp(originalRotation, newRotation, fadeOutFactor), this);
         }
     }
 }

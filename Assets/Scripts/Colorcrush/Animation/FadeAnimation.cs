@@ -27,11 +27,11 @@ namespace Colorcrush.Animation
             Duration = duration;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
             var easedProgress = EaseInOutCubic(progress);
             var currentOpacity = Mathf.Lerp(_startOpacity, _endOpacity, easedProgress);
-            animator.SetOpacity(currentOpacity, this);
+            customAnimator.SetOpacity(currentOpacity, this);
         }
 
         private float EaseInOutCubic(float t)

@@ -10,7 +10,7 @@ using UnityEngine.UI;
 
 namespace Colorcrush.Animation
 {
-    public class EmojiAnimator : Animator
+    public class EmojiCustomAnimator : CustomAnimator
     {
         [SerializeField] private Image image;
         [SerializeField] private Material material;
@@ -22,14 +22,14 @@ namespace Colorcrush.Animation
             image = GetComponent<Image>();
             if (image == null)
             {
-                Debug.LogError("EmojiAnimator requires an Image component.");
+                Debug.LogError("EmojiCustomAnimator requires an Image component.");
                 return;
             }
 
             material = image.material;
             if (material == null)
             {
-                Debug.LogError("EmojiAnimator requires a material on the Image component.");
+                Debug.LogError("EmojiCustomAnimator requires a material on the Image component.");
             }
         }
 
