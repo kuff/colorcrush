@@ -30,9 +30,6 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The main ScrollRect component that handles the scrolling functionality of the view.")]
         private ScrollRect scrollView;
 
-        [SerializeField] [Range(0.1f, 0.9f)] [Tooltip("The size ratio of the scrollbar handle relative to the scroll view's content size. Value ranges from 0.1 (small) to 0.9 (large).")]
-        private float scrollbarSizeRatio = 0.5f;
-
         [SerializeField] [Range(1, 10)] [Tooltip("The number of visible columns in the scroll view. This determines how many columns of items are displayed at once.")]
         private int visibleColumns = 4;
 
@@ -147,13 +144,35 @@ namespace Colorcrush.Game
         private Coroutine _smoothScrollCoroutine;
         private int _tapCount;
         private HashSet<string> _uniqueCompletedColors;
+        private List<Button> _instantiatedButtons = new List<Button>();
 
         private void Awake()
         {
+            // Try to find components if not assigned
+            if (buttonGrid == null)
+            {
+                buttonGrid = GameObject.FindGameObjectWithTag("SelectionGrid")?.GetComponent<GridLayoutGroup>();
+                if (buttonGrid == null)
+                {
+                    Debug.LogError("Could not find ButtonGrid. Make sure there is a GameObject with tag 'SelectionGrid' and a GridLayoutGroup component.");
+                    return;
+                }
+            }
+
+            if (scrollView == null)
+            {
+                scrollView = GetComponentInChildren<ScrollRect>();
+                if (scrollView == null)
+                {
+                    Debug.LogError("Could not find ScrollRect component. Make sure there is a ScrollRect component in the scene.");
+                    return;
+                }
+            }
+
             _uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
-            ScrollToButtonIndex(0);
+            SetupButtons(); // Call SetupButtons first since ScrollToButtonIndex depends on instantiated buttons
             InitializeScrollBarEffect();
-            SetupButtons();
+            ScrollToButtonIndex(0);
             UpdateSubmitButton();
             InitializeColorAnalysis();
 
@@ -467,15 +486,21 @@ namespace Colorcrush.Game
 
         private void ScrollToButtonIndex(int index)
         {
+            // Early return if components are missing
             if (scrollView == null || buttonGrid == null)
             {
-                Debug.LogError("ScrollView or ButtonGrid not assigned.");
+                return; // Already logged error in Awake
+            }
+
+            // Early return if no buttons are instantiated yet
+            if (_instantiatedButtons == null || _instantiatedButtons.Count == 0)
+            {
                 return;
             }
 
-            if (index < 0 || index >= buttonGrid.transform.childCount)
+            if (index < 0 || index >= _instantiatedButtons.Count)
             {
-                Debug.LogError($"Invalid button index: {index}");
+                Debug.LogWarning($"Invalid button index: {index}. Must be between 0 and {_instantiatedButtons.Count - 1}");
                 return;
             }
 
@@ -483,31 +508,38 @@ namespace Colorcrush.Game
             var cellSize = buttonGrid.cellSize.x;
             var cellSpacing = buttonGrid.spacing.x;
 
-            var totalCells = buttonGrid.transform.childCount;
+            var totalCells = _instantiatedButtons.Count;
             var totalColumns = Mathf.CeilToInt((float)totalCells / cellsPerRow);
 
             var viewportWidth = scrollView.viewport.rect.width;
             var contentWidth = totalColumns * (cellSize + cellSpacing) - cellSpacing;
+            var maxScrollableWidth = Mathf.Max(0, contentWidth - viewportWidth);
             var visibleWidth = visibleColumns * (cellSize + cellSpacing) - cellSpacing;
 
             var clickedColumn = index / cellsPerRow;
-            var currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * (contentWidth - viewportWidth) / (cellSize + cellSpacing));
+            var currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * maxScrollableWidth / (cellSize + cellSpacing));
+
+            // Calculate how many columns can be fully visible at once
+            var maxVisibleColumns = Mathf.FloorToInt(viewportWidth / (cellSize + cellSpacing));
 
             int targetColumn;
             if (clickedColumn == currentLeftmostColumn) // Clicked leftmost visible column
             {
                 targetColumn = Mathf.Max(0, currentLeftmostColumn - 2);
             }
-            else if (clickedColumn == currentLeftmostColumn + visibleColumns - 1) // Clicked rightmost visible column
+            else if (clickedColumn == currentLeftmostColumn + maxVisibleColumns - 1) // Clicked rightmost visible column
             {
-                targetColumn = Mathf.Min(totalColumns - visibleColumns, currentLeftmostColumn + 2);
+                targetColumn = Mathf.Min(totalColumns - maxVisibleColumns, currentLeftmostColumn + 2);
             }
             else // Clicked a middle column or outside visible area
             {
-                targetColumn = Mathf.Clamp(clickedColumn - 1, 0, totalColumns - visibleColumns);
+                targetColumn = Mathf.Clamp(clickedColumn - 1, 0, totalColumns - maxVisibleColumns);
             }
 
-            var normalizedPosition = targetColumn * (cellSize + cellSpacing) / (contentWidth - visibleWidth);
+            // Calculate normalized position based on target column
+            var normalizedPosition = maxScrollableWidth > 0 ? 
+                (targetColumn * (cellSize + cellSpacing)) / maxScrollableWidth : 
+                0;
             normalizedPosition = Mathf.Clamp01(normalizedPosition);
 
             StartCoroutine(SmoothScrollTo(normalizedPosition));
@@ -569,16 +601,39 @@ namespace Colorcrush.Game
             _scrollbarRectTransform = scrollbarImage.rectTransform;
             _originalWidth = _scrollbarRectTransform.rect.width;
 
+            // Calculate the number of columns
+            var gridLayoutGroup = buttonGrid.GetComponent<GridLayoutGroup>();
+            if (gridLayoutGroup != null)
+            {
+                var totalButtons = TargetColors.Length;
+                var buttonsPerColumn = gridLayoutGroup.constraintCount;
+                var totalColumns = Mathf.CeilToInt((float)totalButtons / buttonsPerColumn);
+
+                // Calculate the ratio of visible columns to total columns
+                // We know 4 columns are visible at once
+                var visibleRatio = Mathf.Clamp01(4f / totalColumns);
+
+                // If all content is visible, hide the scrollbar
+                if (visibleRatio >= 1f)
+                {
+                    scrollbarImage.gameObject.SetActive(false);
+                    return;
+                }
+
+                // Otherwise, show the scrollbar and set its width
+                scrollbarImage.gameObject.SetActive(true);
+                _adjustedWidth = _originalWidth * visibleRatio;
+                _scrollbarRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _adjustedWidth);
+            }
+
             // Calculate the scrollable width
             _scrollableWidth = scrollView.content.rect.width - scrollView.viewport.rect.width;
             if (_scrollableWidth <= 0)
             {
                 // Content fits within the viewport, no need for scrolling
+                scrollbarImage.gameObject.SetActive(false);
                 return;
             }
-
-            _adjustedWidth = _originalWidth * scrollbarSizeRatio;
-            _scrollbarRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _adjustedWidth);
 
             // Add listener for scroll value changes
             scrollView.onValueChanged.AddListener(OnScrollValueChanged);
@@ -623,87 +678,157 @@ namespace Colorcrush.Game
                 return;
             }
 
-            var buttons = buttonGrid.GetComponentsInChildren<Button>();
+            // Clear ALL existing buttons from the grid, including editor placeholders
+            while (buttonGrid.transform.childCount > 0)
+            {
+                DestroyImmediate(buttonGrid.transform.GetChild(0).gameObject);
+            }
+
+            // Clear our tracked buttons list
+            _instantiatedButtons.Clear();
+
+            // Load the ColorPickButton prefab
+            var buttonPrefab = Resources.Load<GameObject>("Colorcrush/Prefabs/ColorPickButton");
+            if (buttonPrefab == null)
+            {
+                Debug.LogError("ColorPickButton prefab not found in Resources folder.");
+                return;
+            }
+
+            // Load the ColorTransposeShader material
+            var shaderMaterial = Resources.Load<Material>("Colorcrush/Shaders/ColorTransposeMaterial");
+            if (shaderMaterial == null)
+            {
+                Debug.LogError("ColorTransposeMaterial not found in Resources folder. Make sure it exists at Resources/Colorcrush/Shaders/ColorTransposeMaterial");
+                return;
+            }
+
+            // Get the data we need
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
             var mostRecentCompletedColor = ProgressManager.MostRecentCompletedTargetColor;
             var nextColorIndex = Enumerable.Range(0, TargetColors.Length).First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(TargetColors[i])));
 
-            for (var i = 0; i < buttons.Length; i++)
+            // Create buttons for each target color
+            for (var i = 0; i < TargetColors.Length; i++)
             {
-                var buttonImage = buttons[i].GetComponent<Image>();
-                if (buttonImage == null || buttonImage.material == null)
+                var buttonInstance = Instantiate(buttonPrefab, buttonGrid.transform);
+                var button = buttonInstance.GetComponent<Button>();
+                var buttonImage = buttonInstance.GetComponent<Image>();
+                _instantiatedButtons.Add(button);
+
+                if (buttonImage == null)
                 {
-                    Debug.LogError($"Button {i} is missing Image component or material.");
+                    Debug.LogError($"Button {i} is missing Image component.");
                     continue;
                 }
 
+                // Create a new instance of the material for each button
+                buttonImage.material = new Material(shaderMaterial);
+
                 var targetColor = TargetColors[i];
-                var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+                var colorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+                var isCompleted = completedColors.Contains(colorHex);
+                var isNextColor = i == nextColorIndex;
+                var shouldBeEnabled = ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || isCompleted || isNextColor;
 
-                // Check if all levels should be unlocked
-                if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || _uniqueCompletedColors.Contains(targetColorHex) || i == nextColorIndex)
+                // Set button properties
+                ShaderManager.SetColor(buttonInstance, "_TargetColor", targetColor);
+                ShaderManager.SetColor(buttonInstance, "_OriginalColor", targetColor);
+                
+                // Set button interactability and appearance
+                button.interactable = shouldBeEnabled;
+                ShaderManager.SetFloat(buttonInstance, "_Alpha", shouldBeEnabled ? 1f : 0.2f);
+                ShaderManager.SetFloat(buttonInstance, "_FillScale", 1f); // Set initial fill scale
+
+                // Set button scale
+                buttonInstance.transform.localScale = Vector3.one * (shouldBeEnabled ? 1f : selectedButtonScale);
+
+                // Set the emoji based on completion status
+                if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
-                    // Enable button and set color
-                    buttons[i].interactable = true;
-                    ShaderManager.SetColor(buttonImage.gameObject, "_TargetColor", targetColor);
-                    ShaderManager.SetColor(buttonImage.gameObject, "_OriginalColor", targetColor);
-                    ShaderManager.SetFloat(buttonImage.gameObject, "_Alpha", 1f);
-                    var index = i;
-                    buttons[i].onClick.AddListener(() => OnButtonClicked(index));
-
-                    // Set the emoji based on completion status and unlockAllLevelsFromStart setting
-                    if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
+                    buttonImage.sprite = EmojiManager.GetDefaultHappyEmoji();
+                }
+                else if (isCompleted)
+                {
+                    var colorIndex = completedColors.IndexOf(colorHex);
+                    if (colorIndex < rewardedEmojis.Count)
                     {
-                        buttonImage.sprite = EmojiManager.GetDefaultHappyEmoji();
-                    }
-                    else if (_uniqueCompletedColors.Contains(targetColorHex))
-                    {
-                        var colorIndex = completedColors.IndexOf(targetColorHex);
-                        if (colorIndex < rewardedEmojis.Count)
-                        {
-                            buttonImage.sprite = EmojiManager.GetEmojiByName(rewardedEmojis[colorIndex]);
-                        }
-                        else
-                        {
-                            buttonImage.sprite = EmojiManager.GetDefaultEmoji();
-                            Debug.LogError($"No rewarded emoji found for color index {colorIndex}. Using default emoji.");
-                        }
+                        buttonImage.sprite = EmojiManager.GetEmojiByName(rewardedEmojis[colorIndex]);
                     }
                     else
                     {
                         buttonImage.sprite = EmojiManager.GetDefaultEmoji();
-                    }
-
-                    buttons[i].transform.localScale = Vector3.one;
-
-                    // Set up animation for the next level button if not unlocking all levels
-                    if (!ProjectConfig.InstanceConfig.unlockAllLevelsFromStart && i == nextColorIndex)
-                    {
-                        StartCoroutine(AnimateNextLevelButton(buttons[i], i));
+                        Debug.LogError($"No rewarded emoji found for color index {colorIndex}. Using default emoji.");
                     }
                 }
                 else
                 {
-                    // Disable button and set to black with 20% transparency
-                    buttons[i].interactable = false;
-                    ShaderManager.SetColor(buttonImage.gameObject, "_TargetColor", Color.black);
-                    ShaderManager.SetColor(buttonImage.gameObject, "_OriginalColor", Color.black);
-                    ShaderManager.SetFloat(buttonImage.gameObject, "_Alpha", 0.2f);
-                    buttons[i].transform.localScale = Vector3.one * selectedButtonScale;
+                    buttonImage.sprite = EmojiManager.GetDefaultEmoji();
+                }
+
+                // Add click handler
+                var index = i; // Capture the index for the lambda
+                button.onClick.AddListener(() => OnButtonClicked(index));
+
+                // Set up animation for the next level button if not unlocking all levels
+                if (!ProjectConfig.InstanceConfig.unlockAllLevelsFromStart && isNextColor)
+                {
+                    StartCoroutine(AnimateNextLevelButton(button, index));
                 }
             }
 
+            // Initialize submit button
             if (submitButton != null)
             {
                 submitButton.onClick.AddListener(OnSubmitButtonClicked);
+            }
+
+            // Configure scroll view
+            if (scrollView != null)
+            {
+                // Enable horizontal scrolling, disable vertical
+                scrollView.horizontal = true;
+                scrollView.vertical = false;
+
+                // Calculate the content width based on the number of buttons
+                var contentRectTransform = buttonGrid.GetComponent<RectTransform>();
+                if (contentRectTransform != null)
+                {
+                    // Force the grid layout to calculate sizes
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(contentRectTransform);
+                    
+                    // Make sure the content can be scrolled
+                    var gridLayoutGroup = buttonGrid.GetComponent<GridLayoutGroup>();
+                    if (gridLayoutGroup != null)
+                    {
+                        // Set child alignment to middle center
+                        gridLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+
+                        // Calculate rows and columns
+                        var totalButtons = TargetColors.Length;
+                        var buttonsPerColumn = gridLayoutGroup.constraintCount;
+                        var totalColumns = Mathf.CeilToInt((float)totalButtons / buttonsPerColumn);
+                        
+                        // Calculate the exact width needed
+                        var contentWidth = totalColumns * (gridLayoutGroup.cellSize.x + gridLayoutGroup.spacing.x) - gridLayoutGroup.spacing.x;
+                        
+                        // Set the content width to exactly fit all buttons
+                        contentRectTransform.sizeDelta = new Vector2(contentWidth, contentRectTransform.sizeDelta.y);
+                        
+                        // Set proper anchors to prevent stretching
+                        contentRectTransform.anchorMin = new Vector2(0, 0);
+                        contentRectTransform.anchorMax = new Vector2(0, 1);
+                        contentRectTransform.pivot = new Vector2(0, 0.5f);
+                    }
+                }
             }
 
             // Select the most recently played level at startup
             if (!string.IsNullOrEmpty(mostRecentCompletedColor))
             {
                 var mostRecentIndex = Array.FindIndex(TargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
-                if (mostRecentIndex != -1 && mostRecentIndex < buttons.Length)
+                if (mostRecentIndex != -1)
                 {
                     OnButtonClicked(mostRecentIndex);
                 }
@@ -759,11 +884,11 @@ namespace Colorcrush.Game
             }
 
             // Scale back all buttons except the newly selected one
-            for (var i = 0; i < buttonGrid.transform.childCount; i++)
+            for (var i = 0; i < _instantiatedButtons.Count; i++)
             {
                 if (i != index)
                 {
-                    var buttonTransform = buttonGrid.transform.GetChild(i);
+                    var buttonTransform = _instantiatedButtons[i].transform;
                     ScaleButton(buttonTransform, 1f);
                 }
             }
@@ -774,9 +899,9 @@ namespace Colorcrush.Game
             _currentTargetColor = TargetColors[_selectedLevelIndex];
 
             // Scale down the newly selected button
-            if (index < buttonGrid.transform.childCount)
+            if (index < _instantiatedButtons.Count)
             {
-                var buttonTransform = buttonGrid.transform.GetChild(index);
+                var buttonTransform = _instantiatedButtons[index].transform;
                 var animator = buttonTransform.GetComponent<CustomAnimator>();
                 if (animator != null)
                 {

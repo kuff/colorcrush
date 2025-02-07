@@ -1,7 +1,16 @@
-@ 2024 Peter Guld Leth, MIT Licensed.
+@ 2025 Peter Guld Leth, MIT Licensed.
 # Colorcrush
 
-Colorcrush is a Unity mobile game where players must match colors to collect emoticons while learning about their ability to see colors! The game systems, including animation engine, audio engine, logging engine, and shader code, as well as Unity Editor functionality to aid development, were developed entirely from scratch. As a result, the project only relies on TextMesh Pro for text rendering and is entirely open source with a permissive license to redistribute. Have fun!
+Colorcrush is a Unity mobile game that challenges players to match colors and collect emoticons, all while exploring their color perception abilities. The game is built on a custom-developed framework that includes:
+
+- Animation Engine: A robust system supporting various animation types such as bump, fade, scale, and shake, with smooth transitions and conflict-free property management.
+- Audio Engine: Custom audio management for immersive sound effects and music.
+- Logging Engine: Comprehensive logging for debugging and performance tracking.
+- Shader Code: Custom shaders for dynamic visual effects, including transparency and fill scale adjustments.
+- Unity Editor Extensions: Tailored tools to streamline development and enhance productivity.
+
+Colorcrush is designed to be lightweight and efficient, relying solely on TextMesh Pro for text rendering. The game is entirely open source, distributed under a permissive license, encouraging community contributions and redistribution.
+
 
 ## Art Attributions
 
