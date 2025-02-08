@@ -733,8 +733,8 @@ namespace Colorcrush.Game
                 var shouldBeEnabled = ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || isCompleted || isNextColor;
 
                 // Set button properties
-                ShaderManager.SetColor(buttonInstance, "_TargetColor", targetColor);
-                ShaderManager.SetColor(buttonInstance, "_OriginalColor", targetColor);
+                ShaderManager.SetColor(buttonInstance, "_TargetColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
+                ShaderManager.SetColor(buttonInstance, "_OriginalColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
                 
                 // Set button interactability and appearance
                 button.interactable = shouldBeEnabled;
