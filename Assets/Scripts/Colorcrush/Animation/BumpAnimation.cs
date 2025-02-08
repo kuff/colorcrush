@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Peter Guld Leth
+﻿// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -21,9 +21,9 @@ namespace Colorcrush.Animation
             _duration = duration;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
-            var originalScale = animator.GetOriginalScale();
+            var originalScale = customAnimator.GetOriginalScale();
             var targetScale = originalScale * _targetScaleFactor;
 
             // Calculate eased progress
@@ -33,12 +33,12 @@ namespace Colorcrush.Animation
             if (progress < _duration / 2)
             {
                 // Shrink phase
-                animator.SetScale(Vector3.Lerp(originalScale, targetScale, easedProgress * 2), this);
+                customAnimator.SetScale(Vector3.Lerp(originalScale, targetScale, easedProgress * 2), this);
             }
             else
             {
                 // Expand phase
-                animator.SetScale(Vector3.Lerp(targetScale, originalScale, (easedProgress - 0.5f) * 2), this);
+                customAnimator.SetScale(Vector3.Lerp(targetScale, originalScale, (easedProgress - 0.5f) * 2), this);
             }
         }
 

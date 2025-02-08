@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -19,11 +19,11 @@ namespace Colorcrush.Animation
             IsTemporary = false;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
-            var startScale = animator.GetScale();
+            var startScale = customAnimator.GetScale();
             var easedProgress = EaseInOutQuad(progress);
-            animator.SetScale(Vector3.Lerp(startScale, _targetScale, easedProgress), this);
+            customAnimator.SetScale(Vector3.Lerp(startScale, _targetScale, easedProgress), this);
         }
 
         private float EaseInOutQuad(float t)

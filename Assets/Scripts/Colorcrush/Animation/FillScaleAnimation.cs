@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -19,12 +19,12 @@ namespace Colorcrush.Animation
             IsTemporary = false;
         }
 
-        public override void Play(Animator animator, float progress)
+        public override void Play(CustomAnimator customAnimator, float progress)
         {
-            var emojiAnimator = animator as EmojiAnimator;
+            var emojiAnimator = customAnimator as EmojiCustomAnimator;
             if (emojiAnimator == null)
             {
-                Debug.LogError("FillScaleAnimation requires an EmojiAnimator.");
+                Debug.LogError("FillScaleAnimation requires an EmojiCustomAnimator.");
                 return;
             }
 

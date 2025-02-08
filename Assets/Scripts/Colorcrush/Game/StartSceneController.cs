@@ -1,4 +1,4 @@
-﻿// Copyright (C) 2024 Peter Guld Leth
+﻿// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -11,7 +11,6 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Animator = Colorcrush.Animation.Animator;
 
 #endregion
 
@@ -19,7 +18,8 @@ namespace Colorcrush.Game
 {
     public class StartSceneController : MonoBehaviour
     {
-        [Header("General")] [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
+        [Header("General")]
+        [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
         private TextMeshProUGUI titleText;
 
         [Tooltip("TextMeshProUGUI component for displaying the current version of the game.")] [SerializeField]
@@ -43,7 +43,8 @@ namespace Colorcrush.Game
         [Tooltip("Time in seconds between each shake animation of the title.")] [SerializeField]
         private float shakeInterval = 10f;
 
-        [Header("Emoji Shuffle Effect")] [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
+        [Header("Emoji Shuffle Effect")]
+        [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
         private bool enableEmojiShuffle = true;
 
         [Tooltip("Total duration in seconds of the emoji shuffling animation.")] [SerializeField]
@@ -67,22 +68,24 @@ namespace Colorcrush.Game
         [Tooltip("Final scale of the emoji after the shuffling animation completes.")] [SerializeField]
         private float targetScale = 0.5f;
 
-        [Tooltip("Color to apply to the shuffled emojis.")] [SerializeField]
-        private Color emojiColor = new(0.82f, 0.47f, 0.46f); // D27975 in RGB
-
-        [Tooltip("Color of the background behind the shuffling emojis.")] [SerializeField]
-        private Color backgroundColor = Color.white;
-
         [Tooltip("Image component for the background of the start screen.")] [SerializeField]
         private Image backgroundImage;
 
-        [Header("Reveal Behind Effect")] [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
+        [Header("Reveal Behind Effect")]
+        [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
         private Material circleMaterial;
 
         [Tooltip("Speed at which the reveal circle expands behind the emoji.")] [SerializeField]
         private float expandSpeed = 1.0f;
 
-        [Header("Sound Effects")] [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
+        [Tooltip("Image component for the foreground of the start screen.")] [SerializeField]
+        private Image foregroundImage;
+
+        [Header("Sound Effects")]
+        [Tooltip("Enable or disable sound effects for the smiley animation.")] [SerializeField]
+        private bool enableSmileySound;
+
+        [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
         private string smileySound = "MENU_Pick";
 
         [Tooltip("Pitch adjustment for the colon sound in the smiley face (higher values = higher pitch).")] [SerializeField]
@@ -109,7 +112,8 @@ namespace Colorcrush.Game
         [Tooltip("Volume adjustment for the emoji bump sound.")] [SerializeField]
         private float emojiBumpGain = 1f;
 
-        [Header("Shake Animation")] [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
+        [Header("Shake Animation")]
+        [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
         private float shakeDuration = 0.75f;
 
         [Tooltip("Intensity of the shake animation (higher values = more intense shaking).")] [SerializeField]
@@ -118,7 +122,7 @@ namespace Colorcrush.Game
         [Tooltip("Number of shakes per second in the shake animation.")] [SerializeField]
         private float shakeVibrato = 15f;
 
-        private Animator[] _animators;
+        private CustomAnimator[] _animators;
         private float _circleSize;
         private bool _isLoading;
         private Vector3 _originalScale;
@@ -135,35 +139,27 @@ namespace Colorcrush.Game
             }
 
             SetVersionText();
-            _animators = FindObjectsOfType<Animator>();
+            _animators = FindObjectsOfType<CustomAnimator>();
             StartCoroutine(PlayTwitchAnimationPeriodically());
             StartCoroutine(AddSmileyToTitle());
             StartCoroutine(PlaySoundAfterDelay());
+
+            SetRandomColors();
 
             if (enableEmojiShuffle)
             {
                 InstantiateTargetImage();
                 if (_targetImage != null)
                 {
-                    _ = _targetImage.gameObject.GetComponent<Animator>() ?? _targetImage.gameObject.AddComponent<Animator>();
+                    _ = _targetImage.gameObject.GetComponent<CustomAnimator>() ?? _targetImage.gameObject.AddComponent<CustomAnimator>();
                     _originalScale = _targetImage.transform.localScale;
                     _shuffleDuration = Mathf.Max(0, totalAnimationDuration - scaleDuration);
                     StartCoroutine(ShuffleAndScaleCoroutine());
-                    ShaderManager.SetColor(_targetImage.material, "_TargetColor", emojiColor);
                 }
                 else
                 {
                     Debug.LogError("Failed to instantiate target image for ShuffleEmojisEffect.");
                 }
-            }
-
-            if (backgroundImage != null)
-            {
-                backgroundImage.color = backgroundColor;
-            }
-            else
-            {
-                Debug.LogWarning("Background Image component not assigned in the inspector.");
             }
 
             _startTime = Time.time;
@@ -175,7 +171,7 @@ namespace Colorcrush.Game
             if (elapsedTime >= (enableEmojiShuffle ? 3.0f : 0f))
             {
                 _circleSize += Time.deltaTime * expandSpeed;
-                ShaderManager.SetFloat(circleMaterial, "_CircleSize", _circleSize);
+                ShaderManager.SetFloat(foregroundImage.gameObject, "_CircleSize", _circleSize);
             }
 
             UpdateColorspaceInfo();
@@ -189,7 +185,13 @@ namespace Colorcrush.Game
 
         private void UpdateColorspaceInfo()
         {
-            var info = $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
+            var info = $"Device Model: {SystemInfo.deviceModel}\n";
+            info += $"Operating System: {SystemInfo.operatingSystem}\n";
+            /*info += $"System Memory: {SystemInfo.systemMemorySize}MB\n";
+            info += $"Graphics Device: {SystemInfo.graphicsDeviceName}\n";
+            info += $"Graphics Memory: {SystemInfo.graphicsMemorySize}MB\n\n";*/
+
+            info += $"Desired Color Space: {QualitySettings.desiredColorSpace}\n";
             info += $"Actual Color Space: {QualitySettings.activeColorSpace}\n";
             info += $"Quality Level: {QualitySettings.GetQualityLevel()}\n";
             info += $"HDR Enabled: {QualitySettings.vSyncCount > 0}\n";
@@ -212,7 +214,7 @@ namespace Colorcrush.Game
             while (true)
             {
                 yield return new WaitForSeconds(shakeInterval);
-                var animatorsList = new List<Animator>(_animators);
+                var animatorsList = new List<CustomAnimator>(_animators);
                 AnimationManager.PlayAnimation(animatorsList, new ShakeAnimation(shakeDuration, shakeStrength, shakeVibrato));
             }
         }
@@ -223,12 +225,18 @@ namespace Colorcrush.Game
 
             var originalText = titleText.text;
             titleText.text = originalText + ":";
-            AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
+            if (enableSmileySound)
+            {
+                AudioManager.PlaySound(smileySound, pitchShift: smileyColonPitchShift);
+            }
 
             yield return new WaitForSeconds(delayBetweenCharacters);
 
             titleText.text = originalText + ":)";
-            AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
+            if (enableSmileySound)
+            {
+                AudioManager.PlaySound(smileySound, pitchShift: smileyParenthesisPitchShift);
+            }
         }
 
         private IEnumerator PlaySoundAfterDelay()
@@ -257,13 +265,13 @@ namespace Colorcrush.Game
                 else
                 {
                     Debug.LogWarning($"Failed to parse most recent color: {ProgressManager.MostRecentCompletedTargetColor}. Using first color from ColorArray.");
-                    targetColor = ColorArray.SRGBTargetColors[0];
+                    targetColor = ColorManager.TargetColors[0];
                 }
             }
             else
             {
                 // Use the first color from ColorArray
-                targetColor = ColorArray.SRGBTargetColors[0];
+                targetColor = ColorManager.TargetColors[0];
                 Debug.Log("No completed colors found. Using first color from ColorArray.");
             }
 
@@ -271,19 +279,7 @@ namespace Colorcrush.Game
             PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
             PlayerPrefs.Save();
 
-            if (ProgressManager.CompletedTargetColors.Count > 0)
-            {
-                SceneManager.LoadSceneAsync(recurringStartupScene, OnSceneReady);
-            }
-            else
-            {
-                SceneManager.LoadSceneAsync(freshStartupScene, OnSceneReady);
-            }
-        }
-
-        private void OnSceneReady()
-        {
-            SceneManager.ActivateLoadedScene();
+            SceneManager.LoadSceneAsync(ProgressManager.CompletedTargetColors.Count > 0 ? recurringStartupScene : freshStartupScene, SceneManager.ActivateLoadedScene);
         }
 
         private void InstantiateTargetImage()
@@ -388,6 +384,40 @@ namespace Colorcrush.Game
             }
 
             _targetImage.transform.localScale = startScale;
+        }
+
+        private void SetRandomColors()
+        {
+            // Select one of the first three colors from ColorArray
+            var randomIndex = Random.Range(0, 4);
+            var selectedColor = ColorManager.TargetColors[randomIndex];
+
+            // Set the background color
+            if (backgroundImage != null)
+            {
+                backgroundImage.color = selectedColor;
+            }
+
+            // Set the emoji color
+            if (_targetImage != null)
+            {
+                ShaderManager.SetColor(_targetImage.gameObject, "_TargetColor", selectedColor);
+            }
+
+            // Set the text color to a contrasting color
+            var contrastColor = GetContrastColor(selectedColor);
+            titleText.color = contrastColor;
+            versionText.color = contrastColor;
+            debugColorspaceInfoText.color = contrastColor;
+        }
+
+        private static Color GetContrastColor(Color color)
+        {
+            // Calculate the luminance of the color
+            var luminance = 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
+
+            // Return black or white based on the luminance
+            return luminance > 0.5f ? Color.black : Color.white;
         }
     }
 }

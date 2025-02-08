@@ -1,10 +1,11 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 #endregion
 
@@ -17,7 +18,7 @@ namespace Colorcrush.Util
         private AsyncOperation _asyncOperation;
         private string _previousSceneName;
 
-        public static SceneManager Instance
+        private static SceneManager Instance
         {
             get
             {
@@ -49,6 +50,8 @@ namespace Colorcrush.Util
                 DontDestroyOnLoad(gameObject);
             }
         }
+
+        public static event Action<Scene, LoadSceneMode> sceneLoaded;
 
         public static void LoadSceneAsync(string sceneName)
         {
@@ -148,6 +151,7 @@ namespace Colorcrush.Util
             }
 
             IsLoading = false;
+            sceneLoaded?.Invoke(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), LoadSceneMode.Single);
         }
 
         public static string GetPreviousSceneName()

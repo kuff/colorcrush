@@ -1,8 +1,10 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
 using System;
+using System.Linq;
+using Colorcrush.Game;
 using UnityEngine;
 
 #endregion
@@ -196,6 +198,46 @@ namespace Colorcrush.Logging
         public string GetStringifiedData()
         {
             return StartTime.ToString("o"); // ISO 8601 format
+        }
+    }
+
+    public class FinalColorsEvent : ILogEvent
+    {
+        public FinalColorsEvent(ColorManager.ColorMatrixResult result)
+        {
+            Result = result;
+        }
+
+        public ColorManager.ColorMatrixResult Result { get; }
+        public string EventName => "finalcolors";
+
+        public string GetStringifiedData()
+        {
+            // Print both encodings and colors
+
+            // Cast the result.finalColors.Vector255 to a Color (Unity) object and then to a string
+            var colors = string.Join(" ", Result.FinalColors.Select(color => ColorUtility.ToHtmlStringRGB(color.ToDisplayColor())));
+
+            // Encodings
+            var encodings = string.Join(" ", Result.AxisEncodings.Select(encoding => encoding.ToString("F3").Replace(",", ";")));
+
+            return $"{colors} {encodings}";
+        }
+    }
+
+    public class SkinColorModeEvent : ILogEvent
+    {
+        public SkinColorModeEvent(bool isEnabled)
+        {
+            IsEnabled = isEnabled;
+        }
+
+        public bool IsEnabled { get; }
+        public string EventName => "skincolormode";
+
+        public string GetStringifiedData()
+        {
+            return IsEnabled.ToString().ToLower();
         }
     }
 }

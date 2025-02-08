@@ -1,9 +1,12 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 #endregion
 
@@ -12,10 +15,9 @@ namespace Colorcrush.Util
     public class ShaderManager : MonoBehaviour
     {
         private static ShaderManager _instance;
+        private readonly Dictionary<GameObject, Material> _materialCopies = new();
 
-        private readonly Dictionary<Material, Dictionary<string, object>> _originalValues = new();
-
-        public static ShaderManager Instance
+        private static ShaderManager Instance
         {
             get
             {
@@ -40,67 +42,123 @@ namespace Colorcrush.Util
             {
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
+                SceneManager.sceneLoaded += OnSceneLoaded;
             }
+        }
+
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void OnApplicationQuit()
         {
-            ResetValues();
+            CleanupMaterialCopies();
         }
 
-        public static void SetColor(Material material, string propertyName, Color color)
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            Instance.SaveOriginalValue(material, propertyName, material.GetColor(propertyName));
-            material.SetColor(propertyName, color);
+            Debug.Log("ShaderManager: Number of material copies before cleanup: " + _materialCopies.Count);
+            CleanupMaterialCopies();
         }
 
-        public static void SetFloat(Material material, string propertyName, float value)
+        private Material GetOrCreateMaterialCopy(GameObject targetObject)
         {
-            Instance.SaveOriginalValue(material, propertyName, material.GetFloat(propertyName));
-            material.SetFloat(propertyName, value);
-        }
-
-        private void SaveOriginalValue(Material material, string propertyName, object value)
-        {
-            if (!_originalValues.ContainsKey(material))
+            if (targetObject == null)
             {
-                _originalValues[material] = new Dictionary<string, object>();
+                throw new ArgumentNullException(nameof(targetObject));
             }
 
-            if (!_originalValues[material].ContainsKey(propertyName))
+            if (_materialCopies.TryGetValue(targetObject, out var existingCopy))
             {
-                _originalValues[material][propertyName] = value;
-                Debug.Log($"ShaderManager: Saved original value of {value} for {propertyName} on {material.name}");
+                return existingCopy;
             }
+
+            var image = targetObject.GetComponent<Image>();
+            var originalMaterial = image != null
+                ? image.material
+                : targetObject.GetComponent<Renderer>()?.sharedMaterial;
+
+            if (originalMaterial == null)
+            {
+                throw new InvalidOperationException($"ShaderManager: No material found on GameObject {targetObject.name}");
+            }
+
+            return _materialCopies[targetObject] = new Material(originalMaterial);
         }
 
-        public static void ResetValues()
+        public static void SetColor(GameObject targetObject, string propertyName, Color color)
         {
-            if (!ProjectConfig.InstanceConfig.resetShadersOnShutdown)
+            if (targetObject == null)
             {
+                throw new ArgumentNullException(nameof(targetObject));
+            }
+
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
+            var materialCopy = Instance.GetOrCreateMaterialCopy(targetObject);
+            try
+            {
+                materialCopy.SetColor(propertyName, color);
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException($"Failed to set color property '{propertyName}' on material", e);
+            }
+
+            UpdateObjectMaterial(targetObject, materialCopy);
+        }
+
+        public static void SetFloat(GameObject targetObject, string propertyName, float value)
+        {
+            if (targetObject == null)
+            {
+                throw new ArgumentNullException(nameof(targetObject));
+            }
+
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
+            var materialCopy = Instance.GetOrCreateMaterialCopy(targetObject);
+            try
+            {
+                materialCopy.SetFloat(propertyName, value);
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException($"Failed to set float property '{propertyName}' on material", e);
+            }
+
+            UpdateObjectMaterial(targetObject, materialCopy);
+        }
+
+        private static void UpdateObjectMaterial(GameObject targetObject, Material material)
+        {
+            var image = targetObject.GetComponent<Image>();
+            if (image != null)
+            {
+                image.material = material;
                 return;
             }
 
-            var resetCount = 0;
-            foreach (var (material, value) in Instance._originalValues)
+            var renderer = targetObject.GetComponent<Renderer>();
+            if (renderer != null)
             {
-                foreach (var propertyEntry in value)
-                {
-                    if (propertyEntry.Value is Color color)
-                    {
-                        material.SetColor(propertyEntry.Key, color);
-                        resetCount++;
-                    }
-                    else if (propertyEntry.Value is float entryValue)
-                    {
-                        material.SetFloat(propertyEntry.Key, entryValue);
-                        resetCount++;
-                    }
-                }
+                renderer.material = material;
+                return;
             }
 
-            Instance._originalValues.Clear();
-            Debug.Log($"ShaderManager: Reset {resetCount} shader properties to their original values.");
+            throw new InvalidOperationException($"ShaderManager: No Image or Renderer component found on GameObject {targetObject.name}");
+        }
+
+        private void CleanupMaterialCopies()
+        {
+            _materialCopies.Clear();
         }
     }
 }

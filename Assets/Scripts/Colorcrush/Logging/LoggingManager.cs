@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -37,7 +37,7 @@ namespace Colorcrush.Logging
         private StreamWriter _logWriter;
         private DateTime _startTime;
 
-        public static LoggingManager Instance
+        private static LoggingManager Instance
         {
             get
             {
@@ -247,26 +247,6 @@ namespace Colorcrush.Logging
             }
         }
 
-        public void DeleteLogFile(string filePath)
-        {
-            try
-            {
-                if (File.Exists(filePath))
-                {
-                    File.Delete(filePath);
-                    Debug.Log($"LoggingManager: Log file deleted: {filePath}");
-                }
-                else
-                {
-                    Debug.LogWarning($"LoggingManager: Log file not found: {filePath}");
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"LoggingManager: Error deleting log file: {e.Message}");
-            }
-        }
-
         public static void DeleteAllLogFiles()
         {
             try
@@ -301,13 +281,11 @@ namespace Colorcrush.Logging
             {
                 if (File.Exists(Instance._currentLogFilePath))
                 {
-                    using (var fileStream = new FileStream(Instance._currentLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (var reader = new StreamReader(fileStream, ProjectConfig.InstanceConfig.logFileEncoding, false, ProjectConfig.InstanceConfig.logFileBufferSize))
+                    using var fileStream = new FileStream(Instance._currentLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                    using var reader = new StreamReader(fileStream, ProjectConfig.InstanceConfig.logFileEncoding, false, ProjectConfig.InstanceConfig.logFileBufferSize);
+                    while (reader.ReadLine() is { } line)
                     {
-                        while (reader.ReadLine() is { } line)
-                        {
-                            logLines.Add(line);
-                        }
+                        logLines.Add(line);
                     }
                 }
 

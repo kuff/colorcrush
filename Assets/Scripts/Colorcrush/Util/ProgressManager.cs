@@ -1,9 +1,11 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using Colorcrush.Game;
 using Colorcrush.Logging;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -16,10 +18,10 @@ namespace Colorcrush.Util
     {
         private static ProgressManager _instance;
         private static readonly Queue<ILogEvent> LogEventQueue = new();
-
         private static readonly List<string> _completedTargetColors = new();
         private static readonly List<string> _rewardedEmojis = new();
         private static readonly List<List<string>> _selectedColors = new();
+        private static readonly List<ColorManager.ColorMatrixResult> _finalColors = new();
         private static string _mostRecentCompletedTargetColor;
         private static bool _currentLevelCompleted = true;
         private static string _currentTargetColor;
@@ -56,6 +58,16 @@ namespace Colorcrush.Util
             }
         }
 
+        public static List<ColorManager.ColorMatrixResult> FinalColors
+        {
+            get
+            {
+                EnsureInstance();
+                ProcessLogEventQueue();
+                return _finalColors;
+            }
+        }
+
         public static string MostRecentCompletedTargetColor
         {
             get
@@ -63,16 +75,6 @@ namespace Colorcrush.Util
                 EnsureInstance();
                 ProcessLogEventQueue();
                 return _mostRecentCompletedTargetColor;
-            }
-            private set => _mostRecentCompletedTargetColor = value;
-        }
-
-        public static ProgressManager Instance
-        {
-            get
-            {
-                EnsureInstance();
-                return _instance;
             }
         }
 
@@ -125,6 +127,7 @@ namespace Colorcrush.Util
             _completedTargetColors.Clear();
             _rewardedEmojis.Clear();
             _selectedColors.Clear();
+            _finalColors.Clear();
             _currentLevelCompleted = true;
             _currentTargetColor = null;
             _generatedColors.Clear();
@@ -147,6 +150,22 @@ namespace Colorcrush.Util
             EnsureInstance();
             LoggingManager.StartNewLogFile();
             RefreshProgressionState();
+        }
+
+        public static void ResetAllProgress()
+        {
+            EnsureInstance();
+            LoggingManager.StartNewLogFile();
+            _completedTargetColors.Clear();
+            _rewardedEmojis.Clear();
+            _selectedColors.Clear();
+            _finalColors.Clear();
+            _currentLevelCompleted = true;
+            _currentTargetColor = null;
+            _generatedColors.Clear();
+            _currentLevelSelectedColors.Clear();
+            _mostRecentCompletedTargetColor = null;
+            Debug.Log("ProgressManager: All progress has been reset");
         }
 
         private static void ProcessLogLines(List<string> logLines)
@@ -181,12 +200,40 @@ namespace Colorcrush.Util
             switch (eventName)
             {
                 case "gamelevelbegun":
-                    if (_currentLevelCompleted)
+                    _currentTargetColor = eventData;
+                    _currentLevelCompleted = false;
+                    _currentLevelSelectedColors.Clear();
+                    _generatedColors.Clear();
+                    break;
+                case "finalcolors":
+                    if (_currentTargetColor != null)
                     {
-                        _currentTargetColor = eventData;
-                        _currentLevelCompleted = false;
-                        _currentLevelSelectedColors.Clear();
-                        _generatedColors.Clear();
+                        var chunks = eventData.Split(' ');
+
+                        // Parse the first 8 chunks as hex colors
+                        var colors = new List<ColorManager.ColorObject>();
+                        for (var i = 0; i < 8; i++)
+                        {
+                            ColorUtility.TryParseHtmlString("#" + chunks[i], out var color);
+                            colors.Add(new ColorManager.ColorObject(color));
+                        }
+
+                        // Parse the remaining chunks as Vector3 encodings
+                        var encodings = new List<Vector3>();
+                        for (var i = 0; i < 8; i++)
+                        {
+                            var vectorStr = chunks[8 + i * 3] + chunks[9 + i * 3] + chunks[10 + i * 3];
+                            var components = vectorStr.Trim('(', ')').Split(';');
+
+                            var x = float.Parse(components[0], CultureInfo.InvariantCulture);
+                            var y = float.Parse(components[1], CultureInfo.InvariantCulture);
+                            var z = float.Parse(components[2], CultureInfo.InvariantCulture);
+
+                            encodings.Add(new Vector3(x, y, z));
+                        }
+
+                        var result = new ColorManager.ColorMatrixResult(encodings, colors);
+                        _finalColors.Add(result);
                     }
 
                     break;
@@ -195,12 +242,13 @@ namespace Colorcrush.Util
                     {
                         _completedTargetColors.Add(_currentTargetColor);
                         _mostRecentCompletedTargetColor = _currentTargetColor;
-                        _currentLevelCompleted = true;
-                        _currentTargetColor = null;
                         if (_currentLevelSelectedColors.Count > 0)
                         {
                             _selectedColors.Add(new List<string>(_currentLevelSelectedColors));
                         }
+
+                        _currentLevelCompleted = true;
+                        _currentTargetColor = null;
                     }
 
                     break;

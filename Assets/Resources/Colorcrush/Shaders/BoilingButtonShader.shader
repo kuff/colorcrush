@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 Shader "Colorcrush/BoilingButtonShader"
 {
@@ -11,10 +11,13 @@ Shader "Colorcrush/BoilingButtonShader"
         _DropSize ("Drop Size", Float) = 0.25
         _Alpha ("Alpha", Range(0, 1)) = 1.0
     }
-    
+
     SubShader
     {
-        Tags { "Queue"="Overlay" "IgnoreProjector"="True" "RenderType"="Transparent" }
+        Tags
+        {
+            "Queue"="Overlay" "IgnoreProjector"="True" "RenderType"="Transparent"
+        }
         LOD 100
         Blend SrcAlpha OneMinusSrcAlpha
 
@@ -56,37 +59,18 @@ Shader "Colorcrush/BoilingButtonShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                float2 uv = i.uv;
-
-                if (_EffectToggle < 0.5)
-                {
-                    return fixed4(_BackgroundColor.rgb, _BackgroundColor.a * _Alpha);
-                }
-
-                // Calculate the time-based factor for the ripple effect
-                half time = _Time.y * _Speed;
-
-                // Calculate the distance from the center
-                half dist = distance(uv, half2(0.5, 0.5));
-
-                // Create ripple effect
-                half ripple = sin(dist * 12.0 - time * 4.0) * 0.1;
-
-                // Modulate the size of the ripple
-                half dropEffect = smoothstep(_DropSize + ripple, _DropSize, dist);
-
-                // Interpolate between the accent color and the background color
-                fixed4 color = lerp(_AccentColor, _BackgroundColor, dropEffect);
-
-                // Apply the alpha value
-                color.a *= _Alpha;
-
-                // Return the final color based on the effect
-                return color;
+                half dist = length(i.uv - 0.5);
+                half ripplePattern = sin(dist * 12.0 - _Time.y * _Speed * 4.0) * 0.1;
+                half dropMask = smoothstep(_DropSize + ripplePattern, _DropSize, dist);
+                fixed4 finalColor = _EffectToggle < 1
+                                        ? _BackgroundColor
+                                        : lerp(_AccentColor, _BackgroundColor, dropMask);
+                finalColor.a *= _Alpha;
+                return finalColor;
             }
             ENDCG
         }
     }
-    
+
     FallBack "Unlit/Transparent"
 }

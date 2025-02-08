@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -23,7 +23,7 @@ namespace Colorcrush.Util
         private AudioSource[] _audioSources;
         private int _currentAudioSourceIndex;
 
-        public static AudioManager Instance
+        private static AudioManager Instance
         {
             get
             {
@@ -107,7 +107,7 @@ namespace Colorcrush.Util
             clip.GetData(samples, 0);
 
             var rms = Mathf.Sqrt(samples.Select(s => s * s).Average());
-            var volumeAdjustment = rms > 0 ? ProjectConfig.InstanceConfig.targetRMS / rms : 1f;
+            var volumeAdjustment = rms > 0 ? ProjectConfig.InstanceConfig.targetRms / rms : 1f;
 
             var mixerGainFactor = Mathf.Pow(10, ProjectConfig.InstanceConfig.mixerGainDB / 20f);
             volumeAdjustment /= mixerGainFactor;

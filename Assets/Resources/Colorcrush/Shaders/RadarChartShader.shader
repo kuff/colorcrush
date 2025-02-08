@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 Shader "Colorcrush/RadarChartShader"
 {
@@ -11,6 +11,7 @@ Shader "Colorcrush/RadarChartShader"
         _BackgroundColor ("Background Color", Color) = (0.5, 0.5, 0.5, 1) // Color for non-transparent pixels
         _LineColor ("Line Color", Color) = (0.3, 0.3, 0.3, 1) // Color for chart lines
         _FillColor ("Fill Color", Color) = (1, 0, 0, 0.5) // Color for the filled area
+        _ClampValue ("Clamp Value", Range(0.1, 1)) = 0.87 // Maximum value for axis values
         _Axis1 ("Axis 1", Range(0, 1)) = 0.5
         _Axis2 ("Axis 2", Range(0, 1)) = 0.5
         _Axis3 ("Axis 3", Range(0, 1)) = 0.5
@@ -19,6 +20,8 @@ Shader "Colorcrush/RadarChartShader"
         _Axis6 ("Axis 6", Range(0, 1)) = 0.5
         _Axis7 ("Axis 7", Range(0, 1)) = 0.5
         _Axis8 ("Axis 8", Range(0, 1)) = 0.5
+        _PulseEffect ("Pulse Effect", Range(0, 1)) = 0 // Toggle for pulse effect
+        _PulseSpeed ("Pulse Speed", Range(0.1, 5.0)) = 1.0 // Speed of the pulse effect
     }
     SubShader
     {
@@ -45,7 +48,10 @@ Shader "Colorcrush/RadarChartShader"
             float4 _BackgroundColor;
             float4 _LineColor;
             float4 _FillColor;
+            float _ClampValue;
             float _Axis1, _Axis2, _Axis3, _Axis4, _Axis5, _Axis6, _Axis7, _Axis8;
+            float _PulseEffect;
+            float _PulseSpeed;
 
             struct appdata
             {
@@ -88,14 +94,14 @@ Shader "Colorcrush/RadarChartShader"
             {
                 float angle = axisIndex * (2.0 * PI / AXIS_COUNT);
                 float radius;
-                if (axisIndex == 0) radius = _Axis1;
-                else if (axisIndex == 1) radius = _Axis2;
-                else if (axisIndex == 2) radius = _Axis3;
-                else if (axisIndex == 3) radius = _Axis4;
-                else if (axisIndex == 4) radius = _Axis5;
-                else if (axisIndex == 5) radius = _Axis6;
-                else if (axisIndex == 6) radius = _Axis7;
-                else radius = _Axis8;
+                if (axisIndex == 0) radius = min(_ClampValue, _Axis1);
+                else if (axisIndex == 1) radius = min(_ClampValue, _Axis2);
+                else if (axisIndex == 2) radius = min(_ClampValue, _Axis3);
+                else if (axisIndex == 3) radius = min(_ClampValue, _Axis4);
+                else if (axisIndex == 4) radius = min(_ClampValue, _Axis5);
+                else if (axisIndex == 5) radius = min(_ClampValue, _Axis6);
+                else if (axisIndex == 6) radius = min(_ClampValue, _Axis7);
+                else radius = min(_ClampValue, _Axis8);
                 return float2(cos(angle), sin(angle)) * radius;
             }
 
@@ -176,6 +182,21 @@ Shader "Colorcrush/RadarChartShader"
 
                 // Apply the alpha value
                 finalColor.a *= texColor.a * _Alpha;
+
+                // Apply pulse effect if enabled
+                if (_PulseEffect > 0.0)
+                {
+                    float pulse = frac(_Time.y * _PulseSpeed); // Pulse value between 0 and 1
+                    float pulseRadius = pulse; // Adjust the pulse radius as needed
+                    float pulseDist = length(uv);
+                    float pulseWidth = 0.05; // Width of the pulse ring
+                    float fadeOut = smoothstep(0.8, 1.0, pulseDist); // Fade out as it approaches the edge
+
+                    if (abs(pulseDist - pulseRadius) < pulseWidth)
+                    {
+                        finalColor.rgb = lerp(finalColor.rgb, _LineColor.rgb, 1.0 - fadeOut);
+                    }
+                }
 
                 return finalColor;
             }

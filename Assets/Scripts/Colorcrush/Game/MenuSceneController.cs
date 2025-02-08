@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -10,7 +10,7 @@ using Colorcrush.Animation;
 using Colorcrush.Util;
 using UnityEngine;
 using UnityEngine.UI;
-using Animator = Colorcrush.Animation.Animator;
+using static Colorcrush.Game.ColorManager;
 
 #endregion
 
@@ -18,7 +18,10 @@ namespace Colorcrush.Game
 {
     public class MenuSceneController : MonoBehaviour
     {
-        [Header("Scroll View Settings")] [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
+        private const float DoubleTapTime = 0.3f;
+
+        [Header("Scroll View Settings")]
+        [SerializeField] [Tooltip("The ScrollRect component that will be reset to the beginning position when the scene loads.")]
         private ScrollRect scrollViewToReset;
 
         [SerializeField] [Tooltip("The Image component representing the scrollbar of the scroll view.")]
@@ -26,9 +29,6 @@ namespace Colorcrush.Game
 
         [SerializeField] [Tooltip("The main ScrollRect component that handles the scrolling functionality of the view.")]
         private ScrollRect scrollView;
-
-        [SerializeField] [Range(0.1f, 0.9f)] [Tooltip("The size ratio of the scrollbar handle relative to the scroll view's content size. Value ranges from 0.1 (small) to 0.9 (large).")]
-        private float scrollbarSizeRatio = 0.5f;
 
         [SerializeField] [Range(1, 10)] [Tooltip("The number of visible columns in the scroll view. This determines how many columns of items are displayed at once.")]
         private int visibleColumns = 4;
@@ -39,11 +39,15 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The easing function to use for smooth scrolling. This curve defines the acceleration and deceleration of the scroll animation, providing a more natural movement.")]
         private AnimationCurve scrollEasingCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-        [Header("Button Grid Settings")] [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
+        [Header("Button Grid Settings")]
+        [SerializeField] [Tooltip("The GridLayoutGroup component that contains and arranges the buttons in a grid layout.")]
         private GridLayoutGroup buttonGrid;
 
         [SerializeField] [Tooltip("The button that submits the player's selection.")]
         private Button submitButton;
+
+        [SerializeField] [Tooltip("The button that resets all progress.")]
+        private Button resetProgressButton;
 
         [SerializeField] [Tooltip("The color of the submit button when a new level is selected.")]
         private Color newLevelColor = Color.green;
@@ -54,7 +58,8 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("The color of the submit button when a completed level is selected.")]
         private Color completedLevelColor = Color.red;
 
-        [Header("Color Analysis Settings")] [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
+        [Header("Color Analysis Settings")]
+        [SerializeField] [Tooltip("Toggle to enable or disable the color view inspector.")]
         private bool enableColorViewInspector = true;
 
         [SerializeField] [Tooltip("The Image component that uses the RadarChartShader material for displaying color analysis.")]
@@ -81,7 +86,11 @@ namespace Colorcrush.Game
         [SerializeField] [Tooltip("Maximum pitch shift value. How much the pitch of the tick sound is shifted up when dragging quickly.")]
         private float MaxPitchShift = 1.5f;
 
-        [Header("Button Animation Settings")] [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
+        [SerializeField] [Tooltip("The drag signifier object.")]
+        private GameObject dragSignifier;
+
+        [Header("Button Animation Settings")]
+        [SerializeField] [Tooltip("The scale factor applied to a button when it is selected. A value less than 1 will shrink the button.")]
         private float selectedButtonScale = 0.8f;
 
         [SerializeField] [Tooltip("The duration of the shake animation applied to buttons.")]
@@ -121,24 +130,49 @@ namespace Colorcrush.Game
         private float[] _currentAnalysisValues;
         private Color _currentFillColor = Color.clear;
         private Color _currentTargetColor;
+        private float _distanceSinceLastTick;
+        private bool _hasColorAnalysisBeenClicked;
         private bool _isDraggingColorAnalysisImage;
+        private Vector2 _lastDragPosition;
+        private float _lastTapTime;
+        private float _lastTickTime;
         private float _originalWidth;
         private float _scrollableWidth;
         private RectTransform _scrollbarRectTransform;
         private int _selectedLevelIndex = -1;
         private Coroutine _shakeCoroutine;
         private Coroutine _smoothScrollCoroutine;
+        private int _tapCount;
         private HashSet<string> _uniqueCompletedColors;
-        private Vector2 _lastDragPosition;
-        private float _distanceSinceLastTick;
-        private float _lastTickTime;
+        private List<Button> _instantiatedButtons = new List<Button>();
 
         private void Awake()
         {
+            // Try to find components if not assigned
+            if (buttonGrid == null)
+            {
+                buttonGrid = GameObject.FindGameObjectWithTag("SelectionGrid")?.GetComponent<GridLayoutGroup>();
+                if (buttonGrid == null)
+                {
+                    Debug.LogError("Could not find ButtonGrid. Make sure there is a GameObject with tag 'SelectionGrid' and a GridLayoutGroup component.");
+                    return;
+                }
+            }
+
+            if (scrollView == null)
+            {
+                scrollView = GetComponentInChildren<ScrollRect>();
+                if (scrollView == null)
+                {
+                    Debug.LogError("Could not find ScrollRect component. Make sure there is a ScrollRect component in the scene.");
+                    return;
+                }
+            }
+
             _uniqueCompletedColors = new HashSet<string>(ProgressManager.CompletedTargetColors);
-            ScrollToButtonIndex(0);
+            SetupButtons(); // Call SetupButtons first since ScrollToButtonIndex depends on instantiated buttons
             InitializeScrollBarEffect();
-            SetupButtons();
+            ScrollToButtonIndex(0);
             UpdateSubmitButton();
             InitializeColorAnalysis();
 
@@ -148,13 +182,77 @@ namespace Colorcrush.Game
                 // Assuming the image is circular, the radius is half the width or height
                 _colorAnalysisRadius = colorAnalysisImage.rectTransform.rect.width / 2;
             }
+
+            if (SceneManager.GetPreviousSceneName() != "StartScene")
+            {
+                SetDragSignifierActive(true);
+            }
+            else
+            {
+                SetDragSignifierActive(false);
+            }
+
+            UpdateColorAnalysis();
+        }
+
+        private void Start()
+        {
+            if (ProjectConfig.InstanceConfig.enableResetButton)
+            {
+                resetProgressButton.gameObject.SetActive(true);
+                resetProgressButton.onClick.RemoveAllListeners(); // Clear any existing listeners first
+                resetProgressButton.onClick.AddListener(OnResetProgressButtonClicked);
+            }
+            else
+            {
+                resetProgressButton.gameObject.SetActive(false);
+            }
         }
 
         private void Update()
         {
+            // Handle color view inspector
             if (enableColorViewInspector)
             {
                 HandleColorViewInspector();
+            }
+
+            // Handle triple tap to toggle useSkinColorMode
+            if (Input.GetMouseButtonDown(0) && ProjectConfig.InstanceConfig.enableTripleTapToggleSkinColorMode)
+            {
+                if (Time.time - _lastTapTime < DoubleTapTime)
+                {
+                    _tapCount++;
+                }
+                else
+                {
+                    _tapCount = 1;
+                }
+
+                _lastTapTime = Time.time;
+
+                if (_tapCount == 3)
+                {
+                    _tapCount = 0;
+                    ProjectConfig.InstanceConfig.useSkinColorMode = !ProjectConfig.InstanceConfig.useSkinColorMode;
+
+                    AudioManager.PlaySound("MENU B_Select");
+
+                    // Update the shader on all buttons to reflect the change in useSkinColorMode
+                    var buttons = FindObjectsOfType<Button>();
+                    foreach (var button in buttons)
+                    {
+                        var image = button.GetComponent<Image>();
+                        if (image != null)
+                        {
+                            var material = image.material;
+                            if (material != null && material.shader.name == "Colorcrush/ColorTransposeShader")
+                            {
+                                ShaderManager.SetFloat(button.gameObject, "_SkinColorMode", ProjectConfig.InstanceConfig.useSkinColorMode ? 1.0f : 0.0f);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -176,6 +274,16 @@ namespace Colorcrush.Game
             }
         }
 
+        private void OnResetProgressButtonClicked()
+        {
+            ProgressManager.ResetAllProgress();
+            _uniqueCompletedColors.Clear();
+            _selectedLevelIndex = -1;
+            OnButtonClicked(0);
+            UpdateSubmitButton();
+            AudioManager.PlaySound("MENU B_Select");
+        }
+
         private void HandleColorViewInspector()
         {
             if (colorAnalysisImage == null || colorViewPrefab == null || uiCanvas == null)
@@ -186,22 +294,30 @@ namespace Colorcrush.Game
             if (Input.GetMouseButtonDown(0))
             {
                 // Check if the selected button is the most recent one (yet to be completed)
-                if (_selectedLevelIndex == _uniqueCompletedColors.Count)
+                if (_selectedLevelIndex == _uniqueCompletedColors.Count && !ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
                     var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
-                    var submitButtonAnimator = submitButton.GetComponent<Animator>();
+                    var submitButtonAnimator = submitButton.GetComponent<CustomAnimator>();
                     if (submitButtonAnimator != null)
                     {
                         AnimationManager.PlayAnimation(submitButtonAnimator, bumpAnimation);
                     }
                     else
                     {
-                        Debug.LogWarning("Submit button is missing Animator component.");
+                        Debug.LogWarning("Submit button is missing CustomAnimator component.");
                     }
+
                     return;
                 }
-                else if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
+
+                if (RectTransformUtility.RectangleContainsScreenPoint(colorAnalysisImage.rectTransform, Input.mousePosition, uiCanvas.worldCamera))
                 {
+                    if (!ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor)))
+                    {
+                        AudioManager.PlaySound("MENU B_Back");
+                        return;
+                    }
+
                     _isDraggingColorAnalysisImage = true;
                     colorAnalysisImage.rectTransform.anchoredPosition = _colorAnalysisOriginalPosition + new Vector2(0, -800);
 
@@ -217,6 +333,12 @@ namespace Colorcrush.Game
                     _lastDragPosition = Input.mousePosition;
                     _distanceSinceLastTick = 0f;
                     _lastTickTime = Time.time;
+
+                    if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) == ProgressManager.MostRecentCompletedTargetColor)
+                    {
+                        _hasColorAnalysisBeenClicked = true;
+                        SetDragSignifierActive(false);
+                    }
                 }
             }
 
@@ -239,11 +361,10 @@ namespace Colorcrush.Game
 
             if (_isDraggingColorAnalysisImage && _colorViewInstance != null)
             {
-                Vector2 localPoint;
-                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out localPoint))
+                if (RectTransformUtility.ScreenPointToLocalPointInRectangle(uiCanvas.transform as RectTransform, Input.mousePosition, uiCanvas.worldCamera, out var localPoint))
                 {
                     // Calculate the vector from the original center of the analysis image to the mouse position
-                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, Screen.height / 2);
+                    var dragCenter = _colorAnalysisOriginalPosition + new Vector2(0, 1389);
                     var dragVector = localPoint - dragCenter;
 
                     // Clamp the magnitude of the drag vector to the radius of the analysis image
@@ -266,14 +387,14 @@ namespace Colorcrush.Game
                     _distanceSinceLastTick += distanceMoved;
 
                     // Check if the distance threshold is met and the minimum interval has passed
-                    if (_distanceSinceLastTick >= TickDistanceThreshold && (Time.time - _lastTickTime) >= MinTickInterval)
+                    if (_distanceSinceLastTick >= TickDistanceThreshold && Time.time - _lastTickTime >= MinTickInterval)
                     {
                         // Calculate pitch shift based on speed (logarithmic scaling)
                         var speed = distanceMoved / Time.deltaTime;
                         var pitchShift = Mathf.Lerp(1.0f, MaxPitchShift, Mathf.Log10(speed + 1) / Mathf.Log10(1000 + 1));
 
                         // Play tick sound with pitch shift
-                        AudioManager.PlaySound("click_2", gain: 0.5f, pitchShift: pitchShift);
+                        AudioManager.PlaySound("click_2", 0.5f, pitchShift);
 
                         // Reset distance and update last tick time
                         _distanceSinceLastTick = 0f;
@@ -288,7 +409,24 @@ namespace Colorcrush.Game
 
         private void UpdateCircle1Color(Vector2 dragVector)
         {
-            var edges = ColorManager.GetColorMatrixEdges(_currentTargetColor);
+            // Get the index from completed colors list that matches current target color
+            var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
+            var completedColorIndex = ProgressManager.CompletedTargetColors.IndexOf(targetColorHex);
+            var finalColorsResult = ProgressManager.FinalColors[completedColorIndex];
+
+            // Use the knowledge of the center color and the 8 result colors, as well as the magnitude of the vector, to determine the color at the edges of each axis
+            var edges = new Color[8];
+
+            for (var i = 0; i < 8; i++)
+            {
+                var axisEncoding = finalColorsResult.AxisEncodings[i];
+                var axisColor = finalColorsResult.FinalColors[i].ToDisplayColor();
+
+                var magnitude = axisEncoding.magnitude;
+
+                edges[i] = Color.Lerp(_currentTargetColor, axisColor, 1 / magnitude);
+            }
+
             var angle = Mathf.Atan2(dragVector.y, dragVector.x);
             if (angle < 0)
             {
@@ -311,8 +449,8 @@ namespace Colorcrush.Game
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
             {
-                var material = compareView.GetComponent<Image>().material;
-                ShaderManager.SetColor(material, "_Circle1Color", finalColor);
+                var go = compareView.GetComponent<Image>();
+                ShaderManager.SetColor(go.gameObject, "_Circle1Color", finalColor);
             }
         }
 
@@ -323,8 +461,8 @@ namespace Colorcrush.Game
             var compareView = _colorViewInstance.transform.Find("CompareView");
             if (compareView != null)
             {
-                var material = compareView.GetComponent<Image>().material;
-                ShaderManager.SetColor(material, "_Circle2Color", finalColor);
+                var go = compareView.GetComponent<Image>();
+                ShaderManager.SetColor(go.gameObject, "_Circle2Color", finalColor);
             }
         }
 
@@ -334,22 +472,35 @@ namespace Colorcrush.Game
             {
                 if (child.gameObject != colorAnalysisImage.gameObject && child.gameObject != _colorViewInstance)
                 {
-                    child.gameObject.SetActive(isActive);
+                    if (!isActive)
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else if (child.gameObject != resetProgressButton.gameObject || ProjectConfig.InstanceConfig.enableResetButton)
+                    {
+                        child.gameObject.SetActive(true);
+                    }
                 }
             }
         }
 
         private void ScrollToButtonIndex(int index)
         {
+            // Early return if components are missing
             if (scrollView == null || buttonGrid == null)
             {
-                Debug.LogError("ScrollView or ButtonGrid not assigned.");
+                return; // Already logged error in Awake
+            }
+
+            // Early return if no buttons are instantiated yet
+            if (_instantiatedButtons == null || _instantiatedButtons.Count == 0)
+            {
                 return;
             }
 
-            if (index < 0 || index >= buttonGrid.transform.childCount)
+            if (index < 0 || index >= _instantiatedButtons.Count)
             {
-                Debug.LogError($"Invalid button index: {index}");
+                Debug.LogWarning($"Invalid button index: {index}. Must be between 0 and {_instantiatedButtons.Count - 1}");
                 return;
             }
 
@@ -357,31 +508,38 @@ namespace Colorcrush.Game
             var cellSize = buttonGrid.cellSize.x;
             var cellSpacing = buttonGrid.spacing.x;
 
-            var totalCells = buttonGrid.transform.childCount;
+            var totalCells = _instantiatedButtons.Count;
             var totalColumns = Mathf.CeilToInt((float)totalCells / cellsPerRow);
 
             var viewportWidth = scrollView.viewport.rect.width;
             var contentWidth = totalColumns * (cellSize + cellSpacing) - cellSpacing;
+            var maxScrollableWidth = Mathf.Max(0, contentWidth - viewportWidth);
             var visibleWidth = visibleColumns * (cellSize + cellSpacing) - cellSpacing;
 
             var clickedColumn = index / cellsPerRow;
-            var currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * (contentWidth - viewportWidth) / (cellSize + cellSpacing));
+            var currentLeftmostColumn = Mathf.FloorToInt(scrollView.horizontalNormalizedPosition * maxScrollableWidth / (cellSize + cellSpacing));
+
+            // Calculate how many columns can be fully visible at once
+            var maxVisibleColumns = Mathf.FloorToInt(viewportWidth / (cellSize + cellSpacing));
 
             int targetColumn;
             if (clickedColumn == currentLeftmostColumn) // Clicked leftmost visible column
             {
                 targetColumn = Mathf.Max(0, currentLeftmostColumn - 2);
             }
-            else if (clickedColumn == currentLeftmostColumn + visibleColumns - 1) // Clicked rightmost visible column
+            else if (clickedColumn == currentLeftmostColumn + maxVisibleColumns - 1) // Clicked rightmost visible column
             {
-                targetColumn = Mathf.Min(totalColumns - visibleColumns, currentLeftmostColumn + 2);
+                targetColumn = Mathf.Min(totalColumns - maxVisibleColumns, currentLeftmostColumn + 2);
             }
             else // Clicked a middle column or outside visible area
             {
-                targetColumn = Mathf.Clamp(clickedColumn - 1, 0, totalColumns - visibleColumns);
+                targetColumn = Mathf.Clamp(clickedColumn - 1, 0, totalColumns - maxVisibleColumns);
             }
 
-            var normalizedPosition = targetColumn * (cellSize + cellSpacing) / (contentWidth - visibleWidth);
+            // Calculate normalized position based on target column
+            var normalizedPosition = maxScrollableWidth > 0 ? 
+                (targetColumn * (cellSize + cellSpacing)) / maxScrollableWidth : 
+                0;
             normalizedPosition = Mathf.Clamp01(normalizedPosition);
 
             StartCoroutine(SmoothScrollTo(normalizedPosition));
@@ -443,16 +601,39 @@ namespace Colorcrush.Game
             _scrollbarRectTransform = scrollbarImage.rectTransform;
             _originalWidth = _scrollbarRectTransform.rect.width;
 
+            // Calculate the number of columns
+            var gridLayoutGroup = buttonGrid.GetComponent<GridLayoutGroup>();
+            if (gridLayoutGroup != null)
+            {
+                var totalButtons = TargetColors.Length;
+                var buttonsPerColumn = gridLayoutGroup.constraintCount;
+                var totalColumns = Mathf.CeilToInt((float)totalButtons / buttonsPerColumn);
+
+                // Calculate the ratio of visible columns to total columns
+                // We know 4 columns are visible at once
+                var visibleRatio = Mathf.Clamp01(4f / totalColumns);
+
+                // If all content is visible, hide the scrollbar
+                if (visibleRatio >= 1f)
+                {
+                    scrollbarImage.gameObject.SetActive(false);
+                    return;
+                }
+
+                // Otherwise, show the scrollbar and set its width
+                scrollbarImage.gameObject.SetActive(true);
+                _adjustedWidth = _originalWidth * visibleRatio;
+                _scrollbarRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _adjustedWidth);
+            }
+
             // Calculate the scrollable width
             _scrollableWidth = scrollView.content.rect.width - scrollView.viewport.rect.width;
             if (_scrollableWidth <= 0)
             {
                 // Content fits within the viewport, no need for scrolling
+                scrollbarImage.gameObject.SetActive(false);
                 return;
             }
-
-            _adjustedWidth = _originalWidth * scrollbarSizeRatio;
-            _scrollbarRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, _adjustedWidth);
 
             // Add listener for scroll value changes
             scrollView.onValueChanged.AddListener(OnScrollValueChanged);
@@ -497,92 +678,174 @@ namespace Colorcrush.Game
                 return;
             }
 
-            var buttons = buttonGrid.GetComponentsInChildren<Button>();
+            // Clear ALL existing buttons from the grid, including editor placeholders
+            while (buttonGrid.transform.childCount > 0)
+            {
+                DestroyImmediate(buttonGrid.transform.GetChild(0).gameObject);
+            }
+
+            // Clear our tracked buttons list
+            _instantiatedButtons.Clear();
+
+            // Load the ColorPickButton prefab
+            var buttonPrefab = Resources.Load<GameObject>("Colorcrush/Prefabs/ColorPickButton");
+            if (buttonPrefab == null)
+            {
+                Debug.LogError("ColorPickButton prefab not found in Resources folder.");
+                return;
+            }
+
+            // Load the ColorTransposeShader material
+            var shaderMaterial = Resources.Load<Material>("Colorcrush/Shaders/ColorTransposeMaterial");
+            if (shaderMaterial == null)
+            {
+                Debug.LogError("ColorTransposeMaterial not found in Resources folder. Make sure it exists at Resources/Colorcrush/Shaders/ColorTransposeMaterial");
+                return;
+            }
+
+            // Get the data we need
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
             var mostRecentCompletedColor = ProgressManager.MostRecentCompletedTargetColor;
-            var nextColorIndex = _uniqueCompletedColors.Count;
+            var nextColorIndex = Enumerable.Range(0, TargetColors.Length).First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(TargetColors[i])));
 
-            for (var i = 0; i < buttons.Length; i++)
+            // Create buttons for each target color
+            for (var i = 0; i < TargetColors.Length; i++)
             {
-                var buttonImage = buttons[i].GetComponent<Image>();
-                if (buttonImage == null || buttonImage.material == null)
+                var buttonInstance = Instantiate(buttonPrefab, buttonGrid.transform);
+                var button = buttonInstance.GetComponent<Button>();
+                var buttonImage = buttonInstance.GetComponent<Image>();
+                _instantiatedButtons.Add(button);
+
+                if (buttonImage == null)
                 {
-                    Debug.LogError($"Button {i} is missing Image component or material.");
+                    Debug.LogError($"Button {i} is missing Image component.");
                     continue;
                 }
 
-                var targetColor = ColorArray.SRGBTargetColors[i];
-                var targetColorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+                // Create a new instance of the material for each button
+                buttonImage.material = new Material(shaderMaterial);
 
-                if (i <= nextColorIndex)
+                var targetColor = TargetColors[i];
+                var colorHex = ColorUtility.ToHtmlStringRGB(targetColor);
+                var isCompleted = completedColors.Contains(colorHex);
+                var isNextColor = i == nextColorIndex;
+                var shouldBeEnabled = ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || isCompleted || isNextColor;
+
+                // Set button properties
+                ShaderManager.SetColor(buttonInstance, "_TargetColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
+                ShaderManager.SetColor(buttonInstance, "_OriginalColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
+                
+                // Set button interactability and appearance
+                button.interactable = shouldBeEnabled;
+                ShaderManager.SetFloat(buttonInstance, "_Alpha", shouldBeEnabled ? 1f : 0.2f);
+                ShaderManager.SetFloat(buttonInstance, "_FillScale", 1f); // Set initial fill scale
+
+                // Set button scale
+                buttonInstance.transform.localScale = Vector3.one * (shouldBeEnabled ? 1f : selectedButtonScale);
+
+                // Set the emoji based on completion status
+                if (ProjectConfig.InstanceConfig.unlockAllLevelsFromStart)
                 {
-                    // Enable button and set color
-                    buttons[i].interactable = true;
-                    ShaderManager.SetColor(buttonImage.material, "_TargetColor", targetColor);
-                    ShaderManager.SetFloat(buttonImage.material, "_Alpha", 1f);
-                    var index = i;
-                    buttons[i].onClick.AddListener(() => OnButtonClicked(index));
-
-                    // Set the rewarded emoji if available
-                    if (_uniqueCompletedColors.Contains(targetColorHex))
+                    buttonImage.sprite = EmojiManager.GetDefaultHappyEmoji();
+                }
+                else if (isCompleted)
+                {
+                    var colorIndex = completedColors.IndexOf(colorHex);
+                    if (colorIndex < rewardedEmojis.Count)
                     {
-                        var colorIndex = completedColors.IndexOf(targetColorHex);
-                        if (colorIndex < rewardedEmojis.Count)
-                        {
-                            buttonImage.sprite = EmojiManager.GetEmojiByName(rewardedEmojis[colorIndex]);
-                        }
-                        else
-                        {
-                            buttonImage.sprite = EmojiManager.GetDefaultEmoji();
-                            Debug.LogError($"No rewarded emoji found for color index {colorIndex}. Using default emoji.");
-                        }
+                        buttonImage.sprite = EmojiManager.GetEmojiByName(rewardedEmojis[colorIndex]);
                     }
                     else
                     {
                         buttonImage.sprite = EmojiManager.GetDefaultEmoji();
-                    }
-
-                    buttons[i].transform.localScale = Vector3.one;
-
-                    // Set up animation for the next level button
-                    if (i == nextColorIndex)
-                    {
-                        StartCoroutine(AnimateNextLevelButton(buttons[i]));
+                        Debug.LogError($"No rewarded emoji found for color index {colorIndex}. Using default emoji.");
                     }
                 }
                 else
                 {
-                    // Disable button and set to black with 20% transparency
-                    buttons[i].interactable = false;
-                    ShaderManager.SetColor(buttonImage.material, "_TargetColor", Color.black);
-                    ShaderManager.SetFloat(buttonImage.material, "_Alpha", 0.2f);
-                    buttons[i].transform.localScale = Vector3.one * selectedButtonScale;
+                    buttonImage.sprite = EmojiManager.GetDefaultEmoji();
+                }
+
+                // Add click handler
+                var index = i; // Capture the index for the lambda
+                button.onClick.AddListener(() => OnButtonClicked(index));
+
+                // Set up animation for the next level button if not unlocking all levels
+                if (!ProjectConfig.InstanceConfig.unlockAllLevelsFromStart && isNextColor)
+                {
+                    StartCoroutine(AnimateNextLevelButton(button, index));
                 }
             }
 
+            // Initialize submit button
             if (submitButton != null)
             {
                 submitButton.onClick.AddListener(OnSubmitButtonClicked);
             }
 
+            // Configure scroll view
+            if (scrollView != null)
+            {
+                // Enable horizontal scrolling, disable vertical
+                scrollView.horizontal = true;
+                scrollView.vertical = false;
+
+                // Calculate the content width based on the number of buttons
+                var contentRectTransform = buttonGrid.GetComponent<RectTransform>();
+                if (contentRectTransform != null)
+                {
+                    // Force the grid layout to calculate sizes
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(contentRectTransform);
+                    
+                    // Make sure the content can be scrolled
+                    var gridLayoutGroup = buttonGrid.GetComponent<GridLayoutGroup>();
+                    if (gridLayoutGroup != null)
+                    {
+                        // Set child alignment to middle center
+                        gridLayoutGroup.childAlignment = TextAnchor.MiddleCenter;
+
+                        // Calculate rows and columns
+                        var totalButtons = TargetColors.Length;
+                        var buttonsPerColumn = gridLayoutGroup.constraintCount;
+                        var totalColumns = Mathf.CeilToInt((float)totalButtons / buttonsPerColumn);
+                        
+                        // Calculate the exact width needed
+                        var contentWidth = totalColumns * (gridLayoutGroup.cellSize.x + gridLayoutGroup.spacing.x) - gridLayoutGroup.spacing.x;
+                        
+                        // Set the content width to exactly fit all buttons
+                        contentRectTransform.sizeDelta = new Vector2(contentWidth, contentRectTransform.sizeDelta.y);
+                        
+                        // Set proper anchors to prevent stretching
+                        contentRectTransform.anchorMin = new Vector2(0, 0);
+                        contentRectTransform.anchorMax = new Vector2(0, 1);
+                        contentRectTransform.pivot = new Vector2(0, 0.5f);
+                    }
+                }
+            }
+
             // Select the most recently played level at startup
             if (!string.IsNullOrEmpty(mostRecentCompletedColor))
             {
-                var mostRecentIndex = Array.FindIndex(ColorArray.SRGBTargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
-                if (mostRecentIndex != -1 && mostRecentIndex < buttons.Length)
+                var mostRecentIndex = Array.FindIndex(TargetColors, c => ColorUtility.ToHtmlStringRGB(c) == mostRecentCompletedColor);
+                if (mostRecentIndex != -1)
                 {
                     OnButtonClicked(mostRecentIndex);
                 }
             }
+            else
+            {
+                // Select the first level by default
+                OnButtonClicked(0);
+            }
         }
 
-        private IEnumerator AnimateNextLevelButton(Button button)
+        private IEnumerator AnimateNextLevelButton(Button button, int buttonIndex)
         {
-            var animator = button.GetComponent<Animator>();
+            var animator = button.GetComponent<CustomAnimator>();
             if (animator == null)
             {
-                Debug.LogError("Next level button is missing Animator component.");
+                Debug.LogError("Next level button is missing CustomAnimator component.");
                 yield break;
             }
 
@@ -590,7 +853,7 @@ namespace Colorcrush.Game
             {
                 yield return new WaitForSeconds(buttonShakeInterval);
 
-                if (_selectedLevelIndex != _uniqueCompletedColors.Count)
+                if (_selectedLevelIndex != buttonIndex)
                 {
                     var bumpAnimation = new BumpAnimation(buttonBumpDuration, buttonBumpScaleFactor);
                     AnimationManager.PlayAnimation(animator, bumpAnimation);
@@ -599,8 +862,6 @@ namespace Colorcrush.Game
 
                     var shakeAnimation = new ShakeAnimation(buttonShakeDuration, buttonShakeStrength);
                     AnimationManager.PlayAnimation(animator, shakeAnimation);
-
-                    yield return new WaitForSeconds(buttonShakeDuration);
                 }
             }
         }
@@ -622,20 +883,26 @@ namespace Colorcrush.Game
                 _shakeCoroutine = null;
             }
 
-            // Scale back the previously selected button, if any
-            if (_selectedLevelIndex != -1 && _selectedLevelIndex < buttonGrid.transform.childCount)
+            // Scale back all buttons except the newly selected one
+            for (var i = 0; i < _instantiatedButtons.Count; i++)
             {
-                var previousButtonTransform = buttonGrid.transform.GetChild(_selectedLevelIndex);
-                ScaleButton(previousButtonTransform, 1f);
+                if (i != index)
+                {
+                    var buttonTransform = _instantiatedButtons[i].transform;
+                    ScaleButton(buttonTransform, 1f);
+                }
             }
 
             _selectedLevelIndex = index;
 
+            // Update the current target color immediately
+            _currentTargetColor = TargetColors[_selectedLevelIndex];
+
             // Scale down the newly selected button
-            if (index < buttonGrid.transform.childCount)
+            if (index < _instantiatedButtons.Count)
             {
-                var buttonTransform = buttonGrid.transform.GetChild(index);
-                var animator = buttonTransform.GetComponent<Animator>();
+                var buttonTransform = _instantiatedButtons[index].transform;
+                var animator = buttonTransform.GetComponent<CustomAnimator>();
                 if (animator != null)
                 {
                     ScaleButton(buttonTransform, selectedButtonScale);
@@ -643,17 +910,18 @@ namespace Colorcrush.Game
                 }
                 else
                 {
-                    Debug.LogError("Button is missing Animator component.");
+                    Debug.LogError("Button is missing CustomAnimator component.");
                 }
             }
 
+            // Update the submit button immediately after updating the target color
             UpdateSubmitButton();
             UpdateColorAnalysis();
 
             // Animate the submit button with a bump animation
             if (submitButton != null)
             {
-                var submitButtonAnimator = submitButton.GetComponent<Animator>();
+                var submitButtonAnimator = submitButton.GetComponent<CustomAnimator>();
                 if (submitButtonAnimator != null)
                 {
                     var bumpAnimation = new BumpAnimation(submitButtonBumpDuration, submitButtonBumpScaleFactor);
@@ -661,16 +929,16 @@ namespace Colorcrush.Game
                 }
                 else
                 {
-                    Debug.LogError("Submit button is missing Animator component.");
+                    Debug.LogError("Submit button is missing CustomAnimator component.");
                 }
             }
 
-            AudioManager.PlaySound("MENU_Pick");
+            AudioManager.PlaySound("MENU_Pick", pitchShift: 1.85f);
         }
 
         private void ScaleButton(Transform buttonTransform, float targetScale)
         {
-            var animator = buttonTransform.GetComponent<Animator>();
+            var animator = buttonTransform.GetComponent<CustomAnimator>();
             if (animator != null)
             {
                 var scaleAnimation = new FillScaleAnimation(targetScale, buttonBumpDuration);
@@ -678,7 +946,7 @@ namespace Colorcrush.Game
             }
             else
             {
-                Debug.LogError("Button is missing Animator component.");
+                Debug.LogError("Button is missing CustomAnimator component.");
             }
         }
 
@@ -686,59 +954,26 @@ namespace Colorcrush.Game
         {
             if (submitButton != null)
             {
-                var isNewLevel = _selectedLevelIndex == _uniqueCompletedColors.Count;
+                // Determine if the selected level is new or completed
+                var isNewLevel = !ProgressManager.CompletedTargetColors.Contains(ColorUtility.ToHtmlStringRGB(_currentTargetColor));
 
                 var buttonImage = submitButton.GetComponent<Image>();
                 if (buttonImage != null && buttonImage.material != null)
                 {
                     if (isNewLevel)
                     {
-                        ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", newLevelColor);
-                        ShaderManager.SetColor(buttonImage.material, "_AccentColor", newLevelAccentColor);
-                        ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 1f);
-                        // Find the GameObject with the "SubmitIcon" tag
-                        GameObject submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
-                        if (submitIconObject != null)
-                        {
-                            Image submitIconImage = submitIconObject.GetComponent<Image>();
-                            if (submitIconImage != null)
-                            {
-                                // Change the sprite to icons8-advance-90
-                                submitIconImage.sprite = Resources.Load<Sprite>("Colorcrush/Icons/icons8-advance-90");
-                            }
-                            else
-                            {
-                                Debug.LogWarning("SubmitIcon object does not have an Image component.");
-                            }
-                        }
-                        else
-                        {
-                            Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
-                        }
+                        // Set colors for a new level
+                        ShaderManager.SetColor(buttonImage.gameObject, "_BackgroundColor", newLevelColor);
+                        ShaderManager.SetColor(buttonImage.gameObject, "_AccentColor", newLevelAccentColor);
+                        ShaderManager.SetFloat(buttonImage.gameObject, "_EffectToggle", 1f);
+                        UpdateSubmitIcon("Colorcrush/Icons/icons8-advance-90");
                     }
                     else
                     {
-                        ShaderManager.SetColor(buttonImage.material, "_BackgroundColor", completedLevelColor);
-                        ShaderManager.SetFloat(buttonImage.material, "_EffectToggle", 0f);
-                        // Find the GameObject with the "SubmitIcon" tag
-                        GameObject submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
-                        if (submitIconObject != null)
-                        {
-                            Image submitIconImage = submitIconObject.GetComponent<Image>();
-                            if (submitIconImage != null)
-                            {
-                                // Change the sprite to icons8-advance-90
-                                submitIconImage.sprite = Resources.Load<Sprite>("Colorcrush/Icons/icons8-undo-90");
-                            }
-                            else
-                            {
-                                Debug.LogWarning("SubmitIcon object does not have an Image component.");
-                            }
-                        }
-                        else
-                        {
-                            Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
-                        }
+                        // Set colors for a completed level
+                        ShaderManager.SetColor(buttonImage.gameObject, "_BackgroundColor", completedLevelColor);
+                        ShaderManager.SetFloat(buttonImage.gameObject, "_EffectToggle", 0f);
+                        UpdateSubmitIcon("Colorcrush/Icons/icons8-undo-90");
                     }
                 }
                 else
@@ -746,35 +981,56 @@ namespace Colorcrush.Game
                     Debug.LogError("Submit button is missing Image component or material.");
                 }
 
-                submitButton.interactable = _selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count;
+                // Enable or disable the submit button based on the selected level index
+                submitButton.interactable = (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count) || ProjectConfig.InstanceConfig.unlockAllLevelsFromStart;
+            }
+        }
+
+        private void UpdateSubmitIcon(string iconPath)
+        {
+            // Find the GameObject with the "SubmitIcon" tag
+            var submitIconObject = GameObject.FindGameObjectWithTag("SubmitIcon");
+            if (submitIconObject != null)
+            {
+                var submitIconImage = submitIconObject.GetComponent<Image>();
+                if (submitIconImage != null)
+                {
+                    // Change the sprite to the specified icon
+                    submitIconImage.sprite = Resources.Load<Sprite>(iconPath);
+                }
+                else
+                {
+                    Debug.LogWarning("SubmitIcon object does not have an Image component.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("GameObject with tag 'SubmitIcon' not found.");
             }
         }
 
         private void OnSubmitButtonClicked()
         {
-            if (_selectedLevelIndex != -1 && _selectedLevelIndex <= _uniqueCompletedColors.Count && _selectedLevelIndex < ColorArray.SRGBTargetColors.Length)
+            var targetColor = TargetColors[_selectedLevelIndex];
+            PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
+            PlayerPrefs.Save();
+
+            // Play bump animation
+            var animator = submitButton.GetComponent<CustomAnimator>();
+            if (animator != null)
             {
-                var targetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
-                PlayerPrefs.SetString("TargetColor", ColorUtility.ToHtmlStringRGB(targetColor));
-                PlayerPrefs.Save();
-
-                // Play bump animation
-                var animator = submitButton.GetComponent<Animator>();
-                if (animator != null)
-                {
-                    var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
-                    AnimationManager.PlayAnimation(animator, bumpAnimation);
-                }
-                else
-                {
-                    Debug.LogError("Submit button is missing Animator component.");
-                }
-
-                // Wait for 1 second before loading the scene
-                StartCoroutine(LoadSceneAfterDelay(0.1f));
-
-                AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
+                var bumpAnimation = new BumpAnimation(submitButtonClickBumpDuration, submitButtonClickBumpScaleFactor);
+                AnimationManager.PlayAnimation(animator, bumpAnimation);
             }
+            else
+            {
+                Debug.LogError("Submit button is missing CustomAnimator component.");
+            }
+
+            // Wait for 1 second before loading the scene
+            StartCoroutine(LoadSceneAfterDelay(0.1f));
+
+            AudioManager.PlaySound("misc_menu", pitchShift: 1.15f);
         }
 
         private IEnumerator LoadSceneAfterDelay(float delay)
@@ -808,29 +1064,54 @@ namespace Colorcrush.Game
                 return;
             }
 
-            _currentTargetColor = ColorArray.SRGBTargetColors[_selectedLevelIndex];
+            _currentTargetColor = TargetColors[_selectedLevelIndex];
+            var targetColorHex = ColorUtility.ToHtmlStringRGB(_currentTargetColor);
 
-            if (_selectedLevelIndex == _uniqueCompletedColors.Count)
+            if (!ProgressManager.CompletedTargetColors.Contains(targetColorHex))
             {
-                // This is a new, uncompleted level
+                // This is an uncompleted level
                 _currentAnalysisValues = new float[8];
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
+                SetDragSignifierActive(false);
             }
             else
             {
-                var selectedColors = new List<Color>();
+                // Search the list of completed colors for the target color in reverse order, so that only the most recent completion is used
+                var completedColorIndex = ProgressManager.CompletedTargetColors.FindLastIndex(c => c == targetColorHex);
 
-                if (_selectedLevelIndex < ProgressManager.SelectedColors.Count)
+                // Use that index to get the corresponding final colors result
+                if (completedColorIndex >= 0 && completedColorIndex < ProgressManager.FinalColors.Count)
                 {
-                    selectedColors = ProgressManager.SelectedColors[_selectedLevelIndex]
-                        .Select(colorHex => ColorUtility.TryParseHtmlString(colorHex, out var color) ? color : Color.black)
-                        .ToList();
+                    var finalColorsResult = ProgressManager.FinalColors[completedColorIndex];
+                    _currentAnalysisValues = finalColorsResult.AxisEncodings.Select(v => v.magnitude).ToArray();
+                }
+                else
+                {
+                    _currentAnalysisValues = new float[8];
                 }
 
-                _currentAnalysisValues = ColorManager.GenerateColorAnalysis(_currentTargetColor, selectedColors);
-
                 StartCoroutine(AnimateAxisValuesAndColor(_currentAnalysisValues, _currentTargetColor));
+
+                if (ColorUtility.ToHtmlStringRGB(_currentTargetColor) != ProgressManager.MostRecentCompletedTargetColor)
+                {
+                    SetDragSignifierActive(false);
+                }
+                else if (!_hasColorAnalysisBeenClicked && ProgressManager.CompletedTargetColors.Count > 0 && SceneManager.GetPreviousSceneName() != "StartScene")
+                {
+                    SetDragSignifierActive(true);
+                }
             }
+        }
+
+        private void SetDragSignifierActive(bool isActive)
+        {
+            ShaderManager.SetFloat(colorAnalysisImage.gameObject, "_PulseEffect", isActive ? 1 : 0);
+            var dragSignifierAnimator = dragSignifier.GetComponent<Animator>();
+            dragSignifierAnimator.enabled = isActive;
+            var dragSignifierImage = dragSignifier.GetComponent<Image>();
+            var color = dragSignifierImage.color;
+            color.a = isActive ? 1f : 0f;
+            dragSignifierImage.color = color;
         }
 
         private IEnumerator AnimateAxisValuesAndColor(float[] targetValues, Color targetColor)
@@ -857,14 +1138,14 @@ namespace Colorcrush.Game
                         var t = Mathf.Clamp01(axisElapsedTime / colorAnalysisAnimationDuration);
                         var easedT = EaseInOutCubic(t);
                         _currentAxisValues[i] = Mathf.Lerp(startValues[i], targetValues[i], easedT);
-                        ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
+                        ShaderManager.SetFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
                     }
                 }
 
                 var colorT = Mathf.Clamp01(elapsedTime / colorAnalysisAnimationDuration);
                 var easedColorT = EaseInOutCubic(colorT);
                 _currentFillColor = Color.Lerp(startColor, new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f), easedColorT);
-                ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
+                ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
 
                 yield return null;
             }
@@ -873,14 +1154,14 @@ namespace Colorcrush.Game
             for (var i = 0; i < 8; i++)
             {
                 _currentAxisValues[i] = targetValues[i];
-                ShaderManager.SetFloat(_colorAnalysisMaterial, $"_Axis{i + 1}", _currentAxisValues[i]);
+                ShaderManager.SetFloat(colorAnalysisImage.gameObject, $"_Axis{i + 1}", _currentAxisValues[i]);
             }
 
             _currentFillColor = new Color(targetColor.r, targetColor.g, targetColor.b, 0.5f);
-            ShaderManager.SetColor(_colorAnalysisMaterial, "_FillColor", _currentFillColor);
+            ShaderManager.SetColor(colorAnalysisImage.gameObject, "_FillColor", _currentFillColor);
         }
 
-        private float EaseInOutCubic(float t)
+        private static float EaseInOutCubic(float t)
         {
             return t < 0.5 ? 4 * t * t * t : 1 - Mathf.Pow(-2 * t + 2, 3) / 2;
         }

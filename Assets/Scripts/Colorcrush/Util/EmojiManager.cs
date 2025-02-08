@@ -1,4 +1,4 @@
-// Copyright (C) 2024 Peter Guld Leth
+// Copyright (C) 2025 Peter Guld Leth
 
 #region
 
@@ -22,7 +22,7 @@ namespace Colorcrush.Util
         private Queue<Sprite> _happyEmojiQueue;
         private Queue<Sprite> _sadEmojiQueue;
 
-        public static EmojiManager Instance
+        private static EmojiManager Instance
         {
             get
             {
