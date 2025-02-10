@@ -20,8 +20,7 @@ namespace Colorcrush.Game
 {
     public class GameSceneController : MonoBehaviour
     {
-        [Header("General")]
-        [Tooltip("Factor to shrink buttons when toggled. A value of 0.9 means the button will shrink to 90% of its original size.")] [SerializeField]
+        [Header("General")] [Tooltip("Factor to shrink buttons when toggled. A value of 0.9 means the button will shrink to 90% of its original size.")] [SerializeField]
         private float shrinkFactor = 0.9f;
 
         [Tooltip("Alpha (transparency) value for toggled buttons. 0 is fully transparent, 1 is fully opaque.")] [SerializeField]
@@ -39,8 +38,7 @@ namespace Colorcrush.Game
         [Tooltip("Delay in seconds between each button's fade-in animation during the initial setup.")] [SerializeField]
         private float buttonFadeInDelay = 0.025f;
 
-        [Header("Emoji Animation Settings")]
-        [Tooltip("Duration in seconds of the fade-out animation for emojis that were selected.")] [SerializeField]
+        [Header("Emoji Animation Settings")] [Tooltip("Duration in seconds of the fade-out animation for emojis that were selected.")] [SerializeField]
         private float selectedEmojiFadeDuration = 0.5f;
 
         [Tooltip("Duration in seconds of the movement animation for emojis that were not selected.")] [SerializeField]
@@ -49,8 +47,7 @@ namespace Colorcrush.Game
         [Tooltip("Vector3 offset for the movement of non-selected emojis. Determines direction and distance of movement.")] [SerializeField]
         private Vector3 nonSelectedEmojiMoveOffset = Vector3.zero;
 
-        [Header("Sound Settings")]
-        [Tooltip("Name of the sound effect to play for non-selected emojis.")] [SerializeField]
+        [Header("Sound Settings")] [Tooltip("Name of the sound effect to play for non-selected emojis.")] [SerializeField]
         private string nonSelectedEmojiSound = "misc_menu";
 
         [Tooltip("Base pitch for the first non-selected emoji sound. Values above 1 increase pitch, below 1 decrease pitch.")] [SerializeField]
@@ -62,8 +59,7 @@ namespace Colorcrush.Game
         [Tooltip("Volume adjustment for the non-selected emoji sounds. Higher values increase volume.")] [SerializeField]
         private float nonSelectedEmojiGain = 1f;
 
-        [Header("UI Elements")]
-        [Tooltip("TextMeshProUGUI component for displaying text on the submit button.")] [SerializeField]
+        [Header("UI Elements")] [Tooltip("TextMeshProUGUI component for displaying text on the submit button.")] [SerializeField]
         private TextMeshProUGUI submitButtonText;
 
         [Tooltip("Image component representing the progress bar fill.")] [SerializeField]
@@ -78,8 +74,7 @@ namespace Colorcrush.Game
         [Tooltip("Image component for displaying the target emoji that players need to match.")] [SerializeField]
         private Image targetEmojiImage;
 
-        [Header("Scene Management")]
-        [Tooltip("Name of the scene to load after successfully completing all color submissions.")] [SerializeField]
+        [Header("Scene Management")] [Tooltip("Name of the scene to load after successfully completing all color submissions.")] [SerializeField]
         private string nextSceneName = "MuralScene";
 
         private bool _buttonsInteractable = true;
@@ -600,9 +595,12 @@ namespace Colorcrush.Game
 
             yield return new WaitForSeconds(setupAnimationDuration);
 
+            // Safety check - ensure all buttons in current batch have correct alpha
             for (var i = 0; i < _currentBatch.Count; i++)
             {
-                _selectionGridButtons[i].interactable = true;
+                var button = _selectionGridButtons[i];
+                ShaderManager.SetFloat(button.gameObject, "_Alpha", defaultAlpha);
+                button.interactable = true;
             }
 
             _buttonsInteractable = true;

@@ -18,8 +18,7 @@ namespace Colorcrush.Game
 {
     public class StartSceneController : MonoBehaviour
     {
-        [Header("General")]
-        [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
+        [Header("General")] [Tooltip("TextMeshProUGUI component for displaying the main title of the game.")] [SerializeField]
         private TextMeshProUGUI titleText;
 
         [Tooltip("TextMeshProUGUI component for displaying the current version of the game.")] [SerializeField]
@@ -43,8 +42,7 @@ namespace Colorcrush.Game
         [Tooltip("Time in seconds between each shake animation of the title.")] [SerializeField]
         private float shakeInterval = 10f;
 
-        [Header("Emoji Shuffle Effect")]
-        [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
+        [Header("Emoji Shuffle Effect")] [Tooltip("Enable or disable the emoji shuffling animation at the beginning.")] [SerializeField]
         private bool enableEmojiShuffle = true;
 
         [Tooltip("Total duration in seconds of the emoji shuffling animation.")] [SerializeField]
@@ -71,8 +69,7 @@ namespace Colorcrush.Game
         [Tooltip("Image component for the background of the start screen.")] [SerializeField]
         private Image backgroundImage;
 
-        [Header("Reveal Behind Effect")]
-        [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
+        [Header("Reveal Behind Effect")] [Tooltip("Material used to create the circular reveal effect behind the emoji.")] [SerializeField]
         private Material circleMaterial;
 
         [Tooltip("Speed at which the reveal circle expands behind the emoji.")] [SerializeField]
@@ -81,8 +78,7 @@ namespace Colorcrush.Game
         [Tooltip("Image component for the foreground of the start screen.")] [SerializeField]
         private Image foregroundImage;
 
-        [Header("Sound Effects")]
-        [Tooltip("Enable or disable sound effects for the smiley animation.")] [SerializeField]
+        [Header("Sound Effects")] [Tooltip("Enable or disable sound effects for the smiley animation.")] [SerializeField]
         private bool enableSmileySound;
 
         [Tooltip("Name of the sound effect to play when adding the smiley face to the title.")] [SerializeField]
@@ -112,8 +108,7 @@ namespace Colorcrush.Game
         [Tooltip("Volume adjustment for the emoji bump sound.")] [SerializeField]
         private float emojiBumpGain = 1f;
 
-        [Header("Shake Animation")]
-        [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
+        [Header("Shake Animation")] [Tooltip("Duration in seconds of the shake animation applied to the title.")] [SerializeField]
         private float shakeDuration = 0.75f;
 
         [Tooltip("Intensity of the shake animation (higher values = more intense shaking).")] [SerializeField]
