@@ -538,7 +538,7 @@ namespace Colorcrush.Game
 
             StartCoroutine(SmoothScrollTo(normalizedPosition));
 
-            Debug.Log($"Scrolling to column {targetColumn}, normalized position: {normalizedPosition}");
+            Debug.Log($"MenuSceneController: Scrolling to column {targetColumn}, normalized position: {normalizedPosition}");
         }
 
         private IEnumerator SmoothScrollTo(float targetNormalizedPosition)
@@ -701,7 +701,17 @@ namespace Colorcrush.Game
             var completedColors = ProgressManager.CompletedTargetColors;
             var rewardedEmojis = ProgressManager.RewardedEmojis;
             var mostRecentCompletedColor = ProgressManager.MostRecentCompletedTargetColor;
-            var nextColorIndex = Enumerable.Range(0, TargetColors.Length).First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(TargetColors[i])));
+            
+            // Calculate nextColorIndex, defaulting to -1 if all levels are completed
+            var nextColorIndex = -1;
+            try {
+                nextColorIndex = Enumerable.Range(0, TargetColors.Length)
+                    .First(i => !_uniqueCompletedColors.Contains(ColorUtility.ToHtmlStringRGB(TargetColors[i])));
+            }
+            catch (InvalidOperationException) {
+                // All levels are completed, nextColorIndex remains -1
+                Debug.Log("MenuSceneController: All levels are completed!");
+            }
 
             // Create buttons for each target color
             for (var i = 0; i < TargetColors.Length; i++)
@@ -724,7 +734,7 @@ namespace Colorcrush.Game
                 var colorHex = ColorUtility.ToHtmlStringRGB(targetColor);
                 var isCompleted = completedColors.Contains(colorHex);
                 var isNextColor = i == nextColorIndex;
-                var shouldBeEnabled = ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || isCompleted || isNextColor;
+                var shouldBeEnabled = ProjectConfig.InstanceConfig.unlockAllLevelsFromStart || isCompleted || (isNextColor && nextColorIndex != -1);
 
                 // Set button properties
                 ShaderManager.SetColor(buttonInstance, "_TargetColor", shouldBeEnabled ? targetColor : new Color(0, 0, 0, 0));
@@ -862,8 +872,8 @@ namespace Colorcrush.Game
 
         private void OnButtonClicked(int index)
         {
-            Debug.Log($"Button clicked at index: {index}");
-
+            Debug.Log($"MenuSceneController: Button clicked at index: {index}");
+            
             // Don't do anything if the button clicked is the same button that is already selected
             if (index == _selectedLevelIndex)
             {

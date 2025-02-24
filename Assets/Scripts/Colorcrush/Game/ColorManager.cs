@@ -423,7 +423,7 @@ namespace Colorcrush.Game
                     throw new InvalidOperationException("No valid colors were loaded from the file.");
                 }
 
-                Debug.Log($"Color data loading successful. Processed {linesProcessed} lines, added {colorsAdded} colors.");
+                Debug.Log($"ColorManager: Color data loading successful. Processed {linesProcessed} lines, added {colorsAdded} colors.");
 
                 return colors;
             }
