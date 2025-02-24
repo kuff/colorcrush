@@ -201,6 +201,38 @@ namespace Colorcrush.Logging
         }
     }
 
+    public class DeviceInfoEvent : ILogEvent
+    {
+        public DeviceInfoEvent()
+        {
+            DeviceName = SystemInfo.deviceName;
+            DeviceModel = SystemInfo.deviceModel;
+            OperatingSystem = SystemInfo.operatingSystem;
+            ProcessorType = SystemInfo.processorType;
+            SystemMemory = SystemInfo.systemMemorySize;
+            GraphicsDeviceName = SystemInfo.graphicsDeviceName;
+        }
+
+        public string DeviceName { get; }
+        public string DeviceModel { get; }
+        public string OperatingSystem { get; }
+        public string ProcessorType { get; }
+        public int SystemMemory { get; }
+        public string GraphicsDeviceName { get; }
+        public string EventName => "deviceinfo";
+
+        public string GetStringifiedData()
+        {
+            var sanitizedDeviceName = DeviceName.Replace(" ", "-");
+            var sanitizedDeviceModel = DeviceModel.Replace(" ", "-");
+            var sanitizedOperatingSystem = OperatingSystem.Replace(" ", "-");
+            var sanitizedProcessorType = ProcessorType.Replace(" ", "-");
+            var sanitizedGraphicsDeviceName = GraphicsDeviceName.Replace(" ", "-");
+
+            return $"{sanitizedDeviceName} {sanitizedDeviceModel} {sanitizedOperatingSystem} {sanitizedProcessorType} {SystemMemory} {sanitizedGraphicsDeviceName}";
+        }
+    }
+
     public class FinalColorsEvent : ILogEvent
     {
         public FinalColorsEvent(ColorManager.ColorMatrixResult result)

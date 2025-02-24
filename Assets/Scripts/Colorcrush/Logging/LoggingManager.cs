@@ -141,6 +141,7 @@ namespace Colorcrush.Logging
 
                 _logWriter = new StreamWriter(_currentLogFilePath, true, ProjectConfig.InstanceConfig.logFileEncoding, ProjectConfig.InstanceConfig.logFileBufferSize);
                 LogEvent(new StartTimeEvent(_startTime));
+                LogEvent(new DeviceInfoEvent());
                 Debug.Log($"LoggingManager: Set most recent log file: {_currentLogFilePath}, Start time: {_startTime}");
             }
             else
@@ -186,6 +187,7 @@ namespace Colorcrush.Logging
             _lastTimestamp = 0;
             _logWriter = new StreamWriter(_currentLogFilePath, false, ProjectConfig.InstanceConfig.logFileEncoding, ProjectConfig.InstanceConfig.logFileBufferSize);
             LogEvent(new StartTimeEvent(_startTime));
+            LogEvent(new DeviceInfoEvent());
         }
 
         public static void LogEvent(ILogEvent logEvent)
